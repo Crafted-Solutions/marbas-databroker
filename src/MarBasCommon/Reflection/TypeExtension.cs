@@ -1,0 +1,33 @@
+﻿using System.Collections;
+using System.Reflection;
+
+namespace MarBasCommon.Reflection
+{
+    public static class TypeExtension
+    {
+        public static Type GetEnumerableType(this Type? type)
+        {
+            if (typeof(IEnumerable).IsAssignableFrom(type) && 0 < type.GenericTypeArguments.Length)
+            {
+                return type.GenericTypeArguments[0];
+            }
+            return typeof(object);
+        }
+
+        public static IEnumerable<PropertyInfo> GetAllProperties(this Type? type, BindingFlags bindingFlags = BindingFlags.Public)
+        {
+            if (null == type)
+            {
+                return Enumerable.Empty<PropertyInfo>();
+            }
+            if (!type.IsInterface || BindingFlags.FlattenHierarchy != (BindingFlags.FlattenHierarchy & bindingFlags))
+            {
+                return type.GetProperties(bindingFlags);
+            }
+
+            return (new Type[] { type })
+                   .Concat(type.GetInterfaces())
+                   .SelectMany(i => i.GetProperties(bindingFlags));
+        }
+    }
+}

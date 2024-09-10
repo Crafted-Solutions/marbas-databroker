@@ -1,0 +1,66 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32616.157
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasAPI", "src\MarBasAPI\MarBasAPI.csproj", "{C92B784C-F722-47D5-8718-441AF3DD83C6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A8CC4183-7D10-4C81-9B62-2F43C2604B41} = {A8CC4183-7D10-4C81-9B62-2F43C2604B41}
+		{F5DDE518-F6C1-418F-8D57-4351B821477C} = {F5DDE518-F6C1-418F-8D57-4351B821477C}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasSchema", "src\MarBasSchema\MarBasSchema.csproj", "{A8CC4183-7D10-4C81-9B62-2F43C2604B41}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2C06B45A-3CFF-46D7-BCBD-707A3BFAD492}"
+	ProjectSection(SolutionItems) = preProject
+		Common.Build.props = Common.Build.props
+		Directory.Build.props = Directory.Build.props
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasBrokerEngineSQLite", "src\MarBasBrokerEngineSQLite\MarBasBrokerEngineSQLite.csproj", "{F5DDE518-F6C1-418F-8D57-4351B821477C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasAPICore", "src\MatBasAPICore\MarBasAPICore.csproj", "{16E64D94-3ED8-408F-9014-F20822EDB82F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasBrokerSQLCommon", "src\MarBasBrokerSQLCommon\MarBasBrokerSQLCommon.csproj", "{8A088793-F54F-45B1-84B4-9F70837D33DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarBasCommon", "src\MarBasCommon\MarBasCommon.csproj", "{3921840C-BCBD-44E3-8DE8-C606FB1C8A9E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C92B784C-F722-47D5-8718-441AF3DD83C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C92B784C-F722-47D5-8718-441AF3DD83C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C92B784C-F722-47D5-8718-441AF3DD83C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C92B784C-F722-47D5-8718-441AF3DD83C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8CC4183-7D10-4C81-9B62-2F43C2604B41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8CC4183-7D10-4C81-9B62-2F43C2604B41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8CC4183-7D10-4C81-9B62-2F43C2604B41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8CC4183-7D10-4C81-9B62-2F43C2604B41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5DDE518-F6C1-418F-8D57-4351B821477C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5DDE518-F6C1-418F-8D57-4351B821477C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5DDE518-F6C1-418F-8D57-4351B821477C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5DDE518-F6C1-418F-8D57-4351B821477C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16E64D94-3ED8-408F-9014-F20822EDB82F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16E64D94-3ED8-408F-9014-F20822EDB82F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16E64D94-3ED8-408F-9014-F20822EDB82F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16E64D94-3ED8-408F-9014-F20822EDB82F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A088793-F54F-45B1-84B4-9F70837D33DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A088793-F54F-45B1-84B4-9F70837D33DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A088793-F54F-45B1-84B4-9F70837D33DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A088793-F54F-45B1-84B4-9F70837D33DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3921840C-BCBD-44E3-8DE8-C606FB1C8A9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3921840C-BCBD-44E3-8DE8-C606FB1C8A9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3921840C-BCBD-44E3-8DE8-C606FB1C8A9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3921840C-BCBD-44E3-8DE8-C606FB1C8A9E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1E4F474E-AE01-409A-BDFB-69B865E344C2}
+	EndGlobalSection
+EndGlobal

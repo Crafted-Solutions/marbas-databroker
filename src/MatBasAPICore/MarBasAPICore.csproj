@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="../../Common.Build.props" />
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Version>0.1.14</Version>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <Description>Core Web API implementation for MarBas databroker</Description>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+      <Optimize>False</Optimize>
+      <NoWarn>1591;1701;1702</NoWarn>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+      <Optimize>True</Optimize>
+      <NoWarn>1591;1701;1702</NoWarn>
+    </PropertyGroup>
+    
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  
+    <ItemGroup>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../MarBasSchema/MarBasSchema.csproj" />
+        <ProjectReference Include="../MarBasCommon/MarBasCommon.csproj" />
+    </ItemGroup>
+
+</Project>
