@@ -5,7 +5,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-        <Version>0.1.14</Version>
+        <Version>0.1.15</Version>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <Description>MarBas common utilities collection</Description>
   </PropertyGroup>

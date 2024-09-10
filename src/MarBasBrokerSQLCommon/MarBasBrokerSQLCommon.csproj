@@ -5,7 +5,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Version>0.1.14</Version>
+        <Version>0.1.15</Version>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <Description>Common functionality for MarBas SQL brokers</Description>
     </PropertyGroup>
@@ -24,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MarBasCommon\MarBasCommon.csproj" />
-    <ProjectReference Include="..\MarBasSchema\MarBasSchema.csproj" />
+    <ProjectReference Include="../MarBasCommon/MarBasCommon.csproj" />
+    <ProjectReference Include="../MarBasSchema/MarBasSchema.csproj" />
   </ItemGroup>
 
 </Project>

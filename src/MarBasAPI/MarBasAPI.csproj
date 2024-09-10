@@ -4,7 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Version>0.1.14</Version>
+        <Version>0.1.15</Version>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <Description>Sample Web API application for MarBas databroker</Description>
         <UserSecretsId>d16b24b3-4570-4fb8-8c57-153e4044d8ee</UserSecretsId>
