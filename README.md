@@ -25,12 +25,16 @@ API is then available at https://localhost:7277/swagger/index.html. Endpoints re
         <add key="crafted-solutions" value="https://nuget.pkg.github.com/Crafted-Solutions/index.json"/>
     </packageSources>
     <packageSourceCredentials>
-        <github>
+        <crafted-solutions>
             <add key="Username" value="YOUR_USER_NAME"/>
             <add key="ClearTextPassword" value="YOUR_PACKAGE_TOKEN"/>
-        </github>
+        </crafted-solutions>
     </packageSourceCredentials>
+    ```
+    Alternatively run this command
+    ```sh
+    dotnet nuget add source https://nuget.pkg.github.com/Crafted-Solutions/index.json -n crafted-solutions -u YOUR_USER_NAME -p YOUR_PACKAGE_TOKEN --store-password-in-clear-text
     ```
     Alternatively in Visual Studio go to “Tools” -> “Options” -> “NuGet Package Manager” -> “Package Sources” and add the repository as new source.
     
-    *DON'T COMMIT ANY OF THIS!*
+    *DON'T COMMIT ANY CONFIGURATION CONTAINING TOKENS!*

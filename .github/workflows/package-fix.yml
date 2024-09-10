@@ -32,6 +32,6 @@ jobs:
     - name: Pack
       run: dotnet pack -c Release /p:Version=${VERSION} --no-build --output .
     - name: Push
-      run: dotnet nuget push "*.nupkg" -s https://nuget.pkg.github.com/hatelamers/index.json -k ${PACKAGE_TOKEN}
+      run: dotnet nuget push "*.nupkg" -s https://nuget.pkg.github.com/Crafted-Solutions/index.json -k ${PACKAGE_TOKEN}
       env:
         PACKAGE_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
