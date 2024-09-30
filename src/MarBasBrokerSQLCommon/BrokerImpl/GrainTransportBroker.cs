@@ -838,7 +838,7 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
             {
                 using (cmd)
                 {
-                    cmd.CommandText = $"{AclConfig<TDialect>.SQLSelectAcl}{GeneralEntityDefaults.FieldGrainId} = @{GeneralEntityDefaults.ParamGrainId}";
+                    cmd.CommandText = $"{AclConfig<TDialect>.SQLSelectAcl}{GeneralEntityDefaults.FieldGrainId} = @{GeneralEntityDefaults.ParamGrainId} ORDER BY {MapAclColumn(nameof(ISchemaAclEntry.RoleId))}, {MapAclColumn(nameof(ISchemaAclEntry.Inherit))}";
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamGrainId, grain.Id));
 
                     using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
@@ -855,7 +855,7 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
 
         protected async Task<IDictionary<string, IGrainLocalizedLayer>> GetGrainLocalizedLayers(IGrain grain, IDictionary<string, IEnumerable<ITraitTransportable>> traits, CancellationToken cancellationToken = default)
         {
-            var result = new Dictionary<string, IGrainLocalizedLayer>();
+            var result = new SortedDictionary<string, IGrainLocalizedLayer>();
             IGrainLocalizedLayer GetLayer(string lang)
             {
                 IGrainLocalizedLayer layer;
