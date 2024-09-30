@@ -35,7 +35,7 @@ $@"SELECT g.*, l.{GrainLocalizedDefaults.FieldLabel}, l.{GeneralEntityDefaults.F
     {SQLJoinLabel} WHERE ";
 
         public const string SQLInsertLabel = $"INSERT INTO {GrainLocalizedDefaults.DataSourceLabel} ";
-        public const string SQLUpdateLabel = $"{SQLInsertLabel} ({GeneralEntityDefaults.FieldGrainId}, {GeneralEntityDefaults.FieldLangCode}, {GrainLocalizedDefaults.FieldLabel}) VALUES (@{GeneralEntityDefaults.ParamId}, @{GeneralEntityDefaults.ParamLangCode}, @{GrainLocalizedDefaults.ParamLabel}) ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {GeneralEntityDefaults.FieldLangCode}) DO UPDATE SET {GrainLocalizedDefaults.FieldLabel} = excluded.{GrainLocalizedDefaults.FieldLabel}";
+        public static readonly string SQLUpdateLabel = $"{SQLInsertLabel} ({GeneralEntityDefaults.FieldGrainId}, {GeneralEntityDefaults.FieldLangCode}, {GrainLocalizedDefaults.FieldLabel}) VALUES (@{GeneralEntityDefaults.ParamId}, @{GeneralEntityDefaults.ParamLangCode}, @{GrainLocalizedDefaults.ParamLabel}) ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {GeneralEntityDefaults.FieldLangCode}) DO UPDATE SET {GrainLocalizedDefaults.FieldLabel} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(GrainLocalizedDefaults.FieldLabel)}";
         public const string SQLDeleteLabel = $"DELETE FROM {GrainLocalizedDefaults.DataSourceLabel} WHERE ";
 
         public static readonly string SQLSelectPathByAclLocalized =

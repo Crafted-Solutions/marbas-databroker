@@ -395,8 +395,12 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     new Dictionary<string,(Type, object?)>() { { valCol, (TraitValueFactory.GetValueNativeType(trait.ValueType), trait.Value) } });
 
                 cmd.CommandText = @$"{TraitBaseConfig<TDialect>.SQLInsert} {insertValsClause}
-ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {GeneralEntityDefaults.FieldLangCode}, {GeneralEntityDefaults.FieldRevision}, {TraitBaseDefaults.FieldPropDefId}, {TraitBaseDefaults.FieldOrd})
-DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valCol} = @param{valCol}";
+ON CONFLICT({GeneralEntityDefaults.FieldId})
+DO UPDATE SET {GeneralEntityDefaults.FieldLangCode} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(GeneralEntityDefaults.FieldLangCode)},
+{GeneralEntityDefaults.FieldRevision} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(GeneralEntityDefaults.FieldRevision)},
+{TraitBaseDefaults.FieldOrd} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(TraitBaseDefaults.FieldOrd)}, {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
+ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {TraitBaseDefaults.FieldPropDefId}, {GeneralEntityDefaults.FieldLangCode}, {GeneralEntityDefaults.FieldRevision}, {TraitBaseDefaults.FieldOrd})
+DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}";
 
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
 
@@ -517,7 +521,8 @@ DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valC
             }
             static string UpdateField(string propName)
             {
-                return $"{AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(propName)} = @param{propName}";
+                var col = AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(propName);
+                return $"{col} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(col)}";
             }
 
             var result = 0;
@@ -533,7 +538,8 @@ DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valC
                     var insertValsClause = PrepareObjectInserParameters<IAclEntry, AclDataAdapter>(cmd.Parameters, aclentry);
                     if (first)
                     {
-                        cmd.CommandText += @$"{insertValsClause} ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(nameof(IAclEntry.RoleId))})
+                        cmd.CommandText += @$"{insertValsClause}
+ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(nameof(IAclEntry.RoleId))})
 DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(nameof(IAclEntry.RestrictionMask))}, {UpdateField(nameof(IAclEntry.Inherit))}";
 
                         first = false;
