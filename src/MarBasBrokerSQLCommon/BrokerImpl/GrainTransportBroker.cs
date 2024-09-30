@@ -152,7 +152,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             var schema = await GetGrainAsync(SchemaDefaults.SchemaContainerID, cancellationToken: cancellationToken);
             if (null == schema)
             {
-                result.AddFeedback(new BrokerOperationFeedback($"Schema root sourceGrain ({SchemaDefaults.SchemaContainerID}) not found", SourceOperationImport, 404, LogLevel.Critical, SchemaDefaults.SchemaContainerID));
+                result.AddFeedback(new BrokerOperationFeedback($"Schema root grain ({SchemaDefaults.SchemaContainerID}) not found", SourceOperationImport, 404, LogLevel.Critical, SchemaDefaults.SchemaContainerID));
                 return result;
             }
 
@@ -316,7 +316,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 {
                     if (1 > await UpdateOrCreateGrainBaseInTA(ta, grain, cancellationToken))
                     {
-                        throw new ApplicationException($"Record for sourceGrain {grain.Id} could not be updated");
+                        throw new ApplicationException($"Record for grain {grain.Id} could not be updated");
                     }
 
                     if (null != grain.Tier)
@@ -378,7 +378,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 {
                     _logger.LogError(e, "Error importing {id}", grain.Id);
                 }
-                return new BrokerOperationFeedback($"Failed to import sourceGrain {grain.Id} due to error: {e.Message}", SourceOperationImport, 500, LogLevel.Error, grain.Id);
+                return new BrokerOperationFeedback($"Failed to import grain {grain.Id} due to error: {e.Message}", SourceOperationImport, 500, LogLevel.Error, grain.Id);
             }
         }
 
@@ -423,7 +423,7 @@ DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
                 IBrokerOperationFeedback? result = null;
                 return await WrapInTransaction(result, async (ta) =>
                 {
-                    // whatever fails within this block rolls back entire transaction for the sourceGrain
+                    // whatever fails within this block rolls back entire transaction for the grain
 
                     if (eraseExistingGrain && !SchemaDefaults.BuiltInIds.Contains(grain.Id))
                     {
@@ -442,7 +442,7 @@ DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
 
                     if (1 > await UpdateOrCreateGrainBaseInTA(ta, grain, cancellationToken))
                     {
-                        throw new ApplicationException($"Record for sourceGrain {grain.Id} could not be created");
+                        throw new ApplicationException($"Record for grain {grain.Id} could not be created");
                     }
 
                     if (null != grain.Tier)
@@ -468,7 +468,7 @@ DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
                         var traitBase = await CreateTraitInTA(ta, trait, trait.Value, trait.Ord, true, trait.Id, cancellationToken);
                         if (null == traitBase)
                         {
-                            throw new ApplicationException($"Trait {trait.Id} for sourceGrain {grain.Id} could not be created");
+                            throw new ApplicationException($"Trait {trait.Id} for grain {grain.Id} could not be created");
                         }
                     }
                     if (true == grain.Traits?.Any())
@@ -509,7 +509,7 @@ DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
                 {
                     _logger.LogError(e, "Error importing {id}", grain.Id);
                 }
-                return new BrokerOperationFeedback($"Failed to import sourceGrain {grain.Id} due to error: {e.Message}", SourceOperationImport, 500, LogLevel.Error, grain.Id);
+                return new BrokerOperationFeedback($"Failed to import grain {grain.Id} due to error: {e.Message}", SourceOperationImport, 500, LogLevel.Error, grain.Id);
             }
         }
 
@@ -615,7 +615,7 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
                 if (1 > result)
                 {
-                    throw new ApplicationException($"TypeDef tier for sourceGrain {grainId} could not be created");
+                    throw new ApplicationException($"TypeDef tier for grain {grainId} could not be created");
                 }
             }
             if (typeDef.MixInIds.Any())
@@ -661,13 +661,16 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
                 var baseFields = new Dictionary<string, (Type, object?)> { { GeneralEntityDefaults.FieldBaseId, (typeof(Guid), grainId) } };
                 cmd.CommandText = $"{GrainPropDefConfig<TDialect>.SQLInsertPropDef}{PrepareObjectInserParameters<IPropDef, GrainPropDefDataAdapter>(cmd.Parameters, propDef, baseFields)}";
                 var valTypeParam = _profile.ParameterFactory.Create($"param{nameof(IValueTypeConstraint.ValueType)}", TraitValueFactory.GetValueTypeAsString(propDef.ValueType));
-                cmd.Parameters.RemoveAt(valTypeParam.ParameterName);
+                if (cmd.Parameters.Contains(valTypeParam.ParameterName))
+                {
+                    cmd.Parameters.RemoveAt(valTypeParam.ParameterName);
+                }
                 cmd.Parameters.Add(valTypeParam);
 
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
                 if (1 > result)
                 {
-                    throw new ApplicationException($"PropDef tier for sourceGrain {grainId} could not be created");
+                    throw new ApplicationException($"PropDef tier for grain {grainId} could not be created");
                 }
             }
             return result;
