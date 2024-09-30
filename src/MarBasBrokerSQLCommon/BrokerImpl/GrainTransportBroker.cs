@@ -642,7 +642,9 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
             {
                 grainTypeDef.AddMixIn((Identifiable)mixin);
             }
-            return await StoreGrainTypeDefTiersInTA(ta, new[] { grainTypeDef }, cancellationToken: cancellationToken);
+            return 0 < grainTypeDef.GetDirtyFields<IGrainTypeDef>().Count
+                ? await StoreGrainTypeDefTiersInTA(ta, new[] { grainTypeDef }, cancellationToken: cancellationToken)
+                : 0;
         }
 
         protected async Task<int> CreatePropDefTierInTA(DbTransaction ta, Guid grainId, IPropDef propDef, CancellationToken cancellationToken = default)
