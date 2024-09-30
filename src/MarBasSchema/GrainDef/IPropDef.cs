@@ -2,7 +2,7 @@
 {
     public interface IPropDef: IValueTypeConstraint
     {
-        Guid? ValueConstraintId { get; }
+        Guid? ValueConstraintId { get; set; }
         string? ConstraintParams { get; set; }
         int CardinalityMin { get; set; }
         int CardinalityMax { get; set; }

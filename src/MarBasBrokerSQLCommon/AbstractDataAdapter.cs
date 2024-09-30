@@ -38,7 +38,8 @@ namespace MarBasBrokerSQLCommon
         protected DateTime GetDateTime(string fieldName)
         {
             var ord = _dataReader.GetOrdinal(fieldName);
-            return DateTime.SpecifyKind(_dataReader.IsDBNull(ord) ? DateTime.Now : _dataReader.GetDateTime(ord), DateTimeKind.Utc);
+            var result = _dataReader.IsDBNull(ord) ? DateTime.Now : _dataReader.GetDateTime(ord);
+            return DateTimeKind.Unspecified == result.Kind ? DateTime.SpecifyKind(result, DateTimeKind.Utc) : result.ToUniversalTime();
         }
 
         protected T? GetNullableField<T>(string fieldName, T? defaultVal = default)
