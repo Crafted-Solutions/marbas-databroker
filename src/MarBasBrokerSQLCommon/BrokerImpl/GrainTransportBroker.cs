@@ -668,14 +668,16 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
         protected async Task<int> UpdatePropDefTierInTA(DbTransaction ta, Guid grainId, IPropDef propDef, CancellationToken cancellationToken = default)
         {
             var grainPropDef = new GrainPropDef(grainId);
-            var props = typeof(IGrain).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x => true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
+            var props = typeof(IPropDef).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x => true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
 
             foreach (var prop in props)
             {
                 prop.SetValue(grainPropDef, prop.GetValue(propDef));
             }
 
-            return await StoreGrainPropDefTiersInTA(ta, new[] { grainPropDef }, cancellationToken: cancellationToken);
+            return 0 < grainPropDef.GetDirtyFields<IGrainPropDef>().Count
+                ? await StoreGrainPropDefTiersInTA(ta, new[] { grainPropDef }, cancellationToken: cancellationToken)
+                : 0;
         }
 
         protected async Task<int> CreateFileTierInTA(DbTransaction ta, Guid grainId, IFile file, CancellationToken cancellationToken = default)
@@ -734,7 +736,8 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(paramName, x.Id));
                     return paramName;
                 });
-                cmd.CommandText = $"{GrainBaseConfig.SQLUpdate}{MapGrainBaseColumn(nameof(IGrain.MTime))} = @{GrainBaseConfig.ParamMTime} WHERE {GeneralEntityDefaults.FieldId} IN (@{string.Join(",@", vals)})";
+                var mtimeCol = MapGrainBaseColumn(nameof(IGrain.MTime));
+                cmd.CommandText = $"{GrainBaseConfig.SQLUpdate}{mtimeCol} = @{GrainBaseConfig.ParamMTime} WHERE {GeneralEntityDefaults.FieldId} IN (@{string.Join(",@", vals)}) AND {mtimeCol} <> @{GrainBaseConfig.ParamMTime}";
                 cmd.Parameters.Add(_profile.ParameterFactory.Create(GrainBaseConfig.ParamMTime, timestamp ?? DateTime.UtcNow));
 
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);

@@ -137,6 +137,7 @@ END;
 CREATE TRIGGER mb_tg_grain_base_update_parent_update
   AFTER UPDATE OF parent_id
   ON mb_grain_base
+  WHEN new.parent_id <> old.parent_id
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now'), child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = old.parent_id) WHERE id = old.parent_id;
   UPDATE mb_grain_base SET mtime = DATETIME('now'), child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = new.parent_id) WHERE id = new.parent_id;

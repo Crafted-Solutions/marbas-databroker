@@ -21,7 +21,7 @@ namespace MarBasBrokerSQLCommon.GrainDef
         public IIdentifiable? ValueConstraint { get => (Identifiable?)GetNullableGuid(GetMappedColumnName()); set => throw new NotImplementedException(); }
 
         [Column(GrainPropDefDefaults.FieldValueConstraint)]
-        public Guid? ValueConstraintId => ValueConstraint?.Id;
+        public Guid? ValueConstraintId { get => ValueConstraint?.Id; set => throw new NotImplementedException(); }
 
         [Column("constraint_params")]
         public string? ConstraintParams { get => GetNullableField<string>(GetMappedColumnName()); set => throw new NotImplementedException(); }

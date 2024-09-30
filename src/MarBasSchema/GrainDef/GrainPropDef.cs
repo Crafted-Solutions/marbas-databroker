@@ -94,7 +94,12 @@ namespace MarBasSchema.GrainDef
                 }
             }
         }
-        public Guid? ValueConstraintId => ValueConstraint?.Id;
+        public Guid? ValueConstraintId
+        {
+            get => ValueConstraint?.Id;
+            internal set => ValueConstraint = (Identifiable?)value;
+        }
+        Guid? IPropDef.ValueConstraintId { get => ValueConstraintId; set => ValueConstraintId = value; }
 
         public string? ConstraintParams
         {
