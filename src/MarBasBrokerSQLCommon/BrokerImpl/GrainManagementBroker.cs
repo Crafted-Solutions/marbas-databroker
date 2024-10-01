@@ -565,6 +565,30 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             }
         }
 
+        protected async Task<int> DisableGrainTimestampTriggers(DbTransaction ta, Guid grainId, CancellationToken cancellationToken)
+        {
+            using (var cmd = ta.Connection!.CreateCommand())
+            {
+                const string flagCol = "flag";
+
+                cmd.CommandText = @$"INSERT INTO mb_grain_control ({GeneralEntityDefaults.FieldGrainId}, {flagCol}) VALUES (@{GeneralEntityDefaults.ParamGrainId}, @{flagCol})
+ON CONFLICT ({GeneralEntityDefaults.FieldGrainId}) DO UPDATE SET {flagCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(flagCol)}";
+                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamGrainId, grainId));
+                cmd.Parameters.Add(_profile.ParameterFactory.Create(flagCol, 0x1));
+                return await cmd.ExecuteNonQueryAsync(cancellationToken);
+            }
+        }
+
+        protected async Task<int> EnableGrainTimestampTriggers(DbTransaction ta, Guid grainId, CancellationToken cancellationToken)
+        {
+            using (var cmd = ta.Connection!.CreateCommand())
+            {
+                cmd.CommandText = $"DELETE FROM mb_grain_control WHERE {GeneralEntityDefaults.FieldGrainId} = @{GeneralEntityDefaults.ParamGrainId}";
+                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamGrainId, grainId));
+                return await cmd.ExecuteNonQueryAsync(cancellationToken);
+            }
+        }
+
         public static async IAsyncEnumerable<TIGrain> EnumGrainDataReader<TIGrain, TGrain, TGrainAdapter>(DbDataReader reader, GrainExtendedDataAdapter.ExtensionColumn extensionColumn = GrainExtendedDataAdapter.ExtensionColumn.All, [EnumeratorCancellation] CancellationToken cancellationToken = default)
             where TIGrain : IGrainBase
             where TGrain : GrainBase

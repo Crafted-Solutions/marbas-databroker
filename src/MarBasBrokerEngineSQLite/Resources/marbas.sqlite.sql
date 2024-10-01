@@ -28,6 +28,7 @@ CREATE INDEX mb_idx_file_mime
 CREATE TRIGGER mb_tg_file_update_mtime
   AFTER UPDATE
   ON mb_file
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.base_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = new.base_id;
@@ -114,7 +115,7 @@ END;
 CREATE TRIGGER mb_tg_grain_base_mtime
   AFTER UPDATE
   ON mb_grain_base
-  WHEN new.mtime IS NULL OR new.mtime = old.mtime
+  WHEN (new.mtime IS NULL OR new.mtime = old.mtime) AND NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE rowid = new.rowid;
@@ -124,14 +125,14 @@ CREATE TRIGGER mb_tg_grain_base_insert_parent_update
   AFTER INSERT
   ON mb_grain_base
 BEGIN
-  UPDATE mb_grain_base SET mtime = DATETIME('now'), child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = new.parent_id) WHERE id = new.parent_id;
+  UPDATE mb_grain_base SET child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = new.parent_id) WHERE id = new.parent_id;
 END;
 
 CREATE TRIGGER mb_tg_grain_base_delete_parent_update
   AFTER DELETE
   ON mb_grain_base
 BEGIN
-  UPDATE mb_grain_base SET mtime = DATETIME('now'), child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = old.parent_id) WHERE id = old.parent_id;
+  UPDATE mb_grain_base SET child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = old.parent_id) WHERE id = old.parent_id;
 END;
 
 CREATE TRIGGER mb_tg_grain_base_update_parent_update
@@ -139,8 +140,8 @@ CREATE TRIGGER mb_tg_grain_base_update_parent_update
   ON mb_grain_base
   WHEN new.parent_id <> old.parent_id
 BEGIN
-  UPDATE mb_grain_base SET mtime = DATETIME('now'), child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = old.parent_id) WHERE id = old.parent_id;
-  UPDATE mb_grain_base SET mtime = DATETIME('now'), child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = new.parent_id) WHERE id = new.parent_id;
+  UPDATE mb_grain_base SET child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = old.parent_id) WHERE id = old.parent_id;
+  UPDATE mb_grain_base SET child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = new.parent_id) WHERE id = new.parent_id;
 END;
 
 CREATE TRIGGER mb_tg_grain_typedef_defaults_check
@@ -169,6 +170,21 @@ BEGIN
   UPDATE mb_grain_base SET name = '__defaults__'
   WHERE rowid = new.rowid AND name <> '__defaults__';
 END;
+
+CREATE TABLE mb_grain_control (
+  grain_id  guid NOT NULL PRIMARY KEY,
+  flag      integer,
+  /* Foreign keys */
+  CONSTRAINT mb_fk_grain_control
+    FOREIGN KEY (grain_id)
+    REFERENCES mb_grain_base(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+CREATE INDEX mb_idx_grain_control_flag
+  ON mb_grain_control
+  (flag);
 
 CREATE TABLE mb_grain_history (
   grain_id  guid NOT NULL,
@@ -253,6 +269,7 @@ END;
 CREATE TRIGGER mb_tg_grain_label_delete_mtime
   AFTER DELETE
   ON mb_grain_label
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = old.grain_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = old.grain_id;
@@ -261,6 +278,7 @@ END;
 CREATE TRIGGER mb_tg_grain_label_insert_mtime
   AFTER INSERT
   ON mb_grain_label
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.grain_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = new.grain_id;
@@ -269,6 +287,7 @@ END;
 CREATE TRIGGER mb_tg_grain_label_update_mtime
   AFTER UPDATE
   ON mb_grain_label
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.grain_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = new.grain_id;
@@ -335,6 +354,7 @@ CREATE INDEX mb_idx_propdef_versionable
 CREATE TRIGGER mb_tg_propdef_update_mtime
   AFTER UPDATE
   ON mb_propdef
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.base_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = new.base_id;
@@ -389,6 +409,7 @@ CREATE UNIQUE INDEX mb_idx_grain_trait_propdef
 CREATE TRIGGER mb_tg_grain_trait_delete_mtime
   AFTER DELETE
   ON mb_grain_trait
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = old.grain_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = old.grain_id;
@@ -397,6 +418,7 @@ END;
 CREATE TRIGGER mb_tg_grain_trait_insert_mtime
   AFTER INSERT
   ON mb_grain_trait
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.grain_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = new.grain_id;
@@ -405,6 +427,7 @@ END;
 CREATE TRIGGER mb_tg_grain_trait_update_mtime
   AFTER UPDATE
   ON mb_grain_trait
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.grain_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = new.grain_id;
@@ -456,6 +479,7 @@ CREATE TABLE mb_typedef (
 CREATE TRIGGER mb_tg_typedef_update_mtime
   AFTER UPDATE
   ON mb_typedef
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.base_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = new.base_id;
@@ -483,6 +507,7 @@ CREATE TABLE mb_typedef_mixin (
 CREATE TRIGGER mb_tg_typedef_mixin_delete_mtime
   AFTER DELETE
   ON mb_typedef_mixin
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = old.derived_typedef_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = old.derived_typedef_id;
@@ -491,6 +516,7 @@ END;
 CREATE TRIGGER mb_tg_typedef_mixin_insert_mtime
   AFTER INSERT
   ON mb_typedef_mixin
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.derived_typedef_id AND (0x1 & flag) > 0)
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = new.derived_typedef_id;
