@@ -157,18 +157,20 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             }
 
             var schemaPath = schema.Path ?? string.Empty;
-            var schemaGrainsByPath = new SortedDictionary<string, IGrainTransportable>();
-            var otherGrainsByPath = new SortedDictionary<string, IGrainTransportable>();
+            var schemaGrainsByPath = new SortedDictionary<(DateTime, string), IGrainTransportable>();
+            var otherGrainsByPath = new SortedDictionary<(DateTime, string), IGrainTransportable>();
             Parallel.ForEach(grains, (grain) =>
             {
                 var coll = true == grain.Path?.StartsWith(schemaPath) ? schemaGrainsByPath : otherGrainsByPath;
                 lock (coll)
                 {
-                    coll.Add(grain.Path ?? string.Empty, grain);
+                    coll.Add((grain.CTime, grain.Path ?? string.Empty), grain);
                 }
             });
 
-            async Task<bool> WorkerFunc(IGrainTransportable grain)
+
+            var firstPassFailures = new SortedDictionary<(DateTime, string), IGrainTransportable>();
+            async Task<bool> WorkerFunc(IGrainTransportable grain, bool secondPass = false)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -177,8 +179,20 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 var existing = await CheckGrainsExistAsync(null == grain.ParentId ? new[] { grain.Id } : new[] { grain.Id, (Guid)grain.ParentId }, cancellationToken);
                 if (null != grain.ParentId && !existing.Last())
                 {
-                    result.AddFeedback(new BrokerOperationFeedback($"Grain parent {grain.ParentId} doesn't exist", SourceOperationImport, 404, LogLevel.Error, grain.Id));
+                    if (secondPass)
+                    {
+                        result.AddFeedback(new BrokerOperationFeedback($"Grain parent {grain.ParentId} doesn't exist", SourceOperationImport, 404, LogLevel.Error, grain.Id));
+                    }
+                    else
+                    {
+                        firstPassFailures.Add((grain.CTime, grain.Path ?? string.Empty), grain);
+                    }
                     return true;
+                }
+
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("Importing grain {id} ({path}, {ctime})", grain.Id, grain.Path ?? "/", grain.CTime);
                 }
 
                 var replace = false;
@@ -210,7 +224,14 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 }
                 else
                 {
-                    result.AddFeedback(error);
+                    if (secondPass)
+                    {
+                        result.AddFeedback(error);
+                    }
+                    else
+                    {
+                        firstPassFailures.Add((grain.CTime, grain.Path ?? string.Empty), grain);
+                    }
                 }
                 return true;
             }
@@ -228,6 +249,20 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 if (!await WorkerFunc(entry.Value))
                 {
                     break;
+                }
+            }
+            if (0 < firstPassFailures.Count)
+            {
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("Attempting second pass import on {count} failures", firstPassFailures.Count);
+                }
+                foreach (var entry in firstPassFailures)
+                {
+                    if (!await WorkerFunc(entry.Value, true))
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -314,10 +349,20 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
 
                 return await WrapInTransaction(result, async (ta) =>
                 {
+                    if (null != grain.ParentId)
+                    {
+                        _ = await DisableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
+                    }
                     if (1 > await UpdateOrCreateGrainBaseInTA(ta, grain, cancellationToken))
                     {
                         throw new ApplicationException($"Record for grain {grain.Id} could not be updated");
                     }
+                    if (null != grain.ParentId)
+                    {
+                        _ = await EnableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
+                    }
+
+                    _ = await DisableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
 
                     if (null != grain.Tier)
                     {
@@ -369,6 +414,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     _ = await ImportGrainAclInTA(ta, grain, cancellationToken);
                     _ = await UpdateGrainTimestampsInTA(ta, new[] { grain }, grain.MTime, true, cancellationToken);
 
+                    _ = await EnableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
                     return result;
                 }, cancellationToken);
             }
@@ -424,6 +470,10 @@ DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
                 return await WrapInTransaction(result, async (ta) =>
                 {
                     // whatever fails within this block rolls back entire transaction for the grain
+                    if (null != grain.ParentId)
+                    {
+                        _ = await DisableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
+                    }
 
                     if (eraseExistingGrain && !SchemaDefaults.BuiltInIds.Contains(grain.Id))
                     {
@@ -444,6 +494,12 @@ DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
                     {
                         throw new ApplicationException($"Record for grain {grain.Id} could not be created");
                     }
+                    if (null != grain.ParentId)
+                    {
+                        _ = await EnableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
+                    }
+
+                    _ = await DisableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
 
                     if (null != grain.Tier)
                     {
@@ -499,6 +555,7 @@ DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
                     _ = await ImportGrainAclInTA(ta, grain, cancellationToken);
                     _ = await UpdateGrainTimestampsInTA(ta, new[] { grain }, grain.MTime, true, cancellationToken);
 
+                    _ = await EnableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
                     return result;
                 }, cancellationToken);
 
