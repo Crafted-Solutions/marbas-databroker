@@ -51,7 +51,7 @@ namespace MarBasAPICore.Controllers
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
                 var result = await broker.ImportGrainsAsync(imports.Grains, imports.GrainsToDelete?.Select(x => (Identifiable) x), imports.DuplicatesHandling ?? DuplicatesHandlingStrategy.Merge, cancellationToken);
-                return MarbasResultFactory.Create(0 < result.ImportedCount && null == result.Feedback, result);
+                return MarbasResultFactory.Create(0 < (result.ImportedCount + result.DeletedCount + result.IgnoredCount) && null == result.Feedback, result);
             }, _logger);
         }
     }

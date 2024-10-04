@@ -6,6 +6,7 @@
         string GuidGen { get; }
         string ComparableDate(string dateExpression);
         string SignedToUnsigned(string numberExpression);
+        string ConflictExcluded(string fieldName);
         string NewBlobContent(string? sizeParam = null);
         bool BlobUpdateRequiresReset { get; }
         string ReturnFromInsert { get; }

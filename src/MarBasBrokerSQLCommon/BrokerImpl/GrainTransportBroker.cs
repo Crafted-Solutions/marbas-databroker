@@ -139,111 +139,219 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IGrainImportResults> ImportGrainsAsync(IEnumerable<IGrainTransportable> grains, IEnumerable<IIdentifiable>? grainsToDelete = null, DuplicatesHandlingStrategy duplicatesHandling = DuplicatesHandlingStrategy.Merge, CancellationToken cancellationToken = default)
         {
             GrainImportResults result = new();
-            if (!grains.Any())
+            if (!grains.Any() && true != grainsToDelete?.Any())
             {
                 return result;
             }
             CheckProfile();
-            if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ImportSchema | RoleEntitlement.WriteAcl | RoleEntitlement.DeleteAcl, false, cancellationToken))
+            if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ImportSchema | RoleEntitlement.WriteAcl | RoleEntitlement.DeleteAcl | RoleEntitlement.SkipPermissionCheck, false, cancellationToken))
             {
                 throw new UnauthorizedAccessException("Not entitled to import into schema");
             }
 
-            var schema = await GetGrainAsync(SchemaDefaults.SchemaContainerID, cancellationToken: cancellationToken);
-            if (null == schema)
+            if (grains.Any())
             {
-                result.AddFeedback(new BrokerOperationFeedback($"Schema root sourceGrain ({SchemaDefaults.SchemaContainerID}) not found", SourceOperationImport, 404, LogLevel.Critical, SchemaDefaults.SchemaContainerID));
-                return result;
-            }
-
-            var schemaPath = schema.Path ?? string.Empty;
-            var schemaGrainsByPath = new SortedDictionary<string, IGrainTransportable>();
-            var otherGrainsByPath = new SortedDictionary<string, IGrainTransportable>();
-            Parallel.ForEach(grains, (grain) =>
-            {
-                var coll = true == grain.Path?.StartsWith(schemaPath) ? schemaGrainsByPath : otherGrainsByPath;
-                lock (coll)
+                var schema = await GetGrainAsync(SchemaDefaults.SchemaContainerID, cancellationToken: cancellationToken);
+                if (null == schema)
                 {
-                    coll.Add(grain.Path ?? string.Empty, grain);
+                    result.AddFeedback(new BrokerOperationFeedback($"Schema root grain ({SchemaDefaults.SchemaContainerID}) not found", SourceOperationImport, 404, LogLevel.Critical, SchemaDefaults.SchemaContainerID));
+                    return result;
                 }
-            });
 
-            async Task<bool> WorkerFunc(IGrainTransportable grain)
-            {
-                if (cancellationToken.IsCancellationRequested)
+                var schemaPath = schema.Path ?? string.Empty;
+                var schemaGrainsByPath = new SortedDictionary<(DateTime, string), IGrainTransportable>();
+                var otherGrainsByPath = new SortedDictionary<(DateTime, string), IGrainTransportable>();
+                Parallel.ForEach(grains, (grain) =>
                 {
-                    return false;
-                }
-                var existing = await CheckGrainsExistAsync(null == grain.ParentId ? new[] { grain.Id } : new[] { grain.Id, (Guid)grain.ParentId }, cancellationToken);
-                if (null != grain.ParentId && !existing.Last())
+                    var coll = true == grain.Path?.StartsWith(schemaPath) ? schemaGrainsByPath : otherGrainsByPath;
+                    lock (coll)
+                    {
+                        coll.Add((grain.CTime, grain.Path ?? string.Empty), grain);
+                    }
+                });
+
+
+                var firstPassFailures = new SortedDictionary<(DateTime, string), IGrainTransportable>();
+                async Task<bool> ImportWorkerFunc(IGrainTransportable grain, bool secondPass = false)
                 {
-                    result.AddFeedback(new BrokerOperationFeedback($"Grain parent {grain.ParentId} doesn't exist", SourceOperationImport, 404, LogLevel.Error, grain.Id));
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return false;
+                    }
+                    var existing = await VerifyGrainsExistAsync(null == grain.ParentId ? new[] { grain.Id } : new[] { grain.Id, (Guid)grain.ParentId }, cancellationToken);
+                    if (null != grain.ParentId && !existing[(Guid)grain.ParentId])
+                    {
+                        if (secondPass)
+                        {
+                            result.AddFeedback(new BrokerOperationFeedback($"Grain parent {grain.ParentId} doesn't exist", SourceOperationImport, 404, LogLevel.Error, grain.Id));
+                        }
+                        else
+                        {
+                            firstPassFailures.Add((grain.CTime, grain.Path ?? string.Empty), grain);
+                        }
+                        return true;
+                    }
+
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug("Importing grain {id} ({path}, {ctime})", grain.Id, grain.Path ?? "/", grain.CTime);
+                    }
+
+                    var replace = false;
+                    IBrokerOperationFeedback? error = null;
+                    if (existing[grain.Id])
+                    {
+                        var ignore = false;
+                        if (true == grainsToDelete?.Any(x => x.Id == grain.Id))
+                        {
+                            error = new BrokerOperationFeedback($"Grain {grain.Id} is marked for deletion, skipping import", SourceOperationImport, 409, LogLevel.Warning, grain.Id);
+                            ignore = true;
+                        }
+                        else if (DuplicatesHandlingStrategy.OverwriteSkipNewer == duplicatesHandling || DuplicatesHandlingStrategy.MergeSkipNewer == duplicatesHandling)
+                        {
+                            var grainToCheck = await GetGrainAsync(grain.Id, cancellationToken: cancellationToken);
+                            if (null != grainToCheck && grainToCheck.MTime > grain.MTime)
+                            {
+                                ignore = true;
+                            }
+                        }
+
+                        switch (duplicatesHandling)
+                        {
+                            case DuplicatesHandlingStrategy.Ignore:
+                                ignore = true;
+                                break;
+                            case DuplicatesHandlingStrategy.OverwriteSkipNewer:
+                            case DuplicatesHandlingStrategy.Overwrite:
+                            case DuplicatesHandlingStrategy.OverwriteRecursive:
+                                replace = true;
+                                break;
+                            case DuplicatesHandlingStrategy.MergeSkipNewer:
+                            case DuplicatesHandlingStrategy.Merge:
+                                if (!ignore)
+                                {
+                                    error = await ImportGrainAsMerge(grain, cancellationToken);
+                                }
+                                break;
+                        }
+                        if (ignore)
+                        {
+                            result.IgnoredCount++;
+                            result.AddFeedback(error ?? new BrokerOperationFeedback($"Grain {grain.Id} ignored according to duplicates handling strategy", SourceOperationImport, 304, LogLevel.Information, grain.Id));
+                            return true;
+                        }
+                    }
+                    if (replace || !existing[grain.Id])
+                    {
+                        error = await ImportGrainAsNew(grain, DuplicatesHandlingStrategy.OverwriteRecursive == duplicatesHandling, cancellationToken);
+                    }
+
+                    if (null == error)
+                    {
+                        result.ImportedCount++;
+                    }
+                    else
+                    {
+                        if (secondPass)
+                        {
+                            result.AddFeedback(error);
+                        }
+                        else
+                        {
+                            firstPassFailures.Add((grain.CTime, grain.Path ?? string.Empty), grain);
+                        }
+                    }
                     return true;
                 }
 
-                var replace = false;
-                IBrokerOperationFeedback? error = null;
-                if (existing.First())
+
+                foreach (var entry in schemaGrainsByPath)
                 {
-                    switch (duplicatesHandling)
+                    if (!await ImportWorkerFunc(entry.Value))
                     {
-                        case DuplicatesHandlingStrategy.Ignore:
-                            result.IgnoredCount++;
-                            return true;
-                        case DuplicatesHandlingStrategy.Overwrite:
-                        case DuplicatesHandlingStrategy.OverwriteRecursive:
-                            replace = true;
-                            break;
-                        case DuplicatesHandlingStrategy.Merge:
-                            error = await ImportGrainAsMerge(grain, cancellationToken);
-                            break;
+                        break;
                     }
                 }
-                if (replace || !existing.First())
+                foreach (var entry in otherGrainsByPath)
                 {
-                    error = await ImportGrainAsNew(grain, DuplicatesHandlingStrategy.OverwriteRecursive == duplicatesHandling, cancellationToken);
+                    if (!await ImportWorkerFunc(entry.Value))
+                    {
+                        break;
+                    }
                 }
-
-                if (null == error)
+                if (0 < firstPassFailures.Count)
                 {
-                    result.ImportedCount++;
-                }
-                else
-                {
-                    result.AddFeedback(error);
-                }
-                return true;
-            }
-
-
-            foreach (var entry in schemaGrainsByPath)
-            {
-                if (!await WorkerFunc(entry.Value))
-                {
-                    break;
-                }
-            }
-            foreach (var entry in otherGrainsByPath)
-            {
-                if (!await WorkerFunc(entry.Value))
-                {
-                    break;
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug("Attempting second pass import on {count} failures", firstPassFailures.Count);
+                    }
+                    foreach (var entry in firstPassFailures)
+                    {
+                        if (!await ImportWorkerFunc(entry.Value, true))
+                        {
+                            break;
+                        }
+                    }
                 }
             }
 
             if (!cancellationToken.IsCancellationRequested && true == grainsToDelete?.Any())
             {
-                try
+                var deleteList = grainsToDelete.ToList();
+                var retries = Math.Max(2, deleteList.Count / 10);
+                var deleteFailures = new HashSet<IIdentifiable>();
+
+                async Task<bool> DeleteWorkerFunc(IIdentifiable grain, int retry = 0)
                 {
-                    result.DeletedCount = await DeleteGrainsAsync(grainsToDelete, cancellationToken);
-                }
-                catch (Exception e)
-                {
-                    if (_logger.IsEnabled(LogLevel.Error))
+                    if (cancellationToken.IsCancellationRequested)
                     {
-                        _logger.LogError(e, "Error deleting grains");
+                        return false;
                     }
-                    result.AddFeedback(new BrokerOperationFeedback($"Failed to delete {grainsToDelete.Count()} grains due to error: {e.Message}", SourceOperationImport, 500, LogLevel.Error));
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug("Deleting grain {id} (pass {retry})", grain.Id, retry);
+                    }
+                    var error = await ImportDeleteGrain(grain, cancellationToken);
+                    if (null == error)
+                    {
+                        result.DeletedCount++;
+                        deleteFailures.Remove(grain);
+                    }
+                    else
+                    {
+                        if (0 == retry)
+                        {
+                            deleteFailures.Add(grain);
+                        }
+                        else if (retry >= retries)
+                        {
+                            result.AddFeedback(error);
+                        }
+                    }
+                    return true;
+                }
+
+                foreach (var grain in deleteList)
+                {
+                    if (!await DeleteWorkerFunc(grain))
+                    {
+                        break;
+                    }
+                }
+                for (int i = 1, failureCount = deleteFailures.Count; i <= retries && 0 < failureCount && !cancellationToken.IsCancellationRequested; i++)
+                {
+                    foreach (var grain in deleteFailures.ToList())
+                    {
+                        if (!await DeleteWorkerFunc(grain, i))
+                        {
+                            break;
+                        }
+                    }
+                    if (failureCount == deleteFailures.Count)
+                    {
+                        // no more successful retries, skip the rest
+                        i = retries;
+                    }
                 }
             }
             return result;
@@ -251,52 +359,6 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
         #endregion
 
         #region Import Helper Methods
-
-        protected async Task<int> UpdateOrCreateGrainBaseInTA(DbTransaction ta, IGrain sourceGrain, CancellationToken cancellationToken = default)
-        {
-            var result = 0;
-            GrainExtended? targetGrain = null;
-            using (var cmd = ta.Connection!.CreateCommand())
-            {
-                cmd.CommandText = $"{GrainExtendedConfig<TDialect>.SQLSelect}{GeneralEntityDefaults.FieldId} = @{GeneralEntityDefaults.ParamId}";
-                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, sourceGrain.Id));
-
-                using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
-                {
-                    if (await rs.ReadAsync(cancellationToken))
-                    {
-                        targetGrain = new GrainExtended(new GrainExtendedDataAdapter(rs, GrainExtendedDataAdapter.ExtensionColumn.Type | GrainExtendedDataAdapter.ExtensionColumn.Path | GrainExtendedDataAdapter.ExtensionColumn.Container));
-                    }
-                }
-            }
-            if (null == targetGrain)
-            {
-                using (var cmd = ta.Connection!.CreateCommand())
-                {
-                    cmd.CommandText = $"{GrainBaseConfig.SQLInsert}{PrepareObjectInserParameters<IGrain, GrainExtendedDataAdapter>(cmd.Parameters, sourceGrain)}";
-                    result = await cmd.ExecuteNonQueryAsync(cancellationToken);
-                }
-            }
-            else
-            {
-                var props = typeof(IGrain).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x =>
-                    x.Name != nameof(IGrain.Id) &&
-                    x.Name != nameof(IGrain.ParentId) &&
-                    x.Name != nameof(IGrain.TypeDefId) &&
-                    true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
-
-                foreach (var prop in props)
-                {
-                    var targetProp = targetGrain.GetType().GetProperty(prop.Name);
-                    targetProp?.SetValue(targetGrain, prop.GetValue(sourceGrain));
-                }
-                targetGrain.Parent = (Identifiable?)sourceGrain.ParentId;
-                targetGrain.TypeDef = (Identifiable?)sourceGrain.TypeDefId;
-
-                result = await StoreGrainsInTA(new[] { targetGrain }, 0, ta, true, cancellationToken);
-            }
-            return result;
-        }
 
         protected async Task<IBrokerOperationFeedback?> ImportGrainAsMerge(IGrainTransportable grain, CancellationToken cancellationToken = default)
         {
@@ -314,10 +376,20 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
 
                 return await WrapInTransaction(result, async (ta) =>
                 {
+                    if (null != grain.ParentId)
+                    {
+                        _ = await DisableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
+                    }
                     if (1 > await UpdateOrCreateGrainBaseInTA(ta, grain, cancellationToken))
                     {
-                        throw new ApplicationException($"Record for sourceGrain {grain.Id} could not be updated");
+                        throw new ApplicationException($"Record for grain {grain.Id} could not be updated");
                     }
+                    if (null != grain.ParentId)
+                    {
+                        _ = await EnableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
+                    }
+
+                    _ = await DisableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
 
                     if (null != grain.Tier)
                     {
@@ -369,6 +441,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     _ = await ImportGrainAclInTA(ta, grain, cancellationToken);
                     _ = await UpdateGrainTimestampsInTA(ta, new[] { grain }, grain.MTime, true, cancellationToken);
 
+                    _ = await EnableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
                     return result;
                 }, cancellationToken);
             }
@@ -378,30 +451,8 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 {
                     _logger.LogError(e, "Error importing {id}", grain.Id);
                 }
-                return new BrokerOperationFeedback($"Failed to import sourceGrain {grain.Id} due to error: {e.Message}", SourceOperationImport, 500, LogLevel.Error, grain.Id);
+                return new BrokerOperationFeedback($"Failed to import grain {grain.Id} due to error: {e.Message}", SourceOperationImport, 500, LogLevel.Error, grain.Id);
             }
-        }
-
-        protected async Task<int> StoreImportedTraitInTA(DbTransaction ta, Guid grainId, ITraitTransportable trait, string? lang = null, CancellationToken cancellationToken = default)
-        {
-            var result = 0;
-            using (var cmd = ta.Connection!.CreateCommand())
-            {
-                var valCol = TraitBaseDataAdapter.GetValueColumn(trait.ValueType);
-
-                trait.Grain = (Identifiable)grainId;
-                trait.Culture = lang;
-                var insertValsClause = PrepareObjectInserParameters<ITrait, TraitBaseDataAdapter>(cmd.Parameters, trait,
-                    new Dictionary<string,(Type, object?)>() { { valCol, (TraitValueFactory.GetValueNativeType(trait.ValueType), trait.Value) } });
-
-                cmd.CommandText = @$"{TraitBaseConfig<TDialect>.SQLInsert} {insertValsClause}
-ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {GeneralEntityDefaults.FieldLangCode}, {GeneralEntityDefaults.FieldRevision}, {TraitBaseDefaults.FieldPropDefId}, {TraitBaseDefaults.FieldOrd})
-DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valCol} = @param{valCol}";
-
-                result = await cmd.ExecuteNonQueryAsync(cancellationToken);
-
-            }
-            return result;
         }
 
         protected async Task<IBrokerOperationFeedback?> ImportGrainAsNew(IGrainTransportable grain, bool eraseExistingGrain = false, CancellationToken cancellationToken = default)
@@ -419,7 +470,11 @@ DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valC
                 IBrokerOperationFeedback? result = null;
                 return await WrapInTransaction(result, async (ta) =>
                 {
-                    // whatever fails within this block rolls back entire transaction for the sourceGrain
+                    // whatever fails within this block rolls back entire transaction for the grain
+                    if (null != grain.ParentId)
+                    {
+                        _ = await DisableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
+                    }
 
                     if (eraseExistingGrain && !SchemaDefaults.BuiltInIds.Contains(grain.Id))
                     {
@@ -438,8 +493,14 @@ DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valC
 
                     if (1 > await UpdateOrCreateGrainBaseInTA(ta, grain, cancellationToken))
                     {
-                        throw new ApplicationException($"Record for sourceGrain {grain.Id} could not be created");
+                        throw new ApplicationException($"Record for grain {grain.Id} could not be created");
                     }
+                    if (null != grain.ParentId)
+                    {
+                        _ = await EnableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
+                    }
+
+                    _ = await DisableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
 
                     if (null != grain.Tier)
                     {
@@ -464,7 +525,7 @@ DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valC
                         var traitBase = await CreateTraitInTA(ta, trait, trait.Value, trait.Ord, true, trait.Id, cancellationToken);
                         if (null == traitBase)
                         {
-                            throw new ApplicationException($"Trait {trait.Id} for sourceGrain {grain.Id} could not be created");
+                            throw new ApplicationException($"Trait {trait.Id} for grain {grain.Id} could not be created");
                         }
                     }
                     if (true == grain.Traits?.Any())
@@ -495,6 +556,7 @@ DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valC
                     _ = await ImportGrainAclInTA(ta, grain, cancellationToken);
                     _ = await UpdateGrainTimestampsInTA(ta, new[] { grain }, grain.MTime, true, cancellationToken);
 
+                    _ = await EnableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
                     return result;
                 }, cancellationToken);
 
@@ -505,8 +567,109 @@ DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valC
                 {
                     _logger.LogError(e, "Error importing {id}", grain.Id);
                 }
-                return new BrokerOperationFeedback($"Failed to import sourceGrain {grain.Id} due to error: {e.Message}", SourceOperationImport, 500, LogLevel.Error, grain.Id);
+                return new BrokerOperationFeedback($"Failed to import grain {grain.Id} due to error: {e.Message}", SourceOperationImport, 500, LogLevel.Error, grain.Id);
             }
+        }
+
+        protected async Task<IBrokerOperationFeedback?> ImportDeleteGrain(IIdentifiable grain, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                IBrokerOperationFeedback? result = null;
+
+                return await WrapInTransaction(result, async (ta) =>
+                {
+                    using (var cmd = ta.Connection!.CreateCommand())
+                    {
+                        cmd.CommandText = $"{GrainBaseConfig.SQLDelete}{MapGrainBaseColumn(nameof(IGrainBase.Id))} = @{GeneralEntityDefaults.ParamId}";
+                        var param = _profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, grain.Id);
+                        cmd.Parameters.Add(param);
+
+                        _ = await cmd.ExecuteNonQueryAsync(cancellationToken);
+                    }
+                    return result;
+                }, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                if (_logger.IsEnabled(LogLevel.Error))
+                {
+                    _logger.LogError(e, "Error deleting {id}", grain.Id);
+                }
+                return new BrokerOperationFeedback($"Failed to delete grain {grain.Id} due to error: {e.Message}", SourceOperationImport, 500, LogLevel.Error, grain.Id);
+            }
+        }
+
+        protected async Task<int> UpdateOrCreateGrainBaseInTA(DbTransaction ta, IGrain sourceGrain, CancellationToken cancellationToken = default)
+        {
+            var result = 0;
+            GrainExtended? targetGrain = null;
+            using (var cmd = ta.Connection!.CreateCommand())
+            {
+                cmd.CommandText = $"{GrainExtendedConfig<TDialect>.SQLSelect}{GeneralEntityDefaults.FieldId} = @{GeneralEntityDefaults.ParamId}";
+                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, sourceGrain.Id));
+
+                using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
+                {
+                    if (await rs.ReadAsync(cancellationToken))
+                    {
+                        targetGrain = new GrainExtended(new GrainExtendedDataAdapter(rs, GrainExtendedDataAdapter.ExtensionColumn.Type | GrainExtendedDataAdapter.ExtensionColumn.Path | GrainExtendedDataAdapter.ExtensionColumn.Container));
+                    }
+                }
+            }
+            if (null == targetGrain)
+            {
+                using (var cmd = ta.Connection!.CreateCommand())
+                {
+                    cmd.CommandText = $"{GrainBaseConfig.SQLInsert}{PrepareObjectInserParameters<IGrain, GrainExtendedDataAdapter>(cmd.Parameters, sourceGrain)}";
+                    result = await cmd.ExecuteNonQueryAsync(cancellationToken);
+                }
+            }
+            else
+            {
+                var props = typeof(IGrain).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x =>
+                    x.Name != nameof(IGrain.Id) &&
+                    x.Name != nameof(IGrain.ParentId) &&
+                    x.Name != nameof(IGrain.TypeDefId) &&
+                    true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
+
+                foreach (var prop in props)
+                {
+                    var targetProp = targetGrain.GetType().GetProperty(prop.Name);
+                    targetProp?.SetValue(targetGrain, prop.GetValue(sourceGrain));
+                }
+                targetGrain.Parent = (Identifiable?)sourceGrain.ParentId;
+                targetGrain.TypeDef = (Identifiable?)sourceGrain.TypeDefId;
+
+                result = await StoreGrainsInTA(new[] { targetGrain }, 0, ta, true, cancellationToken);
+            }
+            return result;
+        }
+
+        protected async Task<int> StoreImportedTraitInTA(DbTransaction ta, Guid grainId, ITraitTransportable trait, string? lang = null, CancellationToken cancellationToken = default)
+        {
+            var result = 0;
+            using (var cmd = ta.Connection!.CreateCommand())
+            {
+                var valCol = TraitBaseDataAdapter.GetValueColumn(trait.ValueType);
+
+                trait.Grain = (Identifiable)grainId;
+                trait.Culture = lang;
+                var insertValsClause = PrepareObjectInserParameters<ITrait, TraitBaseDataAdapter>(cmd.Parameters, trait,
+                    new Dictionary<string, (Type, object?)>() { { valCol, (TraitValueFactory.GetValueNativeType(trait.ValueType), trait.Value) } });
+
+                cmd.CommandText = @$"{TraitBaseConfig<TDialect>.SQLInsert} {insertValsClause}
+ON CONFLICT({GeneralEntityDefaults.FieldId})
+DO UPDATE SET {GeneralEntityDefaults.FieldLangCode} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(GeneralEntityDefaults.FieldLangCode)},
+{GeneralEntityDefaults.FieldRevision} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(GeneralEntityDefaults.FieldRevision)},
+{TraitBaseDefaults.FieldOrd} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(TraitBaseDefaults.FieldOrd)}, {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
+ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {TraitBaseDefaults.FieldPropDefId}, {GeneralEntityDefaults.FieldLangCode}, {GeneralEntityDefaults.FieldRevision}, {TraitBaseDefaults.FieldOrd})
+DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}";
+
+                result = await cmd.ExecuteNonQueryAsync(cancellationToken);
+
+            }
+            return result;
         }
 
         protected async Task<int> ImportGrainAclInTA(DbTransaction ta, IGrainTransportable grain, CancellationToken cancellationToken = default)
@@ -517,7 +680,8 @@ DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valC
             }
             static string UpdateField(string propName)
             {
-                return $"{AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(propName)} = @param{propName}";
+                var col = AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(propName);
+                return $"{col} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(col)}";
             }
 
             var result = 0;
@@ -533,7 +697,8 @@ DO UPDATE SET {GeneralEntityDefaults.FieldId} = @param{nameof(ITrait.Id)}, {valC
                     var insertValsClause = PrepareObjectInserParameters<IAclEntry, AclDataAdapter>(cmd.Parameters, aclentry);
                     if (first)
                     {
-                        cmd.CommandText += @$"{insertValsClause} ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(nameof(IAclEntry.RoleId))})
+                        cmd.CommandText += @$"{insertValsClause}
+ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(nameof(IAclEntry.RoleId))})
 DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(nameof(IAclEntry.RestrictionMask))}, {UpdateField(nameof(IAclEntry.Inherit))}";
 
                         first = false;
@@ -609,7 +774,7 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
                 if (1 > result)
                 {
-                    throw new ApplicationException($"TypeDef tier for sourceGrain {grainId} could not be created");
+                    throw new ApplicationException($"TypeDef tier for grain {grainId} could not be created");
                 }
             }
             if (typeDef.MixInIds.Any())
@@ -642,7 +807,9 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
             {
                 grainTypeDef.AddMixIn((Identifiable)mixin);
             }
-            return await StoreGrainTypeDefTiersInTA(ta, new[] { grainTypeDef }, cancellationToken: cancellationToken);
+            return 0 < grainTypeDef.GetDirtyFields<IGrainTypeDef>().Count
+                ? await StoreGrainTypeDefTiersInTA(ta, new[] { grainTypeDef }, cancellationToken: cancellationToken)
+                : 0;
         }
 
         protected async Task<int> CreatePropDefTierInTA(DbTransaction ta, Guid grainId, IPropDef propDef, CancellationToken cancellationToken = default)
@@ -653,13 +820,16 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
                 var baseFields = new Dictionary<string, (Type, object?)> { { GeneralEntityDefaults.FieldBaseId, (typeof(Guid), grainId) } };
                 cmd.CommandText = $"{GrainPropDefConfig<TDialect>.SQLInsertPropDef}{PrepareObjectInserParameters<IPropDef, GrainPropDefDataAdapter>(cmd.Parameters, propDef, baseFields)}";
                 var valTypeParam = _profile.ParameterFactory.Create($"param{nameof(IValueTypeConstraint.ValueType)}", TraitValueFactory.GetValueTypeAsString(propDef.ValueType));
-                cmd.Parameters.RemoveAt(valTypeParam.ParameterName);
+                if (cmd.Parameters.Contains(valTypeParam.ParameterName))
+                {
+                    cmd.Parameters.RemoveAt(valTypeParam.ParameterName);
+                }
                 cmd.Parameters.Add(valTypeParam);
 
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
                 if (1 > result)
                 {
-                    throw new ApplicationException($"PropDef tier for sourceGrain {grainId} could not be created");
+                    throw new ApplicationException($"PropDef tier for grain {grainId} could not be created");
                 }
             }
             return result;
@@ -668,14 +838,16 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
         protected async Task<int> UpdatePropDefTierInTA(DbTransaction ta, Guid grainId, IPropDef propDef, CancellationToken cancellationToken = default)
         {
             var grainPropDef = new GrainPropDef(grainId);
-            var props = typeof(IGrain).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x => true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
+            var props = typeof(IPropDef).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x => true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
 
             foreach (var prop in props)
             {
                 prop.SetValue(grainPropDef, prop.GetValue(propDef));
             }
 
-            return await StoreGrainPropDefTiersInTA(ta, new[] { grainPropDef }, cancellationToken: cancellationToken);
+            return 0 < grainPropDef.GetDirtyFields<IGrainPropDef>().Count
+                ? await StoreGrainPropDefTiersInTA(ta, new[] { grainPropDef }, cancellationToken: cancellationToken)
+                : 0;
         }
 
         protected async Task<int> CreateFileTierInTA(DbTransaction ta, Guid grainId, IFile file, CancellationToken cancellationToken = default)
@@ -734,7 +906,8 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(paramName, x.Id));
                     return paramName;
                 });
-                cmd.CommandText = $"{GrainBaseConfig.SQLUpdate}{MapGrainBaseColumn(nameof(IGrain.MTime))} = @{GrainBaseConfig.ParamMTime} WHERE {GeneralEntityDefaults.FieldId} IN (@{string.Join(",@", vals)})";
+                var mtimeCol = MapGrainBaseColumn(nameof(IGrain.MTime));
+                cmd.CommandText = $"{GrainBaseConfig.SQLUpdate}{mtimeCol} = @{GrainBaseConfig.ParamMTime} WHERE {GeneralEntityDefaults.FieldId} IN (@{string.Join(",@", vals)}) AND {mtimeCol} <> @{GrainBaseConfig.ParamMTime}";
                 cmd.Parameters.Add(_profile.ParameterFactory.Create(GrainBaseConfig.ParamMTime, timestamp ?? DateTime.UtcNow));
 
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
@@ -824,7 +997,7 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
             {
                 using (cmd)
                 {
-                    cmd.CommandText = $"{AclConfig<TDialect>.SQLSelectAcl}{GeneralEntityDefaults.FieldGrainId} = @{GeneralEntityDefaults.ParamGrainId}";
+                    cmd.CommandText = $"{AclConfig<TDialect>.SQLSelectAcl}{GeneralEntityDefaults.FieldGrainId} = @{GeneralEntityDefaults.ParamGrainId} ORDER BY {MapAclColumn(nameof(ISchemaAclEntry.RoleId))}, {MapAclColumn(nameof(ISchemaAclEntry.Inherit))}";
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamGrainId, grain.Id));
 
                     using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
@@ -841,7 +1014,7 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
 
         protected async Task<IDictionary<string, IGrainLocalizedLayer>> GetGrainLocalizedLayers(IGrain grain, IDictionary<string, IEnumerable<ITraitTransportable>> traits, CancellationToken cancellationToken = default)
         {
-            var result = new Dictionary<string, IGrainLocalizedLayer>();
+            var result = new SortedDictionary<string, IGrainLocalizedLayer>();
             IGrainLocalizedLayer GetLayer(string lang)
             {
                 IGrainLocalizedLayer layer;

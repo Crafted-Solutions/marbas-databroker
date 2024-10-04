@@ -61,15 +61,14 @@ namespace MarBasBrokerEngineSQLite.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to INSERT INTO mb_schema_opts (name, val) VALUES (&apos;schema.version&apos;, &apos;0.1.6&apos;);
+        ///   Looks up a localized string similar to INSERT INTO mb_schema_opts (name, val) VALUES (&apos;schema.version&apos;, &apos;0.1.12&apos;);
+        ///INSERT INTO mb_schema_opts (name, val) VALUES (&apos;schema.mtime&apos;, strftime(&apos;%Y-%m-%dT%H:%M:%SZ&apos;, &apos;now&apos;));
+        ///INSERT INTO mb_schema_opts (name, val) VALUES (&apos;schema.status&apos;, &apos;stable&apos;);
+        ///INSERT INTO mb_schema_opts (name, val) VALUES (&apos;instace.id&apos;, (SELECT result FROM mb_uuid));
         ///
         ////* Data for table mb_lang */
         ///INSERT INTO mb_lang (iso_code, label, label_native) VALUES (&apos;en&apos;, &apos;English&apos;, &apos;English&apos;);
-        ///INSERT INTO mb_lang (iso_code, label, label_native) VALUES (&apos;en-US&apos;, &apos;English (US)&apos;, &apos;English (US)&apos;);
-        ///INSERT INTO mb_lang (iso_code, label, label_native) VALUES (&apos;de&apos;, &apos;German&apos;, &apos;Deutsch&apos;);
-        ///INSERT INTO mb_lang (iso_code, label, label_native) VALUES (&apos;de-DE&apos;, &apos;German (Germany)&apos;, &apos;Deutsch (Deutschland)&apos;);
-        ///
-        ////* D [rest of string was truncated]&quot;;.
+        ///INSERT INTO mb_lang (iso_code, label, la [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string BasicData {
             get {
