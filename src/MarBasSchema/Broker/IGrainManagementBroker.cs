@@ -12,9 +12,10 @@ namespace MarBasSchema.Broker
         int StoreGrains(IEnumerable<IGrainBase> grains);
         IGrainBase? MoveGrain(IIdentifiable grain, IIdentifiable newParent);
         bool IsGrainInstanceOf(IIdentifiable grain, IIdentifiable typedef);
+        Type? GetGrainTier(IIdentifiable grain);
         IEnumerable<IGrainLocalized> ListGrains(IIdentifiable? container, bool recursive = false, CultureInfo? culture = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, IGrainQueryFilter? filter = null);
         IEnumerable<IGrainLocalized> ResolvePath(string? path, CultureInfo? culture = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, IGrainQueryFilter? filter = null);
         IEnumerable<IGrainLocalized> GetGrainAncestors(IIdentifiable grain, CultureInfo? culture = null, bool includeSelf = false);
-        IEnumerable<bool> CheckGrainsExist(IEnumerable<Guid> ids);
+        IDictionary<Guid, bool> VerifyGrainsExist(IEnumerable<Guid> ids);
     }
 }

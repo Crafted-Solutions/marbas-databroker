@@ -178,8 +178,8 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     {
                         return false;
                     }
-                    var existing = await CheckGrainsExistAsync(null == grain.ParentId ? new[] { grain.Id } : new[] { grain.Id, (Guid)grain.ParentId }, cancellationToken);
-                    if (null != grain.ParentId && !existing.Last())
+                    var existing = await VerifyGrainsExistAsync(null == grain.ParentId ? new[] { grain.Id } : new[] { grain.Id, (Guid)grain.ParentId }, cancellationToken);
+                    if (null != grain.ParentId && !existing[(Guid)grain.ParentId])
                     {
                         if (secondPass)
                         {
@@ -199,7 +199,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
 
                     var replace = false;
                     IBrokerOperationFeedback? error = null;
-                    if (existing.First())
+                    if (existing[grain.Id])
                     {
                         var ignore = false;
                         if (true == grainsToDelete?.Any(x => x.Id == grain.Id))
@@ -241,7 +241,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                             return true;
                         }
                     }
-                    if (replace || !existing.First())
+                    if (replace || !existing[grain.Id])
                     {
                         error = await ImportGrainAsNew(grain, DuplicatesHandlingStrategy.OverwriteRecursive == duplicatesHandling, cancellationToken);
                     }

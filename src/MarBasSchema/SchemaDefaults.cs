@@ -1,6 +1,8 @@
 ﻿using System.Globalization;
 using System.Security.Principal;
 using MarBasSchema.Access;
+using MarBasSchema.GrainDef;
+using MarBasSchema.GrainTier;
 
 namespace MarBasSchema
 {
@@ -92,6 +94,11 @@ namespace MarBasSchema
             (ContentContainerID, ContentConsumerRoleID),
             (FilesContainerID, ContentContributorRoleID),
             (FilesContainerID, ContentConsumerRoleID)
+        };
+
+        public static readonly IEnumerable<Type> GrainTierTypes = new[]
+        {
+            typeof(IFile), typeof(ITypeDef), typeof(IPropDef)
         };
     }
 }

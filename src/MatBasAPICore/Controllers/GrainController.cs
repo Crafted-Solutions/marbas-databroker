@@ -17,16 +17,17 @@ namespace MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
     using FlagResult = IMarBasResult<bool>;
+    using StringResult = IMarBasResult<string?>;
     using GrainTraitsMapResult = IMarBasResult<GrainTraitsMap>;
     using IGrainBaseResult = IMarBasResult<IGrainBase>;
     using IGrainLocalizedResult = IMarBasResult<IGrainLocalized>;
     using IGrainsLocalizedResult = IMarBasResult<IEnumerable<IGrainLocalized>>;
     using ISchemaAclsResult = IMarBasResult<IEnumerable<ISchemaAclEntry>>;
+    using IGrainFlagMapResult = IMarBasResult<IDictionary<Guid, bool>>;
 
     [Authorize]
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.Grain)]
     [ApiController]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "We want the token without interference with default parameters")]
     public sealed class GrainController : ControllerBase
     {
         private readonly ILogger _logger;
@@ -40,7 +41,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(IGrainLocalizedResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainLocalizedResult> Get(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, [FromQuery] string? lang)
+        public async Task<IGrainLocalizedResult> Get([FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, [FromQuery] string? lang, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -58,7 +59,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(IGrainBaseResult), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainBaseResult> Put(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, GrainCreateModel model)
+        public async Task<IGrainBaseResult> Put([FromServices] IAsyncSchemaBroker broker, GrainCreateModel model, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -86,7 +87,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(CountResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<CountResult> Delete(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, Guid id)
+        public async Task<CountResult> Delete([FromServices] IAsyncSchemaBroker broker, Guid id, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -100,7 +101,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(CountResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<CountResult> Store(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, GrainUpdateModel model)
+        public async Task<CountResult> Store([FromServices] IAsyncSchemaBroker broker, GrainUpdateModel model, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -114,7 +115,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(IGrainBaseResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainBaseResult> CloneGrain(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, GrainCloneModel model)
+        public async Task<IGrainBaseResult> CloneGrain([FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, GrainCloneModel model, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -128,7 +129,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(IGrainBaseResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainBaseResult> MoveGrain(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, Guid newParentId)
+        public async Task<IGrainBaseResult> MoveGrain([FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, Guid newParentId, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -141,7 +142,7 @@ namespace MarBasAPICore.Controllers
         [HttpGet("{id}/InstanceOf/{typeDefId}", Name = "IsGrainInstanceOf")]
         [ProducesResponseType(typeof(FlagResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<FlagResult> IsInstanceOf(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, Guid id, Guid typeDefId)
+        public async Task<FlagResult> IsInstanceOf([FromServices] IAsyncSchemaBroker broker, Guid id, Guid typeDefId, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -151,18 +152,33 @@ namespace MarBasAPICore.Controllers
             }, _logger);
         }
 
+        [HttpGet("{id}/Tier", Name = "GetGrainTier")]
+        [ProducesResponseType(typeof(StringResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<StringResult> GetGrainTier([FromServices] IAsyncSchemaBroker broker, Guid id, CancellationToken cancellationToken = default)
+        {
+            HttpResponseException.Throw503IfOffline(broker);
+            return await HttpResponseException.DigestExceptionsAsync(async () =>
+            {
+                var result = await broker.GetGrainTierAsync((Identifiable) id, cancellationToken);
+                return MarbasResultFactory.Create<string?>(true, result?.Name);
+            }, _logger);
+        }
+
         [HttpGet("List", Name = "ListRootGrains")]
         [ProducesResponseType(typeof(IGrainsLocalizedResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainsLocalizedResult> ListRoot(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, [FromQuery] bool recursive = false, [FromQuery] string? lang = null, [FromQuery] GrainQueryParametersModel? queryParameters = null)
+        public async Task<IGrainsLocalizedResult> ListRoot([FromServices] IAsyncSchemaBroker broker, [FromQuery] bool recursive = false,
+            [FromQuery] string? lang = null, [FromQuery] GrainQueryParametersModel? queryParameters = null, CancellationToken cancellationToken = default)
         {
-            return await List(cancellationToken, broker, null, recursive, lang, queryParameters);
+            return await List(broker, null, recursive, lang, queryParameters, cancellationToken);
         }
 
         [HttpGet("{id}/List", Name = "ListGrains")]
         [ProducesResponseType(typeof(IGrainsLocalizedResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainsLocalizedResult> List(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid? id = null, [FromQuery] bool recursive = false, [FromQuery] string? lang = null, [FromQuery] GrainQueryParametersModel? queryParameters = null)
+        public async Task<IGrainsLocalizedResult> List([FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid? id = null, [FromQuery] bool recursive = false,
+            [FromQuery] string? lang = null, [FromQuery] GrainQueryParametersModel? queryParameters = null, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -173,10 +189,24 @@ namespace MarBasAPICore.Controllers
             }, _logger);
         }
 
+        [HttpPost("VerifyExist", Name = "VerifyGrainsExist")]
+        [ProducesResponseType(typeof(IGrainFlagMapResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<IGrainFlagMapResult> VerifyGrainsExist([FromServices] IAsyncSchemaBroker broker, IEnumerable<Guid> grainIdsToCheck, CancellationToken cancellationToken = default)
+        {
+            HttpResponseException.Throw503IfOffline(broker);
+            return await HttpResponseException.DigestExceptionsAsync(async () =>
+            {
+                var result = await broker.VerifyGrainsExistAsync(grainIdsToCheck, cancellationToken);
+                return MarbasResultFactory.Create(result.Any(), result);
+            }, _logger);
+        }
+
         [HttpGet("{id}/Path", Name = "GetGrainAncestors")]
         [ProducesResponseType(typeof(IGrainsLocalizedResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainsLocalizedResult> Path(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, [FromQuery] bool includeSelf = false, [FromQuery] string? lang = null)
+        public async Task<IGrainsLocalizedResult> Path([FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, [FromQuery] bool includeSelf = false,
+            [FromQuery] string? lang = null, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -190,7 +220,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(GrainTraitsMapResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<GrainTraitsMapResult> GetTraits(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, [FromQuery] string? lang = null)
+        public async Task<GrainTraitsMapResult> GetTraits([FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, [FromQuery] string? lang = null, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -204,7 +234,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(ISchemaAclsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<ISchemaAclsResult> GetAcl(CancellationToken cancellationToken, [FromServices] IAsyncSchemaAccessBroker broker, [FromRoute] Guid id)
+        public async Task<ISchemaAclsResult> GetAcl([FromServices] IAsyncSchemaAccessBroker broker, [FromRoute] Guid id, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>

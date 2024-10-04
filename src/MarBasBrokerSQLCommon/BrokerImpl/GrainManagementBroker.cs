@@ -4,11 +4,14 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using MarBasBrokerSQLCommon.Grain;
 using MarBasBrokerSQLCommon.GrainDef;
+using MarBasBrokerSQLCommon.GrainTier;
 using MarBasCommon;
 using MarBasSchema;
 using MarBasSchema.Access;
 using MarBasSchema.Broker;
 using MarBasSchema.Grain;
+using MarBasSchema.GrainDef;
+using MarBasSchema.GrainTier;
 using Microsoft.Extensions.Logging;
 
 namespace MarBasBrokerSQLCommon.BrokerImpl
@@ -205,6 +208,56 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             }, cancellationToken);
         }
 
+        public Type? GetGrainTier(IIdentifiable grain)
+        {
+            return GetGrainTierAsync(grain).Result;
+        }
+
+        public async Task<Type?> GetGrainTierAsync(IIdentifiable grain, CancellationToken cancellationToken = default)
+        {
+            foreach (var type in SchemaDefaults.GrainTierTypes)
+            {
+                if (type.IsAssignableFrom(grain.GetType()))
+                {
+                    return type;
+                }
+            }
+            Type? result = null;
+            return await ExecuteOnConnection(result, async (cmd) =>
+            {
+                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, grain.Id));
+                cmd.CommandText = SchemaDefaults.GrainTierTypes.Aggregate(string.Empty, (aggr, type) =>
+                {
+                    var tbl = string.Empty;
+                    switch (true)
+                    {
+                        case true when type == typeof(IFile):
+                            tbl = GrainFileDefaults.DataSourceFile;
+                            break;
+                        case true when type == typeof(ITypeDef):
+                            tbl = GrainTypeDefDefaults.DataSourceTypeDef;
+                            break;
+                        case true when type == typeof(IPropDef):
+                            tbl = GrainPropDefDefaults.DataSourcePropDef;
+                            break;
+                    }
+                    if (0 < aggr.Length)
+                    {
+                        aggr += " UNION ";
+                    }
+                    aggr += $"SELECT '{type.AssemblyQualifiedName}' AS tier WHERE EXISTS (SELECT {GeneralEntityDefaults.FieldBaseId} FROM {tbl} WHERE {GeneralEntityDefaults.FieldBaseId} = @{GeneralEntityDefaults.ParamId})";
+                    return aggr;
+                });
+                
+                var tier = await cmd.ExecuteScalarAsync(cancellationToken);
+                if (null != tier)
+                {
+                    result = Type.GetType(tier.ToString()!);
+                }
+                return result;
+            }, cancellationToken);
+        }
+
         public IEnumerable<IGrainLocalized> ListGrains(IIdentifiable? container, bool recursive = false, CultureInfo? culture = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, IGrainQueryFilter? filter = null)
         {
 
@@ -349,14 +402,14 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             }, cancellationToken);
         }
 
-        public IEnumerable<bool> CheckGrainsExist(IEnumerable<Guid> ids)
+        public IDictionary<Guid, bool> VerifyGrainsExist(IEnumerable<Guid> ids)
         {
-            return CheckGrainsExistAsync(ids).Result;
+            return VerifyGrainsExistAsync(ids).Result;
         }
 
-        public async Task<IEnumerable<bool>> CheckGrainsExistAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+        public async Task<IDictionary<Guid, bool>> VerifyGrainsExistAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
         {
-            var result = new bool[ids.Count()];
+            var result = new Dictionary<Guid, bool>(ids.Select(x => new KeyValuePair<Guid, bool>(x, false)));
             if (!ids.Any())
             {
                 return result;
@@ -380,7 +433,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     {
                         while (await rs.ReadAsync(cancellationToken))
                         {
-                            result[idsOrder.IndexOf(rs.GetGuid(0))] = true;
+                            result[rs.GetGuid(0)] = true;
                         }
                     }
                 }
