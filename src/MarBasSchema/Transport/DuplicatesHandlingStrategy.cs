@@ -2,6 +2,11 @@
 {
     public enum DuplicatesHandlingStrategy
     {
-        Ignore, Overwrite, OverwriteRecursive, Merge
+        Ignore,
+        MergeSkipNewer,
+        Merge,
+        OverwriteSkipNewer,
+        Overwrite,
+        OverwriteRecursive
     }
 }
