@@ -210,7 +210,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                         else if (DuplicatesHandlingStrategy.OverwriteSkipNewer == duplicatesHandling || DuplicatesHandlingStrategy.MergeSkipNewer == duplicatesHandling)
                         {
                             var grainToCheck = await GetGrainAsync(grain.Id, cancellationToken: cancellationToken);
-                            if (null != grainToCheck && grainToCheck.MTime > grain.MTime)
+                            if (null != grainToCheck && grainToCheck.MTime >= grain.MTime)
                             {
                                 ignore = true;
                             }
@@ -461,7 +461,9 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             {
                 return new BrokerOperationFeedback("Operation was cancelled", SourceOperationImport, 204, LogLevel.Warning);
             }
-            if (!await _accessService.VerfifyAccessAsync(new[] { (Identifiable)grain.ParentId! }, GrainAccessFlag.CreateSubelement, cancellationToken))
+            var isBuiltIn = SchemaDefaults.BuiltInIds.Contains(grain.Id);
+            var isDeleteable = !isBuiltIn && (grain.Tier is ITypeDef typeDef);
+            if (!isBuiltIn && null != grain.ParentId && !await _accessService.VerfifyAccessAsync(new[] { (Identifiable)grain.ParentId }, GrainAccessFlag.CreateSubelement, cancellationToken))
             {
                 return new BrokerOperationFeedback($"Creating new elements under {grain.ParentId} is prohibited by ACL", SourceOperationImport, 404, LogLevel.Error);
             }
@@ -476,7 +478,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                         _ = await DisableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
                     }
 
-                    if (eraseExistingGrain && !SchemaDefaults.BuiltInIds.Contains(grain.Id))
+                    if (eraseExistingGrain && isDeleteable)
                     {
                         _ = await DeleteGrainsInTA(new[] { grain }, 0, ta, cancellationToken: cancellationToken);
                     }
@@ -484,7 +486,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     {
                         _ = await DeleteGrainLabelsInTA(ta, grain.Id, cancellationToken);
                         _ = await DeleteGrainTraitsInTA(ta, grain.Id, true, cancellationToken);
-                        foreach (var tierType in new[] { typeof(ITypeDef), typeof(IPropDef), typeof(IFile) })
+                        foreach (var tierType in new[] { typeof(IPropDef), typeof(IFile) })
                         {
                             _ = await DeleteGrainTierInTA(ta, grain.Id, tierType, cancellationToken);
                         }
@@ -770,7 +772,9 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
             using (var cmd = ta.Connection!.CreateCommand())
             {
                 var baseFields = new Dictionary<string, (Type, object?)> { { GeneralEntityDefaults.FieldBaseId, (typeof(Guid), grainId) } };
-                cmd.CommandText = $"{GrainTypeDefConfig<TDialect>.SQLInsertTypeDef}{PrepareObjectInserParameters<ITypeDef, GrainTypeDefDataAdapter>(cmd.Parameters, typeDef, baseFields)}";
+                var implCol = MapTypeDefColumn(nameof(ITypeDef.Impl));
+                cmd.CommandText = @$"{GrainTypeDefConfig<TDialect>.SQLInsertTypeDef}{PrepareObjectInserParameters<ITypeDef, GrainTypeDefDataAdapter>(cmd.Parameters, typeDef, baseFields)}
+ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET {implCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(implCol)}";
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
                 if (1 > result)
                 {
@@ -783,6 +787,10 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
                 {
                     var idParam = _profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, grainId);
                     cmd.Parameters.Add(idParam);
+
+                    cmd.CommandText = $"{GrainTypeDefConfig<TDialect>.SQLDeleteTypeDefMixin}{GrainTypeDefDefaults.MixinExtFieldDerivedType} = @{idParam.ParameterName}";
+                    result += await cmd.ExecuteNonQueryAsync(cancellationToken);
+
                     string rows = PrepareTypeDefMixInInsert(typeDef.MixInIds.Select(x => (Identifiable)x), cmd.Parameters, idParam.ParameterName);
                     cmd.CommandText = $"{GrainTypeDefConfig<TDialect>.SQLInsertTypeDefMixin} ({GrainTypeDefDefaults.MixinExtFieldDerivedType}, {GrainTypeDefDefaults.MixinExtFieldBaseType}) VALUES {rows}";
 
