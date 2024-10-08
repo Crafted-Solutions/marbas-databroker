@@ -68,6 +68,14 @@ namespace MarBasBrokerSQLCommon.Access
                     var idsToCheck = new HashSet<Guid>();
                     var i = 0;
                     var grainsClause = grains.Aggregate(string.Empty, (aggr, grain) => {
+                        if (null == grain)
+                        {
+                            if (_logger.IsEnabled(LogLevel.Warning))
+                            {
+                                _logger.LogWarning("Null grain supplied, skipping");
+                            }
+                            return aggr;
+                        }
                         idsToCheck.Add(grain.Id);
                         var result = aggr;
                         if (0 < result.Length)
@@ -79,19 +87,22 @@ namespace MarBasBrokerSQLCommon.Access
                         cmd.Parameters.Add(_profile.ParameterFactory.Create(param, grain.Id));
                         return result;
                     });
-                    if (0 < grainsClause.Length)
+                    if (0 < idsToCheck.Count)
                     {
-                        cmd.CommandText += $"({grainsClause})";
-                    }
-                    using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
-                    {
-                        if (!rs.HasRows)
+                        if (0 < grainsClause.Length)
                         {
-                            return false;
+                            cmd.CommandText += $"({grainsClause})";
                         }
-                        while (await rs.ReadAsync(cancellationToken))
+                        using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
                         {
-                            idsToCheck.Remove(rs.GetGuid(0));
+                            if (!rs.HasRows)
+                            {
+                                return false;
+                            }
+                            while (await rs.ReadAsync(cancellationToken))
+                            {
+                                idsToCheck.Remove(rs.GetGuid(0));
+                            }
                         }
                     }
                     return 0 == idsToCheck.Count;
