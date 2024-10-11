@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Reflection;
 using System.Security.Claims;
 using System.Security.Principal;
+using System.Text;
 using MarBasCommon;
 using MarBasCommon.Reflection;
 using MarBasSchema;
@@ -115,6 +116,45 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 }));
             }
             return $"({string.Join(",", cols)}) VALUES (@{string.Join(",@", vals)})";
+        }
+
+        protected string PrepareObjectUpdateParameters<TFieldIFace, TAdapter>(DbParameterCollection parameters, TFieldIFace valueProvider, IDictionary<string, (Type, object?)>? additionalValues = null)
+            where TAdapter : AbstractDataAdapter
+        {
+            var providerProps = typeof(TFieldIFace).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x =>
+                true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
+
+            var result = new StringBuilder();
+            foreach (var prop in providerProps)
+            {
+                var paramName = $"param{prop.Name}";
+                parameters.Add(_profile.ParameterFactory.Create(paramName, prop.PropertyType, prop.GetValue(valueProvider)));
+
+                if (0 < result.Length)
+                {
+                    result.Append(',');
+                }
+                result.Append(AbstractDataAdapter.GetAdapterColumnName<TAdapter>(prop.Name));
+                result.Append("=@");
+                result.Append(paramName);
+            }
+            if (null != additionalValues)
+            {
+                foreach (var addVal in additionalValues)
+                {
+                    var paramName = $"param{addVal.Key}";
+                    parameters.Add(_profile.ParameterFactory.Create(paramName, addVal.Value.Item1, addVal.Value.Item2));
+
+                    if (0 < result.Length)
+                    {
+                        result.Append(',');
+                    }
+                    result.Append(addVal.Key);
+                    result.Append("=@");
+                    result.Append(paramName);
+                }
+            }
+            return result.ToString();
         }
 
         protected static string PrepareListOrderByClause<TFieldEnum, TAdapter>(IEnumerable<IListSortOption<TFieldEnum>>? sortOptions, string? fieldPrefix = null)

@@ -149,7 +149,67 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 throw new UnauthorizedAccessException("Not entitled to import into schema");
             }
 
-            if (grains.Any())
+            var deleteFailures = new HashSet<IIdentifiable>();
+            if (!cancellationToken.IsCancellationRequested && true == grainsToDelete?.Any())
+            {
+                var deleteList = grainsToDelete.ToList();
+                var retries = Math.Max(2, deleteList.Count / 10);
+
+                async Task<bool> DeleteWorkerFunc(IIdentifiable grain, int retry = 0)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return false;
+                    }
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug("Deleting grain {id} (pass {retry})", grain.Id, retry);
+                    }
+                    var error = await ImportDeleteGrain(grain, cancellationToken);
+                    if (null == error)
+                    {
+                        result.DeletedCount++;
+                        deleteFailures.Remove(grain);
+                    }
+                    else
+                    {
+                        if (0 == retry)
+                        {
+                            deleteFailures.Add(grain);
+                        }
+                        else if (retry >= retries)
+                        {
+                            result.AddFeedback(error);
+                        }
+                    }
+                    return true;
+                }
+
+                foreach (var grain in deleteList)
+                {
+                    if (!await DeleteWorkerFunc(grain))
+                    {
+                        break;
+                    }
+                }
+                for (int i = 1, failureCount = deleteFailures.Count; i <= retries && 0 < failureCount && !cancellationToken.IsCancellationRequested; i++)
+                {
+                    foreach (var grain in deleteFailures.ToList())
+                    {
+                        if (!await DeleteWorkerFunc(grain, i))
+                        {
+                            break;
+                        }
+                    }
+                    if (failureCount == deleteFailures.Count)
+                    {
+                        // no more successful retries, skip the rest
+                        i = retries;
+                    }
+                }
+            }
+
+            if (!cancellationToken.IsCancellationRequested && grains.Any())
             {
                 var schema = await GetGrainAsync(SchemaDefaults.SchemaContainerID, cancellationToken: cancellationToken);
                 if (null == schema)
@@ -178,6 +238,13 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     {
                         return false;
                     }
+                    if (true == grainsToDelete?.Any(x => x.Id == grain.Id))
+                    {
+                        result.AddFeedback(new BrokerOperationFeedback($"Grain {grain.Id} was marked for deletion, skipping import", SourceOperationImport, 409, LogLevel.Warning, grain.Id));
+                        result.IgnoredCount++;
+                        return true;
+                    }
+
                     var existing = await VerifyGrainsExistAsync(null == grain.ParentId ? new[] { grain.Id } : new[] { grain.Id, (Guid)grain.ParentId }, cancellationToken);
                     if (null != grain.ParentId && !existing[(Guid)grain.ParentId])
                     {
@@ -202,12 +269,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     if (existing[grain.Id])
                     {
                         var ignore = false;
-                        if (true == grainsToDelete?.Any(x => x.Id == grain.Id))
-                        {
-                            error = new BrokerOperationFeedback($"Grain {grain.Id} is marked for deletion, skipping import", SourceOperationImport, 409, LogLevel.Warning, grain.Id);
-                            ignore = true;
-                        }
-                        else if (DuplicatesHandlingStrategy.OverwriteSkipNewer == duplicatesHandling || DuplicatesHandlingStrategy.MergeSkipNewer == duplicatesHandling)
+                        if (DuplicatesHandlingStrategy.OverwriteSkipNewer == duplicatesHandling || DuplicatesHandlingStrategy.MergeSkipNewer == duplicatesHandling)
                         {
                             var grainToCheck = await GetGrainAsync(grain.Id, cancellationToken: cancellationToken);
                             if (null != grainToCheck && grainToCheck.MTime >= grain.MTime)
@@ -295,64 +357,13 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 }
             }
 
-            if (!cancellationToken.IsCancellationRequested && true == grainsToDelete?.Any())
+            if (!cancellationToken.IsCancellationRequested && 0 < deleteFailures.Count)
             {
-                var deleteList = grainsToDelete.ToList();
-                var retries = Math.Max(2, deleteList.Count / 10);
-                var deleteFailures = new HashSet<IIdentifiable>();
-
-                async Task<bool> DeleteWorkerFunc(IIdentifiable grain, int retry = 0)
+                if (_logger.IsEnabled(LogLevel.Debug))
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        return false;
-                    }
-                    if (_logger.IsEnabled(LogLevel.Debug))
-                    {
-                        _logger.LogDebug("Deleting grain {id} (pass {retry})", grain.Id, retry);
-                    }
-                    var error = await ImportDeleteGrain(grain, cancellationToken);
-                    if (null == error)
-                    {
-                        result.DeletedCount++;
-                        deleteFailures.Remove(grain);
-                    }
-                    else
-                    {
-                        if (0 == retry)
-                        {
-                            deleteFailures.Add(grain);
-                        }
-                        else if (retry >= retries)
-                        {
-                            result.AddFeedback(error);
-                        }
-                    }
-                    return true;
+                    _logger.LogDebug("Final deletion pass on {count} failures", deleteFailures.Count);
                 }
-
-                foreach (var grain in deleteList)
-                {
-                    if (!await DeleteWorkerFunc(grain))
-                    {
-                        break;
-                    }
-                }
-                for (int i = 1, failureCount = deleteFailures.Count; i <= retries && 0 < failureCount && !cancellationToken.IsCancellationRequested; i++)
-                {
-                    foreach (var grain in deleteFailures.ToList())
-                    {
-                        if (!await DeleteWorkerFunc(grain, i))
-                        {
-                            break;
-                        }
-                    }
-                    if (failureCount == deleteFailures.Count)
-                    {
-                        // no more successful retries, skip the rest
-                        i = retries;
-                    }
-                }
+                result.DeletedCount += await DeleteGrainsAsync(deleteFailures, cancellationToken);
             }
             return result;
         }
@@ -462,7 +473,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 return new BrokerOperationFeedback("Operation was cancelled", SourceOperationImport, 204, LogLevel.Warning);
             }
             var isBuiltIn = SchemaDefaults.BuiltInIds.Contains(grain.Id);
-            var isDeleteable = !isBuiltIn && (grain.Tier is ITypeDef typeDef);
+            var isDeleteable = !isBuiltIn && grain.Tier is not ITypeDef typeDef && grain.Tier is not IPropDef;
             if (!isBuiltIn && null != grain.ParentId && !await _accessService.VerfifyAccessAsync(new[] { (Identifiable)grain.ParentId }, GrainAccessFlag.CreateSubelement, cancellationToken))
             {
                 return new BrokerOperationFeedback($"Creating new elements under {grain.ParentId} is prohibited by ACL", SourceOperationImport, 404, LogLevel.Error);
@@ -484,13 +495,16 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     }
                     else
                     {
+                        _ = await DeleteGrainAclInTA(ta, grain.Id, cancellationToken);
                         _ = await DeleteGrainLabelsInTA(ta, grain.Id, cancellationToken);
                         _ = await DeleteGrainTraitsInTA(ta, grain.Id, true, cancellationToken);
                         foreach (var tierType in new[] { typeof(IPropDef), typeof(IFile) })
                         {
-                            _ = await DeleteGrainTierInTA(ta, grain.Id, tierType, cancellationToken);
+                            if (!tierType.IsAssignableFrom(grain.Tier?.GetType()))
+                            {
+                                _ = await DeleteGrainTierInTA(ta, grain.Id, tierType, cancellationToken);
+                            }
                         }
-                        _ = await DeleteGrainAclInTA(ta, grain.Id, cancellationToken);
                     }
 
                     if (1 > await UpdateOrCreateGrainBaseInTA(ta, grain, cancellationToken))
@@ -515,7 +529,10 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                                 _ = await CreatePropDefTierInTA(ta, grain.Id, propDef, cancellationToken);
                                 break;
                             case true when grain.Tier is IFile file:
-                                _ = await CreateFileTierInTA(ta, grain.Id, file, cancellationToken);
+                                if (0 == await UpdateFileTierInTA(ta, grain.Id, file, cancellationToken))
+                                {
+                                    _ = await CreateFileTierInTA(ta, grain.Id, file, cancellationToken);
+                                }
                                 break;
                         }
                     }
@@ -826,7 +843,22 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET {implCol} = {Eng
             using (var cmd = ta.Connection!.CreateCommand())
             {
                 var baseFields = new Dictionary<string, (Type, object?)> { { GeneralEntityDefaults.FieldBaseId, (typeof(Guid), grainId) } };
-                cmd.CommandText = $"{GrainPropDefConfig<TDialect>.SQLInsertPropDef}{PrepareObjectInserParameters<IPropDef, GrainPropDefDataAdapter>(cmd.Parameters, propDef, baseFields)}";
+                cmd.CommandText = @$"{GrainPropDefConfig<TDialect>.SQLInsertPropDef}{PrepareObjectInserParameters<IPropDef, GrainPropDefDataAdapter>(cmd.Parameters, propDef, baseFields)}
+ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
+                var props = typeof(IPropDef).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x =>
+                    true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
+                var first = true;
+                foreach (var prop in props)
+                {
+                    if (!first)
+                    {
+                        cmd.CommandText += ", ";
+                    }
+                    var col = MapPropDefColumn(prop.Name);
+                    cmd.CommandText += $"{col} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(col)}"; 
+                    first = false;
+                }
+
                 var valTypeParam = _profile.ParameterFactory.Create($"param{nameof(IValueTypeConstraint.ValueType)}", TraitValueFactory.GetValueTypeAsString(propDef.ValueType));
                 if (cmd.Parameters.Contains(valTypeParam.ParameterName))
                 {
