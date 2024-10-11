@@ -207,11 +207,17 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                                 var id = await cmd.ExecuteScalarAsync(cancellationToken);
                                 if (null == id)
                                 {
-                                    throw new ApplicationException($"Failed to find record for file {file.Id}");
+                                    if (_logger.IsEnabled(LogLevel.Error))
+                                    {
+                                        _logger.LogError("Failed to find record for file {fileId}", file.Id);
+                                    }
                                 }
-                                await WriteFileBlobAsync(conn, content.Stream, id, cancellationToken);
-                                file.GetDirtyFields<IGrainFile>().Clear();
-                                result += 1;
+                                else
+                                {
+                                    await WriteFileBlobAsync(conn, content.Stream, id, cancellationToken);
+                                    file.GetDirtyFields<IGrainFile>().Clear();
+                                    result += 1;
+                                }
                             }
                         }
 

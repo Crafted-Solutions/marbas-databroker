@@ -139,17 +139,13 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             }
             CheckProfile();
             var result = 0;
-            await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 result = await StoreGrainsInTA(grainsMod, result, ta, cancellationToken: cancellationToken);
                 result = await StoreLocalizedGrainsInTA(grainsModL, result, ta, cancellationToken);
-                result = await StoreGrainTypeDefTiersInTA(ta, typesMod, result, cancellationToken);
-
-                return result;
+                return await StoreGrainTypeDefTiersInTA(ta, typesMod, result, cancellationToken);
 
             }, cancellationToken);
-
-            return result;
         }
 
         public IGrainBase? GetOrCreateTypeDefDefaults(IIdentifiable typeDef)
@@ -319,14 +315,12 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Write);
             }
             var result = 0;
-            await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 result = await StoreGrainsInTA(grainsMod, result, ta, true, cancellationToken);
                 result = await StoreLocalizedGrainsInTA(grainsModL, result, ta, cancellationToken);
                 return await StoreGrainPropDefTiersInTA(ta, propsMod, result, cancellationToken);
-
             }, cancellationToken);
-            return result;
         }
 
         public IEnumerable<IGrainPropDefLocalized> GetTypeDefProperties(IIdentifiable typedef, CultureInfo? culture = null)

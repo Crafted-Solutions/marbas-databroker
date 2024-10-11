@@ -106,12 +106,11 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             }
             CheckProfile();
             var result = 0;
-            await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 result = await StoreGrainsInTA(grainsMod, result, ta, false, cancellationToken);
                 return await StoreLocalizedGrainsInTA(grainsModL, result, ta, cancellationToken);
             }, cancellationToken);
-            return result;
         }
 
         public IGrainBase? MoveGrain(IIdentifiable grain, IIdentifiable newParent)
