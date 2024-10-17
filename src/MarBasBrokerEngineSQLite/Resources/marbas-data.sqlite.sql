@@ -1,4 +1,4 @@
-INSERT INTO mb_schema_opts (name, val) VALUES ('schema.version', '0.1.13');
+INSERT INTO mb_schema_opts (name, val) VALUES ('schema.version', '0.1.14');
 INSERT INTO mb_schema_opts (name, val) VALUES ('schema.mtime', strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));
 INSERT INTO mb_schema_opts (name, val) VALUES ('schema.status', 'stable');
 INSERT INTO mb_schema_opts (name, val) VALUES ('instace.id', (SELECT result FROM mb_uuid));

@@ -586,6 +586,33 @@ CREATE INDEX mb_idx_grain_acl_restrictions
   ON mb_grain_acl
   (restriction_mask);
 
+CREATE TRIGGER mb_tg_grain_acl_delete_mtime
+  AFTER DELETE
+  ON mb_grain_acl
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = old.grain_id AND (0x1 & flag) > 0)
+BEGIN
+  UPDATE mb_grain_base SET mtime = DATETIME('now')
+  WHERE id = old.grain_id;
+END;
+
+CREATE TRIGGER mb_tg_grain_acl_insert_mtime
+  AFTER INSERT
+  ON mb_grain_acl
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.grain_id AND (0x1 & flag) > 0)
+BEGIN
+  UPDATE mb_grain_base SET mtime = DATETIME('now')
+  WHERE id = new.grain_id;
+END;
+
+CREATE TRIGGER mb_tg_grain_acl_update_mtime
+  AFTER UPDATE
+  ON mb_grain_acl
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_control WHERE grain_id = new.grain_id AND (0x1 & flag) > 0)
+BEGIN
+  UPDATE mb_grain_base SET mtime = DATETIME('now')
+  WHERE id = new.grain_id;
+END;
+
 /* Views */
 CREATE VIEW mb_grain_ancestor
 AS
