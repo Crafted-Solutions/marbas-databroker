@@ -42,6 +42,7 @@ namespace MarBasAPICore.Controllers
         }
 
         [HttpPut("In", Name = "TransportIn")]
+        [DisableRequestSizeLimit]
         [ProducesResponseType(typeof(IGrainImportResultsResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
