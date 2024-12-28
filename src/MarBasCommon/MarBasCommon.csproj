@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="../../Common.Build.props" />
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-        <Version>0.1.15.4</Version>
+        <Version>0.1.16</Version>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <Description>MarBas common utilities collection</Description>
   </PropertyGroup>
