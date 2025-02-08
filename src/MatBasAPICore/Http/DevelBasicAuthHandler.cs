@@ -14,7 +14,7 @@ namespace MarBasAPICore.Http
 
         protected readonly IConfiguration _configuration;
 
-        public DevelBasicAuthHandler(IConfiguration configuration, IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock)
+        public DevelBasicAuthHandler(IConfiguration configuration, IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) : base(options, logger, encoder)
         {
             _configuration = configuration;
         }
@@ -24,7 +24,7 @@ namespace MarBasAPICore.Http
             var authorizationHeader = Request.Headers["Authorization"].ToString();
             if (authorizationHeader != null && authorizationHeader.StartsWith("basic", StringComparison.OrdinalIgnoreCase))
             {
-                var token = authorizationHeader.Substring("Basic ".Length).Trim();
+                var token = authorizationHeader["Basic ".Length..].Trim();
                 var credentialsAsEncodedString = Encoding.UTF8.GetString(Convert.FromBase64String(token));
                 var credentials = credentialsAsEncodedString.Split(':');
                 if (!string.IsNullOrEmpty(credentials[0]) && 2 < credentials[0].Length && "b" == credentials[1])
@@ -44,7 +44,7 @@ namespace MarBasAPICore.Http
                 }
             }
             Response.StatusCode = 401;
-            Response.Headers.Add("WWW-Authenticate", "Basic realm=\"marbas.localhost\"");
+            Response.Headers["WWW-Authenticate"] = "Basic realm=\"marbas.localhost\"";
             return await Task.FromResult(AuthenticateResult.Fail("Invalid Authorization"));
         }
 
