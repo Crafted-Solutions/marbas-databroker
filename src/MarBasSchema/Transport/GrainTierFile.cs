@@ -10,11 +10,25 @@ namespace MarBasSchema.Transport
         [JsonConstructor]
         public GrainTierFile() { }
 
-        public GrainTierFile(IFile other)
+        public GrainTierFile(IFile other, bool readOutContent = false)
         {
             MimeType = other.MimeType;
             Size = other.Size;
-            Content = other.Content;
+            if (readOutContent && null != other.Content)
+            {
+                using (var cont = other.Content)
+                using (var inp = cont.Stream)
+                {
+                    Content = new StreamableContent
+                    {
+                        Stream = inp
+                    };
+                }
+            }
+            else
+            {
+                Content = other.Content;
+            }
         }
 
         public string MimeType { get; set; } = MediaTypeNames.Application.Octet;
