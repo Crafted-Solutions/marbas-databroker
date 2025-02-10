@@ -89,7 +89,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             {
                 throw new UnauthorizedAccessException("Not entitled to export from schema");
             }
-            return await ExecuteOnConnection(result, async (cmd) =>
+            result = await ExecuteOnConnection(result, async (cmd) =>
             {
                 using (cmd)
                 {
@@ -111,36 +111,45 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                         }
                     }
                 }
-                await Parallel.ForEachAsync(result, cancellationToken, async (grain, token) =>
-                {
-                    if (null == grain.TypeDefId)
-                    {
-                        grain.Tier = await GetGrainTierTypeDef(grain, token);
-                        if (null == grain.Tier && _logger.IsEnabled(LogLevel.Warning))
-                        {
-                            _logger.LogWarning("Grain {id} appears to be TypeDef but TypeDef specific data is missing", grain.Id);
-                        }
-                    }
-                    else
-                    {
-                        grain.Tier = await GetGrainTierPropDef(grain, token);
-                        if (null == grain.Tier)
-                        {
-                            grain.Tier = await GetGrainTierFile(grain, token);
-                        }
-                    }
-                    grain.Acl = await GetGrainAclTransportable(grain, token);
+                return result;
 
+            }, cancellationToken);
+
+            await Parallel.ForEachAsync(result, new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cancellationToken }, async (grain, token) =>
+            {
+                if (null == grain.TypeDefId)
+                {
+                    grain.Tier = await GetGrainTierTypeDef(grain, token);
+                    if (null == grain.Tier && _logger.IsEnabled(LogLevel.Warning))
+                    {
+                        _logger.LogWarning("Grain {id} appears to be TypeDef but TypeDef specific data is missing", grain.Id);
+                    }
+                }
+                else
+                {
+                    grain.Tier = await GetGrainTierPropDef(grain, token);
+                    if (null == grain.Tier && !token.IsCancellationRequested)
+                    {
+                        grain.Tier = await GetGrainTierFile(grain, token);
+                    }
+                }
+                grain.Acl = await GetGrainAclTransportable(grain, token);
+
+                if (!token.IsCancellationRequested)
+                {
                     var traitMap = await GetGrainTraitsTransportable(grain, token);
                     if (traitMap.TryGetValue(string.Empty, out IEnumerable<ITraitTransportable>? traits))
                     {
                         grain.Traits = traits;
                     }
-                    grain.Localized = await GetGrainLocalizedLayers(grain, traitMap, token);
-                });
-                return result;
+                    if (!token.IsCancellationRequested)
+                    {
+                        grain.Localized = await GetGrainLocalizedLayers(grain, traitMap, token);
+                    }
+                }
+            });
 
-            }, cancellationToken);
+            return result;
         }
 
         public IGrainImportResults ImportGrains(IEnumerable<IGrainTransportable> grains, IEnumerable<IIdentifiable>? grainsToDelete = null, DuplicatesHandlingStrategy duplicatesHandling = DuplicatesHandlingStrategy.Merge)
@@ -1057,7 +1066,7 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
                     {
                         if (await rs.ReadAsync(cancellationToken))
                         {
-                            result = new(CreateFileAdapter(rs, GrainFileContentAccess.Immediate));
+                            result = new(CreateFileAdapter(rs, GrainFileContentAccess.Immediate), true);
                         }
                     }
                 }
