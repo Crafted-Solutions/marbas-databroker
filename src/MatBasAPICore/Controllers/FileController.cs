@@ -11,6 +11,7 @@ using MarBasSchema.GrainTier;
 using MarBasSchema.IO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
@@ -37,6 +38,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(IGrainFileResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [RequestTimeout("FileDownload")]
         public async Task<IGrainFileResult> Get(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, [FromQuery] string? lang = null, [FromQuery] bool loadContent = false)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
@@ -56,6 +58,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ResponseCache(Duration = 120)]
+        [RequestTimeout("FileDownload")]
         public async Task<IActionResult> Download(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, [FromRoute] DownloadDisposition disposition = DownloadDisposition.Inline, [FromQuery] string? lang = null)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
@@ -86,6 +89,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(IGrainFileResult), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [RequestTimeout("FileUpload")]
         public async Task<IGrainFileResult> Put(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, [FromForm] GrainFileCreateModel model)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
@@ -106,6 +110,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(CountResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [RequestTimeout("FileUpload")]
         public async Task<CountResult> Post(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, [FromForm] GrainFileUpdateModel model)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
