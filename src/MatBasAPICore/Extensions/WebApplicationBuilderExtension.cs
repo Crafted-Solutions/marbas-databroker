@@ -5,7 +5,9 @@ using MarBasCommon.Json;
 using MarBasSchema;
 using MarBasSchema.IO;
 using MarBasSchema.Transport;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -74,6 +76,19 @@ namespace MarBasAPICore.Extensions
                 }
 
                 setupAction?.Invoke(options);
+            });
+            return result;
+        }
+
+        public static IServiceCollection ConfigureMarBasTimeouts(this IServiceCollection services, IConfiguration configuration)
+        {
+            var result = services.AddRequestTimeouts(options =>
+            {
+                options.DefaultPolicy = new RequestTimeoutPolicy { Timeout = TimeSpan.FromSeconds(configuration.GetValue<int>("Default", 120)) };
+                options.AddPolicy("FileDownload", TimeSpan.FromSeconds( configuration.GetValue<int>("FileDownload", 300)));
+                options.AddPolicy("FileUpload", TimeSpan.FromSeconds(configuration.GetValue<int>("FileUpload", 300)));
+                options.AddPolicy("Import", TimeSpan.FromSeconds(configuration.GetValue<int>("Import", 360)));
+                options.AddPolicy("Export", TimeSpan.FromSeconds(configuration.GetValue<int>("Export", 360)));
             });
             return result;
         }

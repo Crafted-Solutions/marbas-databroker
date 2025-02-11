@@ -24,6 +24,18 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
         CloningBroker<TDialect>, IGrainTransportBroker, IAsyncGrainTransportBroker
         where TDialect : ISQLDialect, new()
     {
+        class ImportGrainState
+        {
+            public ImportGrainState(IGrainTransportable grain, bool success = false)
+            {
+                Grain = grain;
+                Success = false;
+            }
+
+            public IGrainTransportable Grain;
+            public bool Success;
+        };
+
         #region Variables
         protected const string SourceOperationImport = "Import";
         #endregion
@@ -77,7 +89,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             {
                 throw new UnauthorizedAccessException("Not entitled to export from schema");
             }
-            return await ExecuteOnConnection(result, async (cmd) =>
+            result = await ExecuteOnConnection(result, async (cmd) =>
             {
                 using (cmd)
                 {
@@ -99,36 +111,45 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                         }
                     }
                 }
-                await Parallel.ForEachAsync(result, cancellationToken, async (grain, token) =>
-                {
-                    if (null == grain.TypeDefId)
-                    {
-                        grain.Tier = await GetGrainTierTypeDef(grain, token);
-                        if (null == grain.Tier && _logger.IsEnabled(LogLevel.Warning))
-                        {
-                            _logger.LogWarning("Grain {id} appears to be TypeDef but TypeDef specific data is missing", grain.Id);
-                        }
-                    }
-                    else
-                    {
-                        grain.Tier = await GetGrainTierPropDef(grain, token);
-                        if (null == grain.Tier)
-                        {
-                            grain.Tier = await GetGrainTierFile(grain, token);
-                        }
-                    }
-                    grain.Acl = await GetGrainAclTransportable(grain, token);
+                return result;
 
+            }, cancellationToken);
+
+            await Parallel.ForEachAsync(result, new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cancellationToken }, async (grain, token) =>
+            {
+                if (null == grain.TypeDefId)
+                {
+                    grain.Tier = await GetGrainTierTypeDef(grain, token);
+                    if (null == grain.Tier && _logger.IsEnabled(LogLevel.Warning))
+                    {
+                        _logger.LogWarning("Grain {id} appears to be TypeDef but TypeDef specific data is missing", grain.Id);
+                    }
+                }
+                else
+                {
+                    grain.Tier = await GetGrainTierPropDef(grain, token);
+                    if (null == grain.Tier && !token.IsCancellationRequested)
+                    {
+                        grain.Tier = await GetGrainTierFile(grain, token);
+                    }
+                }
+                grain.Acl = await GetGrainAclTransportable(grain, token);
+
+                if (!token.IsCancellationRequested)
+                {
                     var traitMap = await GetGrainTraitsTransportable(grain, token);
                     if (traitMap.TryGetValue(string.Empty, out IEnumerable<ITraitTransportable>? traits))
                     {
                         grain.Traits = traits;
                     }
-                    grain.Localized = await GetGrainLocalizedLayers(grain, traitMap, token);
-                });
-                return result;
+                    if (!token.IsCancellationRequested)
+                    {
+                        grain.Localized = await GetGrainLocalizedLayers(grain, traitMap, token);
+                    }
+                }
+            });
 
-            }, cancellationToken);
+            return result;
         }
 
         public IGrainImportResults ImportGrains(IEnumerable<IGrainTransportable> grains, IEnumerable<IIdentifiable>? grainsToDelete = null, DuplicatesHandlingStrategy duplicatesHandling = DuplicatesHandlingStrategy.Merge)
@@ -219,60 +240,65 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 }
 
                 var schemaPath = schema.Path ?? string.Empty;
-                var schemaGrainsByPath = new SortedDictionary<(DateTime, string), IGrainTransportable>();
-                var otherGrainsByPath = new SortedDictionary<(DateTime, string), IGrainTransportable>();
+                var schemaGrainsByPath = new SortedDictionary<(DateTime TStamp, string Path), ImportGrainState>();
+                var otherGrainsByPath = new SortedDictionary<(DateTime TStamp, string Path), ImportGrainState>();
                 Parallel.ForEach(grains, (grain) =>
                 {
                     var coll = true == grain.Path?.StartsWith(schemaPath) ? schemaGrainsByPath : otherGrainsByPath;
                     lock (coll)
                     {
-                        coll.Add((grain.CTime, grain.Path ?? string.Empty), grain);
+                        coll.Add((grain.CTime, grain.Path ?? string.Empty), new(grain));
                     }
                 });
 
-
-                var firstPassFailures = new SortedDictionary<(DateTime, string), IGrainTransportable>();
-                async Task<bool> ImportWorkerFunc(IGrainTransportable grain, bool secondPass = false)
+                int maxRetries = (400 > grains.Count() ? 2 : (int)(Math.Log(grains.Count()) / 2)) - 1;
+                var prevPassFailures = 0;
+                async Task<bool> ImportWorkerFunc(ImportGrainState item, int pass = 0)
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    if (cancellationToken.IsCancellationRequested || (0 < pass && 0 == prevPassFailures))
                     {
                         return false;
                     }
-                    if (true == grainsToDelete?.Any(x => x.Id == grain.Id))
+                    if (item.Success)
                     {
-                        result.AddFeedback(new BrokerOperationFeedback($"Grain {grain.Id} was marked for deletion, skipping import", SourceOperationImport, 409, LogLevel.Warning, grain.Id));
-                        result.IgnoredCount++;
                         return true;
                     }
-
-                    var existing = await VerifyGrainsExistAsync(null == grain.ParentId ? new[] { grain.Id } : new[] { grain.Id, (Guid)grain.ParentId }, cancellationToken);
-                    if (null != grain.ParentId && !existing[(Guid)grain.ParentId])
+                    if (true == grainsToDelete?.Any(x => x.Id == item.Grain.Id))
                     {
-                        if (secondPass)
+                        result.AddFeedback(new BrokerOperationFeedback($"Grain {item.Grain.Id} was marked for deletion, skipping import", SourceOperationImport, 409, LogLevel.Warning, item.Grain.Id));
+                        result.IgnoredCount++;
+                        return false;
+                    }
+
+
+                    var existing = await VerifyGrainsExistAsync(null == item.Grain.ParentId ? new[] { item.Grain.Id } : new[] { item.Grain.Id, (Guid)item.Grain.ParentId }, cancellationToken);
+                    if (null != item.Grain.ParentId && !existing[(Guid)item.Grain.ParentId])
+                    {
+                        if (0 == pass)
                         {
-                            result.AddFeedback(new BrokerOperationFeedback($"Grain parent {grain.ParentId} doesn't exist", SourceOperationImport, 404, LogLevel.Error, grain.Id));
+                            prevPassFailures++;
                         }
-                        else
+                        else if (pass >= maxRetries)
                         {
-                            firstPassFailures.Add((grain.CTime, grain.Path ?? string.Empty), grain);
+                            result.AddFeedback(new BrokerOperationFeedback($"Grain parent {item.Grain.ParentId} doesn't exist", SourceOperationImport, 404, LogLevel.Error, item.Grain.Id));
                         }
                         return true;
                     }
 
                     if (_logger.IsEnabled(LogLevel.Debug))
                     {
-                        _logger.LogDebug("Importing grain {id} ({path}, {ctime})", grain.Id, grain.Path ?? "/", grain.CTime);
+                        _logger.LogDebug("Importing grain {id} ({path}, {ctime}), pass {pass}", item.Grain.Id, item.Grain.Path ?? "/", item.Grain.CTime, pass + 1);
                     }
 
                     var replace = false;
                     IBrokerOperationFeedback? error = null;
-                    if (existing[grain.Id])
+                    if (existing[item.Grain.Id])
                     {
                         var ignore = false;
                         if (DuplicatesHandlingStrategy.OverwriteSkipNewer == duplicatesHandling || DuplicatesHandlingStrategy.MergeSkipNewer == duplicatesHandling)
                         {
-                            var grainToCheck = await GetGrainAsync(grain.Id, cancellationToken: cancellationToken);
-                            if (null != grainToCheck && grainToCheck.MTime >= grain.MTime)
+                            var grainToCheck = await GetGrainAsync(item.Grain.Id, cancellationToken: cancellationToken);
+                            if (null != grainToCheck && grainToCheck.MTime >= item.Grain.MTime)
                             {
                                 ignore = true;
                             }
@@ -292,35 +318,41 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                             case DuplicatesHandlingStrategy.Merge:
                                 if (!ignore)
                                 {
-                                    error = await ImportGrainAsMerge(grain, cancellationToken);
+                                    error = await ImportGrainAsMerge(item.Grain, pass >= maxRetries, cancellationToken);
                                 }
                                 break;
                         }
                         if (ignore)
                         {
                             result.IgnoredCount++;
-                            result.AddFeedback(error ?? new BrokerOperationFeedback($"Grain {grain.Id} ignored according to duplicates handling strategy", SourceOperationImport, 304, LogLevel.Information, grain.Id));
+                            result.AddFeedback(error ?? new BrokerOperationFeedback($"Grain {item.Grain.Id} ignored according to duplicates handling strategy", SourceOperationImport, 304, LogLevel.Information, item.Grain.Id));
+                            item.Success = true;
                             return true;
                         }
                     }
-                    if (replace || !existing[grain.Id])
+                    if (replace || !existing[item.Grain.Id])
                     {
-                        error = await ImportGrainAsNew(grain, DuplicatesHandlingStrategy.OverwriteRecursive == duplicatesHandling, cancellationToken);
+                        error = await ImportGrainAsNew(item.Grain, DuplicatesHandlingStrategy.OverwriteRecursive == duplicatesHandling, pass >= maxRetries, cancellationToken);
                     }
 
                     if (null == error)
                     {
                         result.ImportedCount++;
+                        item.Success = true;
+                        if (0 < pass)
+                        {
+                            prevPassFailures--;
+                        }
                     }
                     else
                     {
-                        if (secondPass)
+                        if (0 == pass)
+                        {
+                            prevPassFailures++;
+                        }
+                        else if (pass >= maxRetries)
                         {
                             result.AddFeedback(error);
-                        }
-                        else
-                        {
-                            firstPassFailures.Add((grain.CTime, grain.Path ?? string.Empty), grain);
                         }
                     }
                     return true;
@@ -341,15 +373,23 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                         break;
                     }
                 }
-                if (0 < firstPassFailures.Count)
+                for (var i = 1; i <= maxRetries && 0 < prevPassFailures && !cancellationToken.IsCancellationRequested; i++)
                 {
                     if (_logger.IsEnabled(LogLevel.Debug))
                     {
-                        _logger.LogDebug("Attempting second pass import on {count} failures", firstPassFailures.Count);
+                        _logger.LogDebug("##### Attempting import pass {pass} on {count} failures (schema: {schemaFails}, other: {otherFails}) #####"
+                            , i + 1, prevPassFailures, schemaGrainsByPath.Count(x => !x.Value.Success), otherGrainsByPath.Count(x => !x.Value.Success));
                     }
-                    foreach (var entry in firstPassFailures)
+                    foreach(var entry in schemaGrainsByPath.Where(x => !x.Value.Success))
                     {
-                        if (!await ImportWorkerFunc(entry.Value, true))
+                        if (!await ImportWorkerFunc(entry.Value, i))
+                        {
+                            break;
+                        }
+                    }
+                    foreach (var entry in otherGrainsByPath.Where(x => !x.Value.Success))
+                    {
+                        if (!await ImportWorkerFunc(entry.Value, i))
                         {
                             break;
                         }
@@ -365,13 +405,18 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 }
                 result.DeletedCount += await DeleteGrainsAsync(deleteFailures, cancellationToken);
             }
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Grain import results: imported {imported}, deleted {deleted}, ignored {ignored}, errors {errors}"
+                    , result.ImportedCount, result.DeletedCount, result.IgnoredCount, null == result.Feedback ? 0 : result.Feedback.Count(x => LogLevel.Warning < x.FeedbackType));
+            }
             return result;
         }
         #endregion
 
         #region Import Helper Methods
 
-        protected async Task<IBrokerOperationFeedback?> ImportGrainAsMerge(IGrainTransportable grain, CancellationToken cancellationToken = default)
+        protected async Task<IBrokerOperationFeedback?> ImportGrainAsMerge(IGrainTransportable grain, bool logErrors = true, CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -458,7 +503,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             }
             catch (Exception e)
             {
-                if (_logger.IsEnabled(LogLevel.Error))
+                if (logErrors && _logger.IsEnabled(LogLevel.Error))
                 {
                     _logger.LogError(e, "Error importing {id}", grain.Id);
                 }
@@ -466,7 +511,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             }
         }
 
-        protected async Task<IBrokerOperationFeedback?> ImportGrainAsNew(IGrainTransportable grain, bool eraseExistingGrain = false, CancellationToken cancellationToken = default)
+        protected async Task<IBrokerOperationFeedback?> ImportGrainAsNew(IGrainTransportable grain, bool eraseExistingGrain = false, bool logErrors = true, CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -582,7 +627,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             }
             catch (Exception e)
             {
-                if (_logger.IsEnabled(LogLevel.Error))
+                if (logErrors && _logger.IsEnabled(LogLevel.Error))
                 {
                     _logger.LogError(e, "Error importing {id}", grain.Id);
                 }
@@ -1021,7 +1066,7 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
                     {
                         if (await rs.ReadAsync(cancellationToken))
                         {
-                            result = new(CreateFileAdapter(rs, GrainFileContentAccess.Immediate));
+                            result = new(CreateFileAdapter(rs, GrainFileContentAccess.Immediate), true);
                         }
                     }
                 }

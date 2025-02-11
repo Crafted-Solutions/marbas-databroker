@@ -7,6 +7,7 @@ using MarBasSchema.Broker;
 using MarBasSchema.Transport;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -31,6 +32,7 @@ namespace MarBasAPICore.Controllers
         [ProducesResponseType(typeof(ITransportableGrainResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [RequestTimeout("Import")]
         public async Task<ITransportableGrainResponse> Out(IEnumerable<Guid> grainIds, [FromServices] IAsyncSchemaBroker schemaBroker, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
@@ -42,9 +44,11 @@ namespace MarBasAPICore.Controllers
         }
 
         [HttpPut("In", Name = "TransportIn")]
+        [DisableRequestSizeLimit]
         [ProducesResponseType(typeof(IGrainImportResultsResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [RequestTimeout("Export")]
         public async Task<IGrainImportResultsResponse> In(GrainImportModel imports, [FromServices] IAsyncSchemaBroker broker, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
