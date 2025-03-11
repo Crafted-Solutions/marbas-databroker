@@ -1,8 +1,8 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
 
-namespace MarBasAPICore.Models.Grain
+namespace CraftedSolutions.MarBasAPICore.Models.Grain
 {
     public interface IGrainUpdateModel<TGrain> : IIdentifiable
     {

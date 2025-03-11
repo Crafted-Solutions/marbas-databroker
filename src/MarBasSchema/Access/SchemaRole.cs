@@ -1,8 +1,8 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema.Access
+namespace CraftedSolutions.MarBasSchema.Access
 {
     public class SchemaRole : Identifiable, ISchemaRole
     {

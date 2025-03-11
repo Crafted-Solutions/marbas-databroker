@@ -1,9 +1,10 @@
 ﻿using System.Globalization;
-using MarBasCommon;
-using MarBasSchema.Grain;
-using MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.GrainDef;
 
-namespace MarBasSchema.Broker
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface IGrainDefManagementBroker
     {

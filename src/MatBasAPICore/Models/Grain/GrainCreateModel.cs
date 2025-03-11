@@ -1,4 +1,4 @@
-﻿namespace MarBasAPICore.Models.Grain
+﻿namespace CraftedSolutions.MarBasAPICore.Models.Grain
 {
     public sealed class GrainCreateModel : IGrainCreateModel
     {

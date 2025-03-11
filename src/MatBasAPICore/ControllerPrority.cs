@@ -1,4 +1,4 @@
-﻿namespace MarBasAPICore
+﻿namespace CraftedSolutions.MarBasAPICore
 {
     public enum ControllerPrority
     {

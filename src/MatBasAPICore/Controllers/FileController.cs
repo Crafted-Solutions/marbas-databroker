@@ -1,14 +1,15 @@
 ﻿using System.Globalization;
 using System.Net.Mime;
-using MarBasAPICore.Http;
-using MarBasAPICore.Models;
-using MarBasAPICore.Models.GrainTier;
-using MarBasAPICore.Routing;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Broker;
-using MarBasSchema.GrainTier;
-using MarBasSchema.IO;
+using CraftedSolutions.MarBasAPICore;
+using CraftedSolutions.MarBasAPICore.Http;
+using CraftedSolutions.MarBasAPICore.Models;
+using CraftedSolutions.MarBasAPICore.Models.GrainTier;
+using CraftedSolutions.MarBasAPICore.Routing;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasSchema.IO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Timeouts;
@@ -16,7 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
-namespace MarBasAPICore.Controllers
+namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
     using IGrainFileResult = IMarBasResult<IGrainFile>;

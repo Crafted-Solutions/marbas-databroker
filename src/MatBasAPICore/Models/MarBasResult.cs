@@ -1,4 +1,4 @@
-﻿namespace MarBasAPICore.Models
+﻿namespace CraftedSolutions.MarBasAPICore.Models
 {
     public class MarBasResult<T> : IMarBasResult<T>
     {

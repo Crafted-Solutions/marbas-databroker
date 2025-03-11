@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace MarBasBrokerEngineSQLite.Resources {
+namespace CraftedSolutions.MarBasBrokerEngineSQLite.Resources {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace MarBasBrokerEngineSQLite.Resources {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MarBasBrokerEngineSQLite.Resources.BootstrapSQL", typeof(BootstrapSQL).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("CraftedSolutions.MarBasBrokerEngineSQLite.Resources.BootstrapSQL", typeof(BootstrapSQL).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,7 +61,7 @@ namespace MarBasBrokerEngineSQLite.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to INSERT INTO mb_schema_opts (name, val) VALUES (&apos;schema.version&apos;, &apos;0.1.12&apos;);
+        ///   Looks up a localized string similar to INSERT INTO mb_schema_opts (name, val) VALUES (&apos;schema.version&apos;, &apos;0.1.14&apos;);
         ///INSERT INTO mb_schema_opts (name, val) VALUES (&apos;schema.mtime&apos;, strftime(&apos;%Y-%m-%dT%H:%M:%SZ&apos;, &apos;now&apos;));
         ///INSERT INTO mb_schema_opts (name, val) VALUES (&apos;schema.status&apos;, &apos;stable&apos;);
         ///INSERT INTO mb_schema_opts (name, val) VALUES (&apos;instace.id&apos;, (SELECT result FROM mb_uuid));

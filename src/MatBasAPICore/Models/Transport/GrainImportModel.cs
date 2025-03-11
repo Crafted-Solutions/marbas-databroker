@@ -1,8 +1,7 @@
 ﻿using System.Collections.Immutable;
-using MarBasSchema;
-using MarBasSchema.Transport;
+using CraftedSolutions.MarBasSchema.Transport;
 
-namespace MarBasAPICore.Models.Transport
+namespace CraftedSolutions.MarBasAPICore.Models.Transport
 {
     public sealed class GrainImportModel : IGrainImportModel
     {

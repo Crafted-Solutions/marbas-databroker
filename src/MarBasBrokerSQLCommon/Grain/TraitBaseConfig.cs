@@ -1,7 +1,8 @@
-﻿using MarBasBrokerSQLCommon.Access;
-using MarBasBrokerSQLCommon.GrainDef;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
 
-namespace MarBasBrokerSQLCommon.Grain
+namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
 {
     public class TraitBaseConfig<TDialect> where TDialect : ISQLDialect, new()
     {

@@ -1,10 +1,10 @@
 ﻿using System.Security.Claims;
 using System.Security.Principal;
-using MarBasSchema;
-using MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Broker;
 using Microsoft.AspNetCore.Http;
 
-namespace MarBasAPICore.Http
+namespace CraftedSolutions.MarBasAPICore.Http
 {
     public sealed class HttpBrokerContext : IBrokerContext
     {

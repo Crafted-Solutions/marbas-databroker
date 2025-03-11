@@ -1,4 +1,4 @@
-﻿namespace MarBasAPICore.Routing
+﻿namespace CraftedSolutions.MarBasAPICore.Routing
 {
     public enum DownloadDisposition
     {

@@ -1,4 +1,4 @@
-﻿namespace MarBasBrokerSQLCommon.Sys
+﻿namespace CraftedSolutions.MarBasBrokerSQLCommon.Sys
 {
     public class SystemLanguageConfig<TDialect> where TDialect : ISQLDialect, new()
     {

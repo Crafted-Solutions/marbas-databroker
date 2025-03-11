@@ -1,6 +1,6 @@
-﻿namespace MarBasSchema.Sys
+﻿namespace CraftedSolutions.MarBasSchema.Sys
 {
-    public class ServerInfo: IServerInfo
+    public class ServerInfo : IServerInfo
     {
         public string Name => "MarBas";
         public string Description => "MarBas holds the keys to the secrets...";

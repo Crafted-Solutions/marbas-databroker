@@ -1,9 +1,9 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
-using MarBasSchema.Access;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Access;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     public class AclEntryTransportable : IAclEntryTransportable
     {
@@ -37,6 +37,6 @@ namespace MarBasSchema.Transport
         public Guid RoleId { get; set; }
         [JsonIgnore]
         [IgnoreDataMember]
-        public IIdentifiable Role { get => (Identifiable) RoleId; set => RoleId = value.Id; }
+        public IIdentifiable Role { get => (Identifiable)RoleId; set => RoleId = value.Id; }
     }
 }

@@ -1,13 +1,13 @@
 ﻿using System.Data.Common;
 
-namespace MarBasBrokerSQLCommon
+namespace CraftedSolutions.MarBasBrokerSQLCommon
 {
     public interface IDbConnectionProvider
     {
         DbConnection Connection { get; }
     }
 
-    public interface IDbConnectionProvider<TConn>: IDbConnectionProvider where TConn: DbConnection
+    public interface IDbConnectionProvider<TConn> : IDbConnectionProvider where TConn : DbConnection
     {
         new TConn Connection { get; }
     }

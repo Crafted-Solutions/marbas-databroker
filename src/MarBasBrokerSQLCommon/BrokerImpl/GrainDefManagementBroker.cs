@@ -1,17 +1,17 @@
 ﻿using System.Data.Common;
 using System.Globalization;
-using MarBasBrokerSQLCommon.Grain;
-using MarBasBrokerSQLCommon.GrainDef;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.Grain;
-using MarBasSchema.Grain.Traits;
-using MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain.Traits;
+using CraftedSolutions.MarBasSchema.GrainDef;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.BrokerImpl
+namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
     public abstract class GrainDefManagementBroker<TDialect>
         : TraitManagementBroker<TDialect>, IGrainDefManagementBroker, IAsyncGrainDefManagementBroker
@@ -451,7 +451,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
         protected async Task<IGrainTypeDef> GetTypeDefMixins(IGrainTypeDef typeDef, CancellationToken cancellationToken = default)
         {
             var mixins = await GetTypeDefMixedInTypeIds(typeDef.Id, cancellationToken);
-            typeDef.ReplaceMixIns(mixins.Select(x => (Identifiable) x));
+            typeDef.ReplaceMixIns(mixins.Select(x => (Identifiable)x));
             return typeDef;
         }
 

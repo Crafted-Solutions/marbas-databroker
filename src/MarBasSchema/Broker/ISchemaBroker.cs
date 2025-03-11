@@ -1,6 +1,6 @@
-﻿namespace MarBasSchema.Broker
+﻿namespace CraftedSolutions.MarBasSchema.Broker
 {
-    public interface ISchemaBroker:
+    public interface ISchemaBroker :
         IProfileProvider, ICloningBroker,
         ISystemLanguageBroker, IGrainManagementBroker,
         ITraitManagementBroker, IFileManagementBroker,

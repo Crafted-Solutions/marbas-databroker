@@ -1,12 +1,13 @@
 ﻿using System.Data.Common;
 using System.Globalization;
-using MarBasBrokerSQLCommon.Sys;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.Sys;
+using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasBrokerSQLCommon.Sys;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Sys;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.BrokerImpl
+namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
     public abstract class SystemManagementBroker<TDialect>
         : BaseSchemaBroker<TDialect>, ISystemLanguageBroker, IAsyncSystemLanguageBroker
@@ -30,7 +31,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             CheckProfile();
             return await ExecuteOnConnection(null, async (cmd) =>
             {
-                using(cmd)
+                using (cmd)
                 {
                     cmd.CommandText = $"{SystemLanguageConfig<TDialect>.SQLSelectLang}{AbstractDataAdapter.GetAdapterColumnName<SystemLanguageDataAdapter>(nameof(ISystemLanguage.IsoCode))} = @{SystemLanguageDefaults.ParamIsoCode}";
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(SystemLanguageDefaults.ParamIsoCode, culture.IetfLanguageTag));

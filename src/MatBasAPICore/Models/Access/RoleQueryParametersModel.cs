@@ -1,8 +1,8 @@
-﻿using MarBasAPICore.Swagger;
-using MarBasSchema.Broker;
+﻿using CraftedSolutions.MarBasAPICore.Swagger;
+using CraftedSolutions.MarBasSchema.Broker;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarBasAPICore.Models.Access
+namespace CraftedSolutions.MarBasAPICore.Models.Access
 {
     public sealed class RoleQueryParametersModel
     {

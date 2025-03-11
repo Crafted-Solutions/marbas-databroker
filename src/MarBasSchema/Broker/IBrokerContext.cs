@@ -1,6 +1,6 @@
 ﻿using System.Security.Principal;
 
-namespace MarBasSchema.Broker
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface IBrokerContext
     {

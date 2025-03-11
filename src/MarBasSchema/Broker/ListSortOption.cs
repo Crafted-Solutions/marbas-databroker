@@ -1,4 +1,4 @@
-﻿namespace MarBasSchema.Broker
+﻿namespace CraftedSolutions.MarBasSchema.Broker
 {
     public class ListSortOption<TFieldEnum> : IListSortOption<TFieldEnum>
         where TFieldEnum : struct, Enum

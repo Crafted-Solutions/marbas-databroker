@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Reflection;
 
-namespace MarBasCommon.Reflection
+namespace CraftedSolutions.MarBasCommon.Reflection
 {
     public static class TypeExtension
     {

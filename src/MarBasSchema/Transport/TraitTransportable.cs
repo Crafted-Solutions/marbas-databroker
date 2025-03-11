@@ -1,11 +1,12 @@
 ﻿using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
-using MarBasSchema.Grain;
-using MarBasSchema.Grain.Traits;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain.Traits;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     public class TraitTransportable : Identifiable, ITraitTransportable
     {
@@ -35,7 +36,7 @@ namespace MarBasSchema.Transport
             Value = other.Value;
         }
 
-        public new Guid Id { get =>  _id; set => _id = value; }
+        public new Guid Id { get => _id; set => _id = value; }
 
         [JsonIgnore]
         [IgnoreDataMember]
@@ -96,7 +97,7 @@ namespace MarBasSchema.Transport
 
     }
 
-    public class TraitTransportableGuid: TraitTransportableValue<Guid?>
+    public class TraitTransportableGuid : TraitTransportableValue<Guid?>
     {
         [JsonConstructor]
         public TraitTransportableGuid()

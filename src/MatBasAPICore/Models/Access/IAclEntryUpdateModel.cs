@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Access;
 
-namespace MarBasAPICore.Models.Access
+namespace CraftedSolutions.MarBasAPICore.Models.Access
 {
     public interface IAclEntryUpdateModel
     {

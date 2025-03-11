@@ -1,16 +1,17 @@
 ﻿using System.Data.Common;
 using System.Globalization;
-using MarBasBrokerSQLCommon.Grain;
-using MarBasBrokerSQLCommon.GrainDef;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.Grain;
-using MarBasSchema.Grain.Traits;
+using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain.Traits;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.BrokerImpl
+namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
     public abstract class TraitManagementBroker<TDialect>
         : GrainManagementBroker<TDialect>, ITraitManagementBroker, IAsyncTraitManagementBroker
@@ -69,7 +70,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             {
                 using (cmd)
                 {
-                    
+
                     cmd.CommandText = $"{TraitBaseConfig<TDialect>.SQLSelect}{GeneralEntityDefaults.FieldId}";
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, id));
                     if (await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.SkipPermissionCheck, cancellationToken: cancellationToken))
@@ -243,7 +244,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
 
         public int ReplaceTraitValues<T>(ITraitRef traitRef, IEnumerable<T> values)
         {
-            return ReplaceTraitValuesAsync<T>(traitRef, values).Result;
+            return ReplaceTraitValuesAsync(traitRef, values).Result;
         }
 
         public async Task<int> ReplaceTraitValuesAsync<T>(ITraitRef traitRef, IEnumerable<T> values, CancellationToken cancellationToken = default)

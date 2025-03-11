@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace MarBasSchema.GrainDef
+namespace CraftedSolutions.MarBasSchema.GrainDef
 {
     public interface ITypeDef
     {

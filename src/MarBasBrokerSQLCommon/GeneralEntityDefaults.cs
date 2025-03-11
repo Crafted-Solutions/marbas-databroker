@@ -1,4 +1,4 @@
-﻿namespace MarBasBrokerSQLCommon
+﻿namespace CraftedSolutions.MarBasBrokerSQLCommon
 {
     public static class GeneralEntityDefaults
     {

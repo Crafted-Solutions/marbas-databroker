@@ -1,11 +1,11 @@
 ﻿using System.Globalization;
 using System.Net.Mime;
 using System.Security.Principal;
-using MarBasCommon;
-using MarBasSchema.Grain;
-using MarBasSchema.IO;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.IO;
 
-namespace MarBasSchema.GrainTier
+namespace CraftedSolutions.MarBasSchema.GrainTier
 {
     public class GrainFile : GrainLocalized, IGrainFile
     {

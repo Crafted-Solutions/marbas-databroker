@@ -1,8 +1,8 @@
 ﻿using System.Globalization;
-using MarBasCommon;
-using MarBasCommon.Reflection;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasCommon.Reflection;
 
-namespace MarBasSchema.Grain.Traits
+namespace CraftedSolutions.MarBasSchema.Grain.Traits
 {
     public static class TraitValueFactory
     {
@@ -108,7 +108,7 @@ namespace MarBasSchema.Grain.Traits
             return valueType switch
             {
                 TraitValueType.Boolean => typeof(bool),
-                TraitValueType.Number => typeof(Decimal),
+                TraitValueType.Number => typeof(decimal),
                 TraitValueType.DateTime => typeof(DateTime),
                 TraitValueType.Grain or TraitValueType.File => typeof(Guid),
                 _ => typeof(string)

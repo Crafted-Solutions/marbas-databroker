@@ -1,25 +1,25 @@
 ﻿using System.Data.Common;
-using MarBasBrokerSQLCommon.Access;
-using MarBasBrokerSQLCommon.Grain;
-using MarBasCommon;
-using MarBasCommon.DependencyInjection;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.Event;
+using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasCommon.DependencyInjection;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Event;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon
+namespace CraftedSolutions.MarBasBrokerSQLCommon
 {
-    public interface ISQLBrokerProfile: IBrokerProfile, IDbConnectionProvider, IDbParameterFactoryProvider
+    public interface ISQLBrokerProfile : IBrokerProfile, IDbConnectionProvider, IDbParameterFactoryProvider
     {
     }
 
     public abstract class SQLBrokerProfile<TConn, TConnSettings>
         : ISQLBrokerProfile, IDbConnectionProvider<TConn>, IAsyncInitService
         where TConn : DbConnection, new()
-        where TConnSettings: DbConnectionStringBuilder, new()
+        where TConnSettings : DbConnectionStringBuilder, new()
     {
         protected readonly IConfiguration _configuration;
         protected readonly ILogger _logger;
@@ -48,7 +48,7 @@ namespace MarBasBrokerSQLCommon
 
         public abstract Version Version { get; }
 
-        public Guid InstanceId { get; protected set; } 
+        public Guid InstanceId { get; protected set; }
 
         public IEnumerable<ISchemaRole> SchemaRoles
         {

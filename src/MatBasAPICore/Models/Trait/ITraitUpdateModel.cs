@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using MarBasSchema;
+using CraftedSolutions.MarBasSchema;
 
-namespace MarBasAPICore.Models.Trait
+namespace CraftedSolutions.MarBasAPICore.Models.Trait
 {
     public interface ITraitUpdateModel
     {

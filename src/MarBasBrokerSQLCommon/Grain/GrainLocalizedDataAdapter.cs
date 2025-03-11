@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Globalization;
-using MarBasCommon;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasBrokerSQLCommon.Grain
+namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
 {
     public class GrainLocalizedDataAdapter : GrainExtendedDataAdapter, IGrainLocalized
     {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace MarBasSchema.Broker
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface IBrokerOperationFeedback
     {

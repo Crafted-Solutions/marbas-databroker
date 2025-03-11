@@ -1,4 +1,6 @@
-﻿namespace MarBasSchema.Broker
+﻿using CraftedSolutions.MarBasSchema;
+
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface IGrainBasicFilter
     {

@@ -1,16 +1,17 @@
-﻿using MarBasAPICore.Http;
-using MarBasAPICore.Models;
-using MarBasAPICore.Models.Access;
-using MarBasAPICore.Routing;
-using MarBasCommon;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
+﻿using CraftedSolutions.MarBasAPICore;
+using CraftedSolutions.MarBasAPICore.Http;
+using CraftedSolutions.MarBasAPICore.Models;
+using CraftedSolutions.MarBasAPICore.Models.Access;
+using CraftedSolutions.MarBasAPICore.Routing;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasAPICore.Controllers
+namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
     using ISchemaRoleResult = IMarBasResult<ISchemaRole>;

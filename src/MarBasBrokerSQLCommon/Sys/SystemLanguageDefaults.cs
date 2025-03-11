@@ -1,4 +1,4 @@
-﻿namespace MarBasBrokerSQLCommon.Sys
+﻿namespace CraftedSolutions.MarBasBrokerSQLCommon.Sys
 {
     public static class SystemLanguageDefaults
     {

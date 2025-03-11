@@ -1,11 +1,12 @@
-﻿using MarBasBrokerSQLCommon.Access;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.BrokerImpl
+namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
     public abstract class AclManagementBroker<TDialect>
         : RoleManagementBroker<TDialect>, IAclManagementBroker, IAsyncAclManagementBroker
@@ -140,7 +141,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             {
                 throw new UnauthorizedAccessException("Not entitled to delete ACL");
             }
-            if (!await _accessService.VerfifyAccessAsync(acl.Where(x => SchemaDefaults.AnyGrainID != x.GrainId).Select(x => (Identifiable)(x.GrainId)), GrainAccessFlag.ModifyAcl, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync(acl.Where(x => SchemaDefaults.AnyGrainID != x.GrainId).Select(x => (Identifiable)x.GrainId), GrainAccessFlag.ModifyAcl, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.ModifyAcl);
             }
@@ -177,7 +178,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             {
                 throw new UnauthorizedAccessException("Not entitled to modify ACL");
             }
-            if (!await _accessService.VerfifyAccessAsync(acl.Where(x => SchemaDefaults.AnyGrainID != x.GrainId).Select(x => (Identifiable)(x.GrainId!)), GrainAccessFlag.ModifyAcl, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync(acl.Where(x => SchemaDefaults.AnyGrainID != x.GrainId).Select(x => (Identifiable)x.GrainId!), GrainAccessFlag.ModifyAcl, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.ModifyAcl);
             }

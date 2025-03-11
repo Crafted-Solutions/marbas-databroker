@@ -1,10 +1,10 @@
 ﻿using System.Text.Json.Serialization;
-using MarBasAPICore.Http;
-using MarBasAPICore.Swagger;
-using MarBasCommon.Json;
-using MarBasSchema;
-using MarBasSchema.IO;
-using MarBasSchema.Transport;
+using CraftedSolutions.MarBasAPICore.Http;
+using CraftedSolutions.MarBasAPICore.Swagger;
+using CraftedSolutions.MarBasCommon.Json;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.IO;
+using CraftedSolutions.MarBasSchema.Transport;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace MarBasAPICore.Extensions
+namespace CraftedSolutions.MarBasAPICore.Extensions
 {
     public static class WebApplicationBuilderExtension
     {
@@ -47,8 +47,8 @@ namespace MarBasAPICore.Extensions
                 });
                 options.SchemaFilter<EnumSchemaFilter>();
                 options.OperationFilter<OptionalRouteParameterOperationFilter>();
-                var docPath = Path.Combine(System.AppContext.BaseDirectory, $"{nameof(MarBasAPICore)}.xml");
-                if (System.IO.File.Exists(docPath))
+                var docPath = Path.Combine(AppContext.BaseDirectory, $"{nameof(MarBasAPICore)}.xml");
+                if (File.Exists(docPath))
                 {
                     options.IncludeXmlComments(docPath);
                 }
@@ -84,11 +84,11 @@ namespace MarBasAPICore.Extensions
         {
             var result = services.AddRequestTimeouts(options =>
             {
-                options.DefaultPolicy = new RequestTimeoutPolicy { Timeout = TimeSpan.FromSeconds(configuration.GetValue<int>("Default", 120)) };
-                options.AddPolicy("FileDownload", TimeSpan.FromSeconds( configuration.GetValue<int>("FileDownload", 300)));
-                options.AddPolicy("FileUpload", TimeSpan.FromSeconds(configuration.GetValue<int>("FileUpload", 300)));
-                options.AddPolicy("Import", TimeSpan.FromSeconds(configuration.GetValue<int>("Import", 360)));
-                options.AddPolicy("Export", TimeSpan.FromSeconds(configuration.GetValue<int>("Export", 360)));
+                options.DefaultPolicy = new RequestTimeoutPolicy { Timeout = TimeSpan.FromSeconds(configuration.GetValue("Default", 120)) };
+                options.AddPolicy("FileDownload", TimeSpan.FromSeconds(configuration.GetValue("FileDownload", 300)));
+                options.AddPolicy("FileUpload", TimeSpan.FromSeconds(configuration.GetValue("FileUpload", 300)));
+                options.AddPolicy("Import", TimeSpan.FromSeconds(configuration.GetValue("Import", 360)));
+                options.AddPolicy("Export", TimeSpan.FromSeconds(configuration.GetValue("Export", 360)));
             });
             return result;
         }

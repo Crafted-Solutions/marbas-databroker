@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasAPICore.Models.Grain
+namespace CraftedSolutions.MarBasAPICore.Models.Grain
 {
     public sealed class GrainUpdateModel : GenericGrainUpdateModel<IGrainLocalized, GrainUpdateModel.GrainWrapper>
     {

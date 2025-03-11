@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
-using MarBasSchema.Sys;
+using CraftedSolutions.MarBasSchema.Sys;
 
-namespace MarBasSchema.Broker
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface ISystemLanguageBroker
     {

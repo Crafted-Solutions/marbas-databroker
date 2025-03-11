@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
 
-namespace MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema.Grain
 {
-    public interface IGrain: IIdentifiable, INamed, ITyped
+    public interface IGrain : IIdentifiable, INamed, ITyped
     {
         Guid? ParentId { get; }
         [ReadOnly(true)]

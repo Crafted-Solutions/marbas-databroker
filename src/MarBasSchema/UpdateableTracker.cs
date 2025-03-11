@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace MarBasSchema
+namespace CraftedSolutions.MarBasSchema
 {
     public class UpdateableTracker : INotifyPropertyChanged
     {
@@ -29,7 +29,7 @@ namespace MarBasSchema
         {
             var df = new HashSet<string>();
             var prevGetter = _scopeGetter;
-            _scopeGetter = (Type t) =>
+            _scopeGetter = (t) =>
             {
                 if (typeof(TScope).IsAssignableFrom(t))
                 {

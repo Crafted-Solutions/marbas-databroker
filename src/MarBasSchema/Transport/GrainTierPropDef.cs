@@ -1,8 +1,9 @@
 ﻿
 using System.Text.Json.Serialization;
-using MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.GrainDef;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     public class GrainTierPropDef : IGrainTierPropDef
     {

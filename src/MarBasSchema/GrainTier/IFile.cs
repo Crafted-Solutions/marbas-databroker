@@ -1,6 +1,6 @@
-﻿using MarBasSchema.IO;
+﻿using CraftedSolutions.MarBasSchema.IO;
 
-namespace MarBasSchema.GrainTier
+namespace CraftedSolutions.MarBasSchema.GrainTier
 {
     public interface IFile
     {

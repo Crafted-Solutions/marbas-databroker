@@ -1,8 +1,8 @@
-﻿using MarBasSchema.Broker;
+﻿using CraftedSolutions.MarBasSchema.Broker;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasAPICore.Http
+namespace CraftedSolutions.MarBasAPICore.Http
 {
     public sealed class HttpResponseException : Exception
     {
@@ -26,7 +26,7 @@ namespace MarBasAPICore.Http
 
         public static T DigestExceptions<T>(Func<T> worker, ILogger? logger = null)
         {
-            return DigestExceptionsAsync<T>(() => { return Task.FromResult(worker()); }, logger).Result;
+            return DigestExceptionsAsync(() => { return Task.FromResult(worker()); }, logger).Result;
         }
 
         public static async Task<T> DigestExceptionsAsync<T>(Func<Task<T>> worker, ILogger? logger = null)

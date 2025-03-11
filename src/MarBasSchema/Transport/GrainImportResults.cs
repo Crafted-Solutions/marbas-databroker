@@ -1,6 +1,6 @@
-﻿using MarBasSchema.Broker;
+﻿using CraftedSolutions.MarBasSchema.Broker;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     public sealed class GrainImportResults : IGrainImportResults
     {
@@ -17,7 +17,7 @@ namespace MarBasSchema.Transport
 
         public void AddFeedback(IBrokerOperationFeedback item)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 if (null == _feedback)
                 {

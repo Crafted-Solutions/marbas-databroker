@@ -2,19 +2,20 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using MarBasBrokerSQLCommon.Grain;
-using MarBasBrokerSQLCommon.GrainDef;
-using MarBasBrokerSQLCommon.GrainTier;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.Grain;
-using MarBasSchema.GrainDef;
-using MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasSchema.GrainTier;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.BrokerImpl
+namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
     public abstract class GrainManagementBroker<TDialect>
         : SystemManagementBroker<TDialect>, IGrainManagementBroker, IAsyncGrainManagementBroker
@@ -141,7 +142,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     cmd.CommandText = $"{GrainBaseConfig.SQLUpdate}{MapGrainBaseColumn(nameof(IGrainBase.ParentId))} = @{GrainBaseConfig.ParamParentId} WHERE {GeneralEntityDefaults.FieldId} = @{GeneralEntityDefaults.ParamId}{EngineSpec<TDialect>.Dialect.ReturnFromInsert}";
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GrainBaseConfig.ParamParentId, newParent.Id));
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, grain.Id));
-                    
+
                     using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
                     {
                         if (await rs.ReadAsync(cancellationToken))
@@ -196,7 +197,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                         var ordStart = rs.GetOrdinal(GrainTypeDefDefaults.MixinExtFieldStart);
                         while (await rs.ReadAsync(cancellationToken))
                         {
-                            if ((!rs.IsDBNull(ordStart) && rs.GetGuid(ordStart).Equals(typedef.Id)) || (!rs.IsDBNull(ordBase) && rs.GetGuid(ordBase).Equals(typedef.Id)))
+                            if (!rs.IsDBNull(ordStart) && rs.GetGuid(ordStart).Equals(typedef.Id) || !rs.IsDBNull(ordBase) && rs.GetGuid(ordBase).Equals(typedef.Id))
                             {
                                 return true;
                             }
@@ -247,7 +248,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     aggr += $"SELECT '{type.AssemblyQualifiedName}' AS tier WHERE EXISTS (SELECT {GeneralEntityDefaults.FieldBaseId} FROM {tbl} WHERE {GeneralEntityDefaults.FieldBaseId} = @{GeneralEntityDefaults.ParamId})";
                     return aggr;
                 });
-                
+
                 var tier = await cmd.ExecuteScalarAsync(cancellationToken);
                 if (null != tier)
                 {
@@ -266,7 +267,8 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IEnumerable<IGrainLocalized>> ListGrainsAsync(IIdentifiable? container, bool recursive = false, CultureInfo? culture = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, IGrainQueryFilter? filter = null, CancellationToken cancellationToken = default)
         {
             CheckProfile();
-            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) => {
+            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) =>
+            {
                 using (cmd)
                 {
                     var parentId = container?.Id ?? SchemaDefaults.RootID;
@@ -331,7 +333,8 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             {
                 return await ListGrainsAsync(null, true, culture, sortOptions, filter, cancellationToken);
             }
-            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) => {
+            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) =>
+            {
                 using (cmd)
                 {
                     var pathCol = MapGrainBaseColumn(nameof(IGrainBase.Path));
@@ -427,7 +430,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                         return paramName;
                     });
                     cmd.CommandText = $"SELECT {GeneralEntityDefaults.FieldId} FROM {GrainBaseConfig.DataSource} WHERE {GeneralEntityDefaults.FieldId} IN (@{string.Join(",@", vals)})";
-                    
+
                     using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
                     {
                         while (await rs.ReadAsync(cancellationToken))
@@ -704,7 +707,7 @@ ON CONFLICT ({GeneralEntityDefaults.FieldGrainId}) DO UPDATE SET {flagCol} = {En
                 var sep = string.Empty;
                 var paramPfx = "idFilter";
                 var i = 0;
-                foreach(var id in filter.IdConstraints)
+                foreach (var id in filter.IdConstraints)
                 {
                     var param = _profile.ParameterFactory.Create($"{paramPfx}{i++}", id);
                     parameters.Add(param);

@@ -1,16 +1,16 @@
-﻿using MarBasBrokerEngineSQLite.Resources;
-using MarBasBrokerSQLCommon;
-using MarBasBrokerSQLCommon.Grain;
-using MarBasBrokerSQLCommon.GrainTier;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
+using CraftedSolutions.MarBasBrokerEngineSQLite.Resources;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerEngineSQLite
+namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
     public sealed class SQLiteProfile : SQLBrokerProfile<SqliteConnection, SqliteConnectionStringBuilder>
     {
-        public static readonly Version SchemaVersion = new (0, 1, 14);
+        public static readonly Version SchemaVersion = new(0, 1, 14);
 
         public SQLiteProfile(IConfiguration configuration, ILogger<SQLiteProfile> logger)
             : base(configuration, logger)
@@ -43,7 +43,7 @@ namespace MarBasBrokerEngineSQLite
         private async Task<bool> InitializeDBAsync(CancellationToken cancellationToken)
         {
             try
-            { 
+            {
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
                     _logger.LogInformation("Initializing profile {dataSource}", ConnectionSettings.DataSource);

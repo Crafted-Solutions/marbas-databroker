@@ -1,8 +1,8 @@
-﻿using MarBasCommon.DependencyInjection;
+﻿using CraftedSolutions.MarBasCommon.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasAPICore.Services
+namespace CraftedSolutions.MarBasAPICore.Services
 {
     public class InitHostedService : IHostedService
     {

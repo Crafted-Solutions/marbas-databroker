@@ -1,9 +1,10 @@
 ﻿using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
 
-namespace MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema.Grain
 {
     public abstract class TraitBase : Identifiable, ITraitBase
     {
@@ -16,7 +17,7 @@ namespace MarBasSchema.Grain
             : base(Guid.NewGuid())
         {
             _fieldTracker = new UpdateableTracker();
-            _traitRef = new (grain, propdef, culture);
+            _traitRef = new(grain, propdef, culture);
             _ord = 0;
         }
 

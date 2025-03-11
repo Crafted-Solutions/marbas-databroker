@@ -1,18 +1,19 @@
 ﻿using System.Globalization;
-using MarBasAPICore.Http;
-using MarBasAPICore.Models;
-using MarBasAPICore.Models.GrainDef;
-using MarBasAPICore.Routing;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Broker;
-using MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasAPICore;
+using CraftedSolutions.MarBasAPICore.Http;
+using CraftedSolutions.MarBasAPICore.Models;
+using CraftedSolutions.MarBasAPICore.Models.GrainDef;
+using CraftedSolutions.MarBasAPICore.Routing;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.GrainDef;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasAPICore.Controllers
+namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
     using IGrainPropDefLocalizedResult = IMarBasResult<IGrainPropDefLocalized>;

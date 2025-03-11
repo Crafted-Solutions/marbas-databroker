@@ -1,8 +1,8 @@
-﻿using MarBasAPICore.Models.Grain;
-using MarBasSchema;
-using MarBasSchema.GrainDef;
+﻿using CraftedSolutions.MarBasAPICore.Models.Grain;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.GrainDef;
 
-namespace MarBasAPICore.Models.GrainDef
+namespace CraftedSolutions.MarBasAPICore.Models.GrainDef
 {
     public interface IPropDefUpdateModel : IGrainUpdateModel<IGrainPropDef>
     {

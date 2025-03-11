@@ -1,10 +1,10 @@
 ﻿using System.Globalization;
-using MarBasAPICore.Models.Grain;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasAPICore.Models.Grain;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.GrainDef;
 
-namespace MarBasAPICore.Models.GrainDef
+namespace CraftedSolutions.MarBasAPICore.Models.GrainDef
 {
     public class PropDefUpdateModel : GenericGrainUpdateModel<IGrainPropDef, PropDefUpdateModel.PropDefWrapper>, IPropDefUpdateModel
     {

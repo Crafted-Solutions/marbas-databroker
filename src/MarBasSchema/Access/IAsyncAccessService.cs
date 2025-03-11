@@ -1,6 +1,6 @@
-﻿namespace MarBasSchema.Access
+﻿namespace CraftedSolutions.MarBasSchema.Access
 {
-    public interface IAsyncAccessService: IAsyncAccessContextService, IAsyncPrincipalAccessService, IAsyncGrainAccessService
+    public interface IAsyncAccessService : IAsyncAccessContextService, IAsyncPrincipalAccessService, IAsyncGrainAccessService
     {
     }
 }

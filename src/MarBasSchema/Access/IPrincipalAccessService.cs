@@ -1,4 +1,4 @@
-﻿namespace MarBasSchema.Access
+﻿namespace CraftedSolutions.MarBasSchema.Access
 {
     public interface IPrincipalAccessService
     {

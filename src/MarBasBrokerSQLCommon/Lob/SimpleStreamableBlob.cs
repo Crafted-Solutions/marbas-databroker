@@ -1,7 +1,7 @@
 ﻿using System.Data.Common;
-using MarBasSchema.IO;
+using CraftedSolutions.MarBasSchema.IO;
 
-namespace MarBasBrokerSQLCommon.Lob
+namespace CraftedSolutions.MarBasBrokerSQLCommon.Lob
 {
     public sealed class SimpleStreamableBlob : StreamableContent, IAsyncStreamableContent
     {

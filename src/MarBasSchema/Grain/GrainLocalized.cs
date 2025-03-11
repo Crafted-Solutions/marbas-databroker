@@ -2,10 +2,11 @@
 using System.Runtime.Serialization;
 using System.Security.Principal;
 using System.Text.Json.Serialization;
-using MarBasCommon;
-using MarBasSchema.Access;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
 
-namespace MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema.Grain
 {
     public class GrainLocalized : GrainExtended, IGrainLocalized
     {

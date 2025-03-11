@@ -1,6 +1,6 @@
-﻿using MarBasSchema.Broker;
+﻿using CraftedSolutions.MarBasSchema.Broker;
 
-namespace MarBasAPICore.Models.Grain
+namespace CraftedSolutions.MarBasAPICore.Models.Grain
 {
     public sealed class GrainCloneModel
     {

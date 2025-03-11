@@ -1,8 +1,8 @@
-﻿using MarBasCommon;
-using MarBasSchema.Access;
-using MarBasSchema.Event;
+﻿using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Event;
 
-namespace MarBasSchema.Broker
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface IBrokerProfile
     {
