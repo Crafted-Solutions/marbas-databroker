@@ -1,7 +1,8 @@
 ﻿using System.Globalization;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasSchema.Grain.Traits
+namespace CraftedSolutions.MarBasSchema.Grain.Traits
 {
     public class TraitText : TraitValue<string>
     {

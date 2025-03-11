@@ -1,6 +1,6 @@
-﻿namespace MarBasSchema.Broker
+﻿namespace CraftedSolutions.MarBasSchema.Broker
 {
-    public interface ISchemaAccessBroker: IProfileProvider, IRoleManagementBroker, IAclManagementBroker
+    public interface ISchemaAccessBroker : IProfileProvider, IRoleManagementBroker, IAclManagementBroker
     {
     }
 }

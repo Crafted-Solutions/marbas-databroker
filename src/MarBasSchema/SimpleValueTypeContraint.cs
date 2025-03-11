@@ -1,6 +1,6 @@
-﻿using MarBasCommon;
+﻿using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema
+namespace CraftedSolutions.MarBasSchema
 {
     public class SimpleValueTypeContraint : Identifiable, IValueTypeConstraint
     {

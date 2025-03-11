@@ -1,4 +1,4 @@
-﻿namespace MarBasSchema.Broker
+﻿namespace CraftedSolutions.MarBasSchema.Broker
 {
     [Flags]
     public enum GrainCloneDepth

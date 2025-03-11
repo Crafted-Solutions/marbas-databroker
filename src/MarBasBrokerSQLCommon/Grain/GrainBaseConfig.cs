@@ -1,4 +1,4 @@
-﻿namespace MarBasBrokerSQLCommon.Grain
+﻿namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
 {
     public static class GrainBaseConfig
     {
@@ -8,7 +8,7 @@
 
         public const string FieldParentId = "parent_id";
         public const string FieldTypeDefId = "typedef_id";
-        
+
         public const string GrainExtFieldIdPath = "id_path";
 
         public const string PathFieldStart = "start";

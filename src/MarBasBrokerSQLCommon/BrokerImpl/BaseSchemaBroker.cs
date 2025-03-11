@@ -4,14 +4,15 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Text;
-using MarBasCommon;
-using MarBasCommon.Reflection;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
+using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasCommon.Reflection;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.BrokerImpl
+namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
     public abstract class BaseSchemaBroker<TDialect> : IProfileProvider where TDialect : ISQLDialect, new()
     {
@@ -107,8 +108,8 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
             });
             if (null != additionalValues)
             {
-                cols = Enumerable.Concat(cols, additionalValues.Select(x => x.Key));
-                vals = Enumerable.Concat(vals, additionalValues.Select(x =>
+                cols = cols.Concat(additionalValues.Select(x => x.Key));
+                vals = vals.Concat(additionalValues.Select(x =>
                 {
                     var paramName = $"param{x.Key}";
                     parameters.Add(_profile.ParameterFactory.Create(paramName, x.Value.Item1, x.Value.Item2));
@@ -168,7 +169,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 var pfx = string.IsNullOrEmpty(fieldPrefix) ? string.Empty : $"{fieldPrefix}.";
                 var orderby = sortOptions.Aggregate(string.Empty, (aggr, elm) =>
                 {
-                    var field = Enum.GetName<TFieldEnum>(elm.Field);
+                    var field = Enum.GetName(elm.Field);
                     if (string.IsNullOrEmpty(field) || usedFields.Contains(field))
                     {
                         return aggr;
@@ -194,7 +195,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
         {
             public IPrincipal User => SchemaDefaults.AnonymousUser;
 
-            public IEnumerable<string> UserRoles => ((ClaimsPrincipal) User).FindAll(ClaimTypes.Role).Select(x => x.Value);
+            public IEnumerable<string> UserRoles => ((ClaimsPrincipal)User).FindAll(ClaimTypes.Role).Select(x => x.Value);
         }
     }
 }

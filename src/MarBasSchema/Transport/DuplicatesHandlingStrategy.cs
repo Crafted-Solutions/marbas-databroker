@@ -1,4 +1,4 @@
-﻿namespace MarBasSchema.Transport
+﻿namespace CraftedSolutions.MarBasSchema.Transport
 {
     public enum DuplicatesHandlingStrategy
     {

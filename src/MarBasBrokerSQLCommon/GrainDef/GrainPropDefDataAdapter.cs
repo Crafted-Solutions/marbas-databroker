@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
-using MarBasBrokerSQLCommon.Grain;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Grain.Traits;
-using MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Grain.Traits;
+using CraftedSolutions.MarBasSchema.GrainDef;
 
-namespace MarBasBrokerSQLCommon.GrainDef
+namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainDef
 {
     public class GrainPropDefDataAdapter : GrainLocalizedDataAdapter, IGrainPropDef
     {

@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace MarBasSchema.IO
+namespace CraftedSolutions.MarBasSchema.IO
 {
     public interface IStreamableContent : IDisposable
     {

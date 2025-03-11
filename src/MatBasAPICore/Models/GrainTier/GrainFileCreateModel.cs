@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 
-namespace MarBasAPICore.Models.GrainTier
+namespace CraftedSolutions.MarBasAPICore.Models.GrainTier
 {
     public class GrainFileCreateModel : IFileUploadModel
     {

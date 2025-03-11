@@ -1,4 +1,4 @@
-﻿namespace MarBasSchema
+﻿namespace CraftedSolutions.MarBasSchema
 {
     [Flags]
     public enum RangeInclusionFlag

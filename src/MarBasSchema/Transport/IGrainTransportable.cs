@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     [JsonDerivedType(typeof(GrainTransportable))]
     public interface IGrainTransportable : IGrain

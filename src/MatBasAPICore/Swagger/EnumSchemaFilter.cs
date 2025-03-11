@@ -2,7 +2,7 @@
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace MarBasAPICore.Swagger
+namespace CraftedSolutions.MarBasAPICore.Swagger
 {
     public class EnumSchemaFilter : ISchemaFilter
     {

@@ -2,13 +2,13 @@
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasSchema.Broker
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public class BrokerOperationFeedback : IBrokerOperationFeedback
     {
         [JsonConstructor]
         public BrokerOperationFeedback() { }
-        
+
         public BrokerOperationFeedback(string message, string? source = null, int code = 0, LogLevel type = LogLevel.Information, Guid? objectId = null)
         {
             if (null != source)

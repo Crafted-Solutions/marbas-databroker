@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
+using CraftedSolutions.MarBasSchema;
 
-namespace MarBasSchema.Sys
+namespace CraftedSolutions.MarBasSchema.Sys
 {
     public class SystemLanguage : ISystemLanguage
     {

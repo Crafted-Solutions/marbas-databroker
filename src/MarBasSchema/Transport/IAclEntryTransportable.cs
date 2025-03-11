@@ -1,11 +1,11 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Access;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     [JsonDerivedType(typeof(AclEntryTransportable))]
-    public interface IAclEntryTransportable: IAclEntry
+    public interface IAclEntryTransportable : IAclEntry
     {
         [JsonIgnore]
         [IgnoreDataMember]

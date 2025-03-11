@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema.Grain
 {
-    public interface ITraitRef: ILocalizable
+    public interface ITraitRef : ILocalizable
     {
         [ReadOnly(true)]
         [JsonIgnore]

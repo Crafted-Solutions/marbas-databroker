@@ -1,8 +1,8 @@
 ﻿using System.Data;
 using System.Data.Common;
-using MarBasBrokerSQLCommon.Lob;
+using CraftedSolutions.MarBasBrokerSQLCommon.Lob;
 
-namespace MarBasBrokerSQLCommon.GrainTier
+namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainTier
 {
     public class GrainFileBlobContext<TDialect, TParamFactory>
         : IBlobContext

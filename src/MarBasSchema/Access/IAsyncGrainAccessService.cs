@@ -1,6 +1,6 @@
-﻿using MarBasCommon;
+﻿using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema.Access
+namespace CraftedSolutions.MarBasSchema.Access
 {
     public interface IAsyncGrainAccessService
     {

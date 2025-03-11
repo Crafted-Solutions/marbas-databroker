@@ -1,8 +1,8 @@
 ﻿using System.Globalization;
-using MarBasCommon;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasSchema.Broker
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface IAsyncGrainManagementBroker
     {

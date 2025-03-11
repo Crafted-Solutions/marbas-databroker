@@ -1,18 +1,18 @@
 ﻿using System.Globalization;
-using MarBasAPICore.Http;
-using MarBasAPICore.Models;
-using MarBasAPICore.Models.Trait;
-using MarBasAPICore.Routing;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Broker;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasAPICore.Http;
+using CraftedSolutions.MarBasAPICore.Models;
+using CraftedSolutions.MarBasAPICore.Models.Trait;
+using CraftedSolutions.MarBasAPICore.Routing;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Grain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasAPICore.Controllers
+namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
     using ITraitResult = IMarBasResult<ITraitBase>;
@@ -121,7 +121,8 @@ namespace MarBasAPICore.Controllers
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
                 var traitRef = new TraitRef((Identifiable)model.GrainId, null == model.ValueType ? (Identifiable)model.PropDefId : new SimpleValueTypeContraint((Identifiable)model.PropDefId, (TraitValueType)model.ValueType),
-                    string.IsNullOrEmpty(model.Culture) ? null : CultureInfo.GetCultureInfo(model.Culture)) { Revision = model.Revision };
+                    string.IsNullOrEmpty(model.Culture) ? null : CultureInfo.GetCultureInfo(model.Culture))
+                { Revision = model.Revision };
                 var result = await schemaBroker.ReplaceTraitValuesAsync(traitRef, model.Values, cancellationToken);
                 return MarbasResultFactory.Create(0 < result, result);
             }, _logger);

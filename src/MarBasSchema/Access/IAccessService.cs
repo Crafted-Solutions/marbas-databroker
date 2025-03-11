@@ -1,6 +1,6 @@
-﻿namespace MarBasSchema.Access
+﻿namespace CraftedSolutions.MarBasSchema.Access
 {
-    public interface IAccessService: IAccessContextService, IPrincipalAccessService, IGrainAccessService
+    public interface IAccessService : IAccessContextService, IPrincipalAccessService, IGrainAccessService
     {
     }
 }

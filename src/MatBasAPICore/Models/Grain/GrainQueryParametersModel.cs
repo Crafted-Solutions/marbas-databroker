@@ -1,9 +1,9 @@
-﻿using MarBasAPICore.Swagger;
-using MarBasSchema;
-using MarBasSchema.Broker;
+﻿using CraftedSolutions.MarBasAPICore.Swagger;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Broker;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarBasAPICore.Models.Grain
+namespace CraftedSolutions.MarBasAPICore.Models.Grain
 {
     public sealed class GrainQueryParametersModel
     {

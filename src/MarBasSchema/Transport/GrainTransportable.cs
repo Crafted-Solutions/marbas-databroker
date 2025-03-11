@@ -1,9 +1,9 @@
 ﻿
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     public class GrainTransportable : GrainPlain, IGrainTransportable
     {

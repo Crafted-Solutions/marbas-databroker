@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
-using MarBasSchema.Access;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Access;
 
-namespace MarBasAPICore.Models.Access
+namespace CraftedSolutions.MarBasAPICore.Models.Access
 {
     public sealed class AclEntryUpdateModel : IAclEntryUpdateModel
     {

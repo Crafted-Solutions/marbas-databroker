@@ -1,19 +1,20 @@
 ﻿using System.Data.Common;
 using System.Globalization;
-using MarBasBrokerSQLCommon.Access;
-using MarBasBrokerSQLCommon.Grain;
-using MarBasBrokerSQLCommon.GrainDef;
-using MarBasBrokerSQLCommon.GrainTier;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.Grain;
-using MarBasSchema.GrainDef;
-using MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasSchema.GrainTier;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.BrokerImpl
+namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
     public abstract class CloningBroker<TDialect>
         : FileManagementBroker<TDialect>, ICloningBroker, IAsyncCloningBroker
@@ -100,7 +101,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                                 }
                             }
                         }
-                        else if (await IsGrainInstanceOfAsync(srcGrain, (Identifiable) SchemaDefaults.PropDefTypeDefID))
+                        else if (await IsGrainInstanceOfAsync(srcGrain, (Identifiable)SchemaDefaults.PropDefTypeDefID))
                         {
                             if (1 > await CloneGrainTypeDetailsInTA(srcGrain.Id, result.Id, new[]
                                 {
@@ -146,7 +147,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 result = srcGrain;
             }
 
-            if (GrainCloneDepth.Infinite == (GrainCloneDepth.Infinite & depth) || (2 > currentDepth && GrainCloneDepth.Immediate == (GrainCloneDepth.Infinite & depth)))
+            if (GrainCloneDepth.Infinite == (GrainCloneDepth.Infinite & depth) || 2 > currentDepth && GrainCloneDepth.Immediate == (GrainCloneDepth.Infinite & depth))
             {
                 var children = new List<IGrainBase>();
                 await ExecuteOnConnection(children, async (cmd) =>

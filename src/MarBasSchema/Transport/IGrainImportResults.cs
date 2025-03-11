@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
-using MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Broker;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     [JsonDerivedType(typeof(GrainImportResults))]
     public interface IGrainImportResults

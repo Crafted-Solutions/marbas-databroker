@@ -1,11 +1,11 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasSchema.GrainDef
+namespace CraftedSolutions.MarBasSchema.GrainDef
 {
-    public interface IGrainTypeDef: IGrainBase, ITypeDef
+    public interface IGrainTypeDef : IGrainBase, ITypeDef
     {
         Guid? DefaultInstanceId { get; }
         [JsonIgnore]
@@ -20,7 +20,7 @@ namespace MarBasSchema.GrainDef
         void ClearMixIns();
     }
 
-    public interface IGrainTypeDefLocalized: IGrainTypeDef, IGrainLocalized
+    public interface IGrainTypeDefLocalized : IGrainTypeDef, IGrainLocalized
     {
     }
 }

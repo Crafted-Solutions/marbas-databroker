@@ -1,15 +1,15 @@
 ﻿using System.Data.Common;
-using MarBasBrokerEngineSQLite.GrainTier;
-using MarBasBrokerSQLCommon;
-using MarBasBrokerSQLCommon.BrokerImpl;
-using MarBasBrokerSQLCommon.GrainTier;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasBrokerEngineSQLite.GrainTier;
+using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.GrainTier;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerEngineSQLite
+namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
     public sealed class SQLiteSchemaBroker : GrainTransportBroker<SQLiteDialect>, ISchemaBroker, IAsyncSchemaBroker
     {

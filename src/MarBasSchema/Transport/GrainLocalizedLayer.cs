@@ -1,5 +1,4 @@
-﻿
-namespace MarBasSchema.Transport
+﻿namespace CraftedSolutions.MarBasSchema.Transport
 {
     public class GrainLocalizedLayer : IGrainLocalizedLayer
     {

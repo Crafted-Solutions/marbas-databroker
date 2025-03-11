@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace MarBasSchema
+namespace CraftedSolutions.MarBasSchema
 {
     public enum TraitValueType
     {

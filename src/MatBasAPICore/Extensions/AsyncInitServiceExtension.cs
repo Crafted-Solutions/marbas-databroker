@@ -1,8 +1,8 @@
-﻿using MarBasAPICore.Services;
-using MarBasCommon.DependencyInjection;
+﻿using CraftedSolutions.MarBasAPICore.Services;
+using CraftedSolutions.MarBasCommon.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MarBasAPICore.Extensions
+namespace CraftedSolutions.MarBasAPICore.Extensions
 {
     public static class AsyncInitServiceExtension
     {

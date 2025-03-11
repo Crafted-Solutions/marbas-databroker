@@ -6,8 +6,10 @@ name: .NET Build And Test
 on:
   push:
     branches: [ "main", "develop" ]
+    paths: [ "*.sln", "*.props", "src/**", ".github/workflows/**" ]
   pull_request:
     branches: [ "main", "develop" ]
+    paths: [ "*.sln", "*.props", "src/**", ".github/workflows/**" ]
   workflow_dispatch:
     inputs:
       logLevel:

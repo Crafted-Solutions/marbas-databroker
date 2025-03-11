@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
-using MarBasSchema.GrainDef;
-using MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasSchema.GrainTier;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     [JsonDerivedType(typeof(GrainTierTypeDef), typeDiscriminator: nameof(ITypeDef))]
     [JsonDerivedType(typeof(GrainTierPropDef), typeDiscriminator: nameof(IPropDef))]

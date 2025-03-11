@@ -1,9 +1,10 @@
 ﻿using System.Runtime.Serialization;
 using System.Security.Principal;
 using System.Text.Json.Serialization;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
 
-namespace MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema.Grain
 {
     public class GrainBase : IGrainBase, ICloneable
     {
@@ -208,7 +209,7 @@ namespace MarBasSchema.Grain
 
         public object Clone()
         {
-            return this.MemberwiseClone();
+            return MemberwiseClone();
         }
 
         public static string SanitizeName(string name)
@@ -234,6 +235,6 @@ namespace MarBasSchema.Grain
             }
         }
 
-        protected interface INamedIdentifiable: IIdentifiable, INamed { }
+        protected interface INamedIdentifiable : IIdentifiable, INamed { }
     }
 }

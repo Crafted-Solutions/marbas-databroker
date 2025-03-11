@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace MarBasCommon
+namespace CraftedSolutions.MarBasCommon
 {
     public interface ILocalizable
     {

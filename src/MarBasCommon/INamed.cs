@@ -1,4 +1,4 @@
-﻿namespace MarBasCommon
+﻿namespace CraftedSolutions.MarBasCommon
 {
     public interface INamed
     {

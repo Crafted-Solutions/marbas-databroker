@@ -1,10 +1,11 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
 
-namespace MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema.Grain
 {
-    public interface IGrainBase: IGrain, ITypeConstraint, IUpdateable
+    public interface IGrainBase : IGrain, ITypeConstraint, IUpdateable
     {
         [JsonIgnore]
         [IgnoreDataMember]

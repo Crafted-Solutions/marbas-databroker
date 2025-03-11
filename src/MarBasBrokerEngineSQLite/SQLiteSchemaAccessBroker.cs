@@ -1,9 +1,9 @@
-﻿using MarBasBrokerSQLCommon.BrokerImpl;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerEngineSQLite
+namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
     public sealed class SQLiteSchemaAccessBroker : AclManagementBroker<SQLiteDialect>, ISchemaAccessBroker, IAsyncSchemaAccessBroker
     {

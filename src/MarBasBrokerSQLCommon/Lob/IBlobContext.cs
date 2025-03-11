@@ -1,6 +1,6 @@
 ﻿using System.Data.Common;
 
-namespace MarBasBrokerSQLCommon.Lob
+namespace CraftedSolutions.MarBasBrokerSQLCommon.Lob
 {
     public interface IBlobContext : IDisposable
     {

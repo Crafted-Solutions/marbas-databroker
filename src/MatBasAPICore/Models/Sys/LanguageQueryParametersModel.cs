@@ -1,8 +1,8 @@
 ﻿using System.Globalization;
-using MarBasAPICore.Swagger;
+using CraftedSolutions.MarBasAPICore.Swagger;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarBasAPICore.Models.Sys
+namespace CraftedSolutions.MarBasAPICore.Models.Sys
 {
     public sealed class LanguageQueryParametersModel
     {

@@ -3,13 +3,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasAPICore.Extensions
+namespace CraftedSolutions.MarBasAPICore.Extensions
 {
     public static class ConfigurableCorsExtension
     {
         public static bool ConfigureCors(this IServiceCollection services, IConfiguration configuration, ILogger? logger = null)
         {
-            if (configuration.GetValue<bool>("Enabled", false))
+            if (configuration.GetValue("Enabled", false))
             {
                 logger?.LogInformation("Enabling CORS");
                 services.AddCors(options =>

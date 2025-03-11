@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace MarBasAPICore.Routing
+namespace CraftedSolutions.MarBasAPICore.Routing
 {
     public class DownloadDispositionRouteConstraint : IRouteConstraint
     {

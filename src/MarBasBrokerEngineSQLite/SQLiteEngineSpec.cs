@@ -1,8 +1,8 @@
-﻿using MarBasBrokerSQLCommon;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon;
 
-namespace MarBasBrokerEngineSQLite
+namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
-    internal sealed class SQLiteEngineSpec: EngineSpec<SQLiteDialect>
+    internal sealed class SQLiteEngineSpec : EngineSpec<SQLiteDialect>
     {
     }
 }

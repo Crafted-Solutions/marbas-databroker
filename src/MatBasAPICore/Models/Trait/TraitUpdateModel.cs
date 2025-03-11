@@ -2,16 +2,16 @@
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Grain;
-using MarBasSchema.Grain.Traits;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain.Traits;
 
-namespace MarBasAPICore.Models.Trait
+namespace CraftedSolutions.MarBasAPICore.Models.Trait
 {
     public sealed class TraitUpdateModel : ITraitUpdateModel
     {
-        private readonly TraitWrapper _trait = new ();
+        private readonly TraitWrapper _trait = new();
 
         [Required]
         public Guid Id { get => _trait.Id; set => _trait.Id = value; }

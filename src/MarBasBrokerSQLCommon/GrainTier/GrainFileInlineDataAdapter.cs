@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Net.Mime;
-using MarBasBrokerSQLCommon.Grain;
-using MarBasSchema.GrainTier;
-using MarBasSchema.IO;
+using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+using CraftedSolutions.MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasSchema.IO;
 
-namespace MarBasBrokerSQLCommon.GrainTier
+namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainTier
 {
     public class GrainFileInlineDataAdapter : GrainLocalizedDataAdapter, IGrainFile
     {

@@ -1,10 +1,10 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema
+namespace CraftedSolutions.MarBasSchema
 {
-    public interface ITypeConstraint: ITyped
+    public interface ITypeConstraint : ITyped
     {
         string? TypeName { get; }
         [JsonIgnore]

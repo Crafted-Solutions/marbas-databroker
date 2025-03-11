@@ -1,7 +1,7 @@
-﻿using MarBasBrokerSQLCommon;
-using MarBasBrokerSQLCommon.GrainTier;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
 
-namespace MarBasBrokerEngineSQLite
+namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
     public sealed class SQLiteDialect : ISQLDialect
     {
@@ -15,7 +15,7 @@ namespace MarBasBrokerEngineSQLite
 
         public string ConflictExcluded(string fieldName) => $"excluded.{fieldName}";
 
-        public string NewBlobContent(string? sizeParam = null) => $"zeroblob({(sizeParam ?? $"@{GrainFileDefaults.ParamSize}")})";
+        public string NewBlobContent(string? sizeParam = null) => $"zeroblob({sizeParam ?? $"@{GrainFileDefaults.ParamSize}"})";
 
         public bool BlobUpdateRequiresReset => true;
 

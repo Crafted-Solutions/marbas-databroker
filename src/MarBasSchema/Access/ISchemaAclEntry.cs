@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema.Access
+namespace CraftedSolutions.MarBasSchema.Access
 {
-    public interface ISchemaAclEntry: IAclEntry, IUpdateable
+    public interface ISchemaAclEntry : IAclEntry, IUpdateable
     {
         [ReadOnly(true)]
         Guid? SourceGrainId { get; }

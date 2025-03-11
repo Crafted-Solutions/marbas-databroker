@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
-using MarBasAPICore.Models.Grain;
-using MarBasCommon;
-using MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasAPICore.Models.Grain;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.GrainDef;
 
-namespace MarBasAPICore.Models.GrainDef
+namespace CraftedSolutions.MarBasAPICore.Models.GrainDef
 {
     public class TypeDefUpdateModel : GenericGrainUpdateModel<IGrainTypeDef, TypeDefUpdateModel.TypeDefWrapper>, ITypeDefUpdateModel
     {

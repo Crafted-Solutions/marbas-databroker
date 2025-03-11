@@ -1,10 +1,10 @@
 ﻿using System.Text.Json.Serialization;
-using MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasSchema.GrainDef;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     [JsonDerivedType(typeof(GrainTierTypeDef))]
-    public interface IGrainTierTypeDef: IGrainTierTransportable, ITypeDef
+    public interface IGrainTierTypeDef : IGrainTierTransportable, ITypeDef
     {
     }
 }

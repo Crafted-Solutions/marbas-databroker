@@ -1,7 +1,7 @@
-﻿namespace MarBasSchema.Access
+﻿namespace CraftedSolutions.MarBasSchema.Access
 {
     [Flags]
-    public enum GrainAccessFlag: uint
+    public enum GrainAccessFlag : uint
     {
         None = 0x000,
         Read = 0x001,

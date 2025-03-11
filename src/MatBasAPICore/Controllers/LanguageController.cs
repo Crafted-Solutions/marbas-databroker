@@ -1,16 +1,17 @@
 ﻿using System.Globalization;
-using MarBasAPICore.Http;
-using MarBasAPICore.Models;
-using MarBasAPICore.Models.Sys;
-using MarBasAPICore.Routing;
-using MarBasSchema.Broker;
-using MarBasSchema.Sys;
+using CraftedSolutions.MarBasAPICore;
+using CraftedSolutions.MarBasAPICore.Http;
+using CraftedSolutions.MarBasAPICore.Models;
+using CraftedSolutions.MarBasAPICore.Models.Sys;
+using CraftedSolutions.MarBasAPICore.Routing;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Sys;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasAPICore.Controllers
+namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
     using ISystemLanguageResult = IMarBasResult<ISystemLanguage>;
@@ -20,7 +21,7 @@ namespace MarBasAPICore.Controllers
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.Language)]
     [ApiController]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "We want the token without interference with default parameters")]
-    public sealed class LanguageController: ControllerBase
+    public sealed class LanguageController : ControllerBase
     {
         private readonly ILogger _logger;
 

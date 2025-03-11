@@ -1,4 +1,4 @@
-﻿namespace MarBasCommon.DependencyInjection
+﻿namespace CraftedSolutions.MarBasCommon.DependencyInjection
 {
     public interface IAsyncInitService
     {

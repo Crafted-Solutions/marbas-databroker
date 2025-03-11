@@ -24,7 +24,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasAPICore", "src\MatBas
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasBrokerSQLCommon", "src\MarBasBrokerSQLCommon\MarBasBrokerSQLCommon.csproj", "{8A088793-F54F-45B1-84B4-9F70837D33DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarBasCommon", "src\MarBasCommon\MarBasCommon.csproj", "{3921840C-BCBD-44E3-8DE8-C606FB1C8A9E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasCommon", "src\MarBasCommon\MarBasCommon.csproj", "{3921840C-BCBD-44E3-8DE8-C606FB1C8A9E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHub", "GitHub", "{8D85AE92-B925-47E0-9913-0CE8840E017C}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+		.github\workflows\publish.yml = .github\workflows\publish.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{BA694FE4-EC50-41CA-A187-BC7553918C9C}"
+	ProjectSection(SolutionItems) = preProject
+		doc\marbas-sql-schema.jpg = doc\marbas-sql-schema.jpg
+		doc\marbas.png = doc\marbas.png
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
