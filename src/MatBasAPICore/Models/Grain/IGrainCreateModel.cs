@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MarBasAPICore.Models.Grain
+namespace CraftedSolutions.MarBasAPICore.Models.Grain
 {
     public interface IGrainCreateModel
     {

@@ -1,9 +1,10 @@
-﻿using MarBasAPICore.Routing;
-using MarBasSchema.Broker;
-using MarBasSchema.Sys;
+﻿using CraftedSolutions.MarBasAPICore;
+using CraftedSolutions.MarBasAPICore.Routing;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Sys;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarBasAPICore.Controllers
+namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.SysInfo)]
     [ApiController]

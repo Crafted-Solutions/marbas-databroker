@@ -1,6 +1,6 @@
-﻿namespace MarBasSchema.Access
+﻿namespace CraftedSolutions.MarBasSchema.Access
 {
-    public class SchemaAccessDeniedException: UnauthorizedAccessException
+    public class SchemaAccessDeniedException : UnauthorizedAccessException
     {
         public SchemaAccessDeniedException(GrainAccessFlag requestedAcces)
             : base(FormatMessage(requestedAcces))

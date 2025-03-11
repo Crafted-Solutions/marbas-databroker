@@ -1,9 +1,9 @@
-﻿using MarBasCommon;
+﻿using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema.Grain
 {
-    public interface IGrainLocalized: IGrainExtended, ILocalized
+    public interface IGrainLocalized : IGrainExtended, ILocalized
     {
-        string? Label {get; set;}
+        string? Label { get; set; }
     }
 }

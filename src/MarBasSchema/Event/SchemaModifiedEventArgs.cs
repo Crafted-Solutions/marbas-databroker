@@ -1,14 +1,14 @@
-﻿using MarBasCommon;
+﻿using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema.Event
+namespace CraftedSolutions.MarBasSchema.Event
 {
     public enum SchemaModificationType
     {
         Update = 1, Create = 2, Delete = 3
     }
 
-    public class SchemaModifiedEventArgs<TSubject>: EventArgs
-        where TSubject: IIdentifiable
+    public class SchemaModifiedEventArgs<TSubject> : EventArgs
+        where TSubject : IIdentifiable
     {
         protected readonly IList<TSubject> _subjects;
         protected readonly SchemaModificationType _type;

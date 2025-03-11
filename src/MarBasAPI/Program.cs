@@ -1,9 +1,9 @@
-using MarBasAPICore.Extensions;
-using MarBasAPICore.Http;
-using MarBasAPICore.Routing;
+using CraftedSolutions.MarBasAPICore.Extensions;
+using CraftedSolutions.MarBasAPICore.Http;
+using CraftedSolutions.MarBasAPICore.Routing;
 using Microsoft.AspNetCore.Authentication;
 
-namespace MarBasAPI
+namespace CraftedSolutions.MarBasAPI
 {
     public class Program
     {
@@ -16,7 +16,7 @@ namespace MarBasAPI
             {
                 options.ConstraintMap.Add("DownloadDisposition", typeof(DownloadDispositionRouteConstraint));
             });
-            
+
             using var loggerFactory = LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConfiguration(
                 builder.Configuration.GetSection("Logging")).AddConsole().AddDebug().AddEventSourceLogger()
                 );
@@ -29,7 +29,7 @@ namespace MarBasAPI
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.ConfigureMarBasSwagger(builder.Environment.IsDevelopment(), options =>
             {
-                options.IncludeXmlComments(Path.Combine(System.AppContext.BaseDirectory, $"{nameof(MarBasAPI)}.xml"));
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{nameof(MarBasAPI)}.xml"));
             });
             if (builder.Environment.IsDevelopment())
             {
@@ -58,21 +58,21 @@ namespace MarBasAPI
             }
 
             app.UseHttpsRedirection();
-			
+
             if (corsEnabled)
             {
                 app.UseCors();
             }
-			app.UseAuthentication();
-			app.UseAuthorization();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
-            if (builder.Configuration.GetValue<bool>("StaticFiles:Enabled", false))
+            if (builder.Configuration.GetValue("StaticFiles:Enabled", false))
             {
                 app.UseStaticFiles();
             }
 
             app.MapControllers();
-			
+
             app.Run();
         }
     }

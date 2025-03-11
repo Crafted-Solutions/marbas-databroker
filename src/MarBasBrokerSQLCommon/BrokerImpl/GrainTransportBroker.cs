@@ -2,23 +2,23 @@
 using System.Data.Common;
 using System.Globalization;
 using System.Reflection;
-using MarBasBrokerSQLCommon.Access;
-using MarBasBrokerSQLCommon.Grain;
-using MarBasBrokerSQLCommon.GrainDef;
-using MarBasBrokerSQLCommon.GrainTier;
-using MarBasCommon;
-using MarBasCommon.Reflection;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.Grain;
-using MarBasSchema.Grain.Traits;
-using MarBasSchema.GrainDef;
-using MarBasSchema.GrainTier;
-using MarBasSchema.Transport;
+using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasCommon.Reflection;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain.Traits;
+using CraftedSolutions.MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasSchema.Transport;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.BrokerImpl
+namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
     public abstract class GrainTransportBroker<TDialect> :
         CloningBroker<TDialect>, IGrainTransportBroker, IAsyncGrainTransportBroker
@@ -255,7 +255,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                 var prevPassFailures = 0;
                 async Task<bool> ImportWorkerFunc(ImportGrainState item, int pass = 0)
                 {
-                    if (cancellationToken.IsCancellationRequested || (0 < pass && 0 == prevPassFailures))
+                    if (cancellationToken.IsCancellationRequested || 0 < pass && 0 == prevPassFailures)
                     {
                         return false;
                     }
@@ -380,7 +380,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                         _logger.LogDebug("##### Attempting import pass {pass} on {count} failures (schema: {schemaFails}, other: {otherFails}) #####"
                             , i + 1, prevPassFailures, schemaGrainsByPath.Count(x => !x.Value.Success), otherGrainsByPath.Count(x => !x.Value.Success));
                     }
-                    foreach(var entry in schemaGrainsByPath.Where(x => !x.Value.Success))
+                    foreach (var entry in schemaGrainsByPath.Where(x => !x.Value.Success))
                     {
                         if (!await ImportWorkerFunc(entry.Value, i))
                         {
@@ -466,7 +466,7 @@ namespace MarBasBrokerSQLCommon.BrokerImpl
                     var traitCount = 0;
                     if (true == grain.Traits?.Any())
                     {
-                        foreach(var trait in grain.Traits)
+                        foreach (var trait in grain.Traits)
                         {
                             traitCount += await StoreImportedTraitInTA(ta, grain.Id, trait, cancellationToken: cancellationToken);
                         }
@@ -900,7 +900,7 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
                         cmd.CommandText += ", ";
                     }
                     var col = MapPropDefColumn(prop.Name);
-                    cmd.CommandText += $"{col} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(col)}"; 
+                    cmd.CommandText += $"{col} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(col)}";
                     first = false;
                 }
 
@@ -1113,7 +1113,7 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
                 }
                 return layer;
             }
-            
+
             await ExecuteOnConnection(0, async (cmd) =>
             {
                 using (cmd)
@@ -1251,7 +1251,7 @@ ORDER BY {GeneralEntityDefaults.FieldLangCode}, {MapTraitColumn(nameof(ITraitBas
                     }
 
                     var count = Convert.ToInt32(await cmd.ExecuteScalarAsync(cancellationToken));
-                    result = null == grain.Tier ? (0 == count) : (1 == count);
+                    result = null == grain.Tier ? 0 == count : 1 == count;
                 }
                 return result;
             }, cancellationToken);

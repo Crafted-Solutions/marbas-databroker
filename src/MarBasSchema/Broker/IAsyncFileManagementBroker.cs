@@ -1,8 +1,8 @@
 ﻿using System.Globalization;
-using MarBasCommon;
-using MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.GrainTier;
 
-namespace MarBasSchema.Broker
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface IAsyncFileManagementBroker
     {

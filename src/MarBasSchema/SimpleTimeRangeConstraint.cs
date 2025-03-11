@@ -1,4 +1,4 @@
-﻿namespace MarBasSchema
+﻿namespace CraftedSolutions.MarBasSchema
 {
     public class SimpleTimeRangeConstraint : ITimeRangeConstraint
     {

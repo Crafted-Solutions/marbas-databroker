@@ -1,4 +1,4 @@
-﻿namespace MarBasCommon
+﻿namespace CraftedSolutions.MarBasCommon
 {
     public class NamedIdentifiable : Identifiable, INamed
     {

@@ -1,9 +1,9 @@
-﻿using MarBasCommon;
+﻿using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema.Access
+namespace CraftedSolutions.MarBasSchema.Access
 {
     [Flags]
-    public enum RoleEntitlement: uint
+    public enum RoleEntitlement : uint
     {
         None = 0x0,
         ReadAcl = 0x001,
@@ -20,7 +20,7 @@ namespace MarBasSchema.Access
         Full = 0xffffffff
     }
 
-    public interface ISchemaRole: IIdentifiable, INamed, IUpdateable
+    public interface ISchemaRole : IIdentifiable, INamed, IUpdateable
     {
         public RoleEntitlement Entitlement { get; set; }
     }

@@ -1,10 +1,11 @@
-﻿using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.Access
+namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
 {
     public abstract class SQLAccessService<TDialect>
         : IAccessService, IAsyncAccessService
@@ -67,7 +68,8 @@ namespace MarBasBrokerSQLCommon.Access
 
                     var idsToCheck = new HashSet<Guid>();
                     var i = 0;
-                    var grainsClause = grains.Aggregate(string.Empty, (aggr, grain) => {
+                    var grainsClause = grains.Aggregate(string.Empty, (aggr, grain) =>
+                    {
                         if (null == grain)
                         {
                             if (_logger.IsEnabled(LogLevel.Warning))

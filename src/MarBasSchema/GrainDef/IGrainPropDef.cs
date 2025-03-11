@@ -1,19 +1,20 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasSchema.GrainDef
+namespace CraftedSolutions.MarBasSchema.GrainDef
 {
-    public interface IGrainPropDef: IGrainBase, IPropDef
+    public interface IGrainPropDef : IGrainBase, IPropDef
     {
         new TraitValueType ValueType { get; set; }
         [JsonIgnore]
         [IgnoreDataMember]
         IIdentifiable? ValueConstraint { get; set; }
-     }
+    }
 
-    public interface IGrainPropDefLocalized: IGrainPropDef, IGrainLocalized
+    public interface IGrainPropDefLocalized : IGrainPropDef, IGrainLocalized
     {
     }
 }

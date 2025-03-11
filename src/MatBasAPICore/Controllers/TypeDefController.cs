@@ -1,18 +1,19 @@
 ﻿using System.Globalization;
-using MarBasAPICore.Http;
-using MarBasAPICore.Models;
-using MarBasAPICore.Models.GrainDef;
-using MarBasAPICore.Routing;
-using MarBasCommon;
-using MarBasSchema.Broker;
-using MarBasSchema.Grain;
-using MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasAPICore;
+using CraftedSolutions.MarBasAPICore.Http;
+using CraftedSolutions.MarBasAPICore.Models;
+using CraftedSolutions.MarBasAPICore.Models.GrainDef;
+using CraftedSolutions.MarBasAPICore.Routing;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.GrainDef;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasAPICore.Controllers
+namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
     using IGrainPropDefsLocalizedResult = IMarBasResult<IEnumerable<IGrainPropDefLocalized>>;
@@ -120,9 +121,9 @@ namespace MarBasAPICore.Controllers
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await schemaBroker.GetOrCreateTypeDefDefaultsAsync((Identifiable) id, cancellationToken);
+                var result = await schemaBroker.GetOrCreateTypeDefDefaultsAsync((Identifiable)id, cancellationToken);
                 return MarbasResultFactory.Create(null != result, result);
             }, _logger);
         }
-}
+    }
 }

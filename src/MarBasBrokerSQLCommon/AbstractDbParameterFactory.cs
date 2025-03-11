@@ -1,13 +1,13 @@
 ﻿using System.Data.Common;
 using System.Globalization;
-using MarBasBrokerSQLCommon.Access;
-using MarBasSchema;
-using MarBasSchema.Access;
+using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
 
-namespace MarBasBrokerSQLCommon
+namespace CraftedSolutions.MarBasBrokerSQLCommon
 {
     public abstract class AbstractDbParameterFactory<TFactory> : IDbParameterFactory
-        where TFactory: IDbParameterFactory, new()
+        where TFactory : IDbParameterFactory, new()
     {
         public DbParameter Create<TVal>(string name, TVal? value)
         {
@@ -70,6 +70,6 @@ namespace MarBasBrokerSQLCommon
 
         public abstract DbParameter PrepareTraitValueParameter(string paramName, TraitValueType valueType, object? value);
 
-        public static readonly TFactory Instance = new ();
+        public static readonly TFactory Instance = new();
     }
 }

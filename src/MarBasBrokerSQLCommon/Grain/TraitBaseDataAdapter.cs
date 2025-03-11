@@ -1,13 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Globalization;
-using MarBasBrokerSQLCommon.GrainDef;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Grain;
-using MarBasSchema.Grain.Traits;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain.Traits;
 
-namespace MarBasBrokerSQLCommon.Grain
+namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
 {
     public class TraitBaseDataAdapter : AbstractDataAdapter, ITraitBase
     {

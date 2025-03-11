@@ -1,4 +1,4 @@
-﻿namespace MarBasBrokerSQLCommon.Access
+﻿namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
 {
     public static class AclDefaults
     {

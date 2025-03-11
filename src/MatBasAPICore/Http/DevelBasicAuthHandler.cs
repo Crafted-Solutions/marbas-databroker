@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace MarBasAPICore.Http
+namespace CraftedSolutions.MarBasAPICore.Http
 {
     public class DevelBasicAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {

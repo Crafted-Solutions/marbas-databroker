@@ -1,7 +1,7 @@
-﻿using MarBasCommon;
-using MarBasSchema.Transport;
+﻿using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Transport;
 
-namespace MarBasSchema.Broker
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface IAsyncGrainTransportBroker
     {

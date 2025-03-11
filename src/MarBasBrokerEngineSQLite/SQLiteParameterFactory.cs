@@ -1,11 +1,11 @@
 ﻿using System.Data.Common;
 using System.Globalization;
-using MarBasBrokerSQLCommon;
-using MarBasCommon;
-using MarBasSchema;
+using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
 using Microsoft.Data.Sqlite;
 
-namespace MarBasBrokerEngineSQLite
+namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
     public sealed class SQLiteParameterFactory : AbstractDbParameterFactory<SQLiteParameterFactory>
     {
@@ -35,7 +35,7 @@ namespace MarBasBrokerEngineSQLite
             {
                 result = new SqliteParameter(name, SqliteType.Text)
                 {
-                    Value = null == value ? null : ((dynamic) value).IetfLanguageTag
+                    Value = null == value ? null : ((dynamic)value).IetfLanguageTag
                 };
             }
             else if (typeof(byte[]).IsAssignableFrom(effectiveType))
@@ -45,7 +45,7 @@ namespace MarBasBrokerEngineSQLite
                     Value = value
                 };
             }
-            else if (typeof(float).IsAssignableFrom(effectiveType) || typeof(double).IsAssignableFrom(effectiveType) || typeof(Decimal).IsAssignableFrom(effectiveType))
+            else if (typeof(float).IsAssignableFrom(effectiveType) || typeof(double).IsAssignableFrom(effectiveType) || typeof(decimal).IsAssignableFrom(effectiveType))
             {
                 result = new SqliteParameter(name, SqliteType.Real)
                 {

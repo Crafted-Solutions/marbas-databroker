@@ -2,9 +2,9 @@
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasAPICore.Models.Grain
+namespace CraftedSolutions.MarBasAPICore.Models.Grain
 {
     public class GenericGrainUpdateModel<TGrain, TGrainImpl>
         : IGrainUpdateModel<TGrain> where TGrain : IGrainBase where TGrainImpl : TGrain, GenericGrainUpdateModel<TGrain, TGrainImpl>.IUpdateableGrain, new()

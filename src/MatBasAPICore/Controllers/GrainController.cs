@@ -1,19 +1,20 @@
 ﻿using System.Globalization;
-using MarBasAPICore.Http;
-using MarBasAPICore.Models;
-using MarBasAPICore.Models.Grain;
-using MarBasAPICore.Routing;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasAPICore;
+using CraftedSolutions.MarBasAPICore.Http;
+using CraftedSolutions.MarBasAPICore.Models;
+using CraftedSolutions.MarBasAPICore.Models.Grain;
+using CraftedSolutions.MarBasAPICore.Routing;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Grain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasAPICore.Controllers
+namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
     using FlagResult = IMarBasResult<bool>;
@@ -120,7 +121,7 @@ namespace MarBasAPICore.Controllers
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await broker.CloneGrainAsync((Identifiable)id, (Identifiable?) model.NewParentId, model.Depth ?? GrainCloneDepth.Self, model.CopyACL ?? false, cancellationToken);
+                var result = await broker.CloneGrainAsync((Identifiable)id, (Identifiable?)model.NewParentId, model.Depth ?? GrainCloneDepth.Self, model.CopyACL ?? false, cancellationToken);
                 return MarbasResultFactory.Create(null != result, result);
             }, _logger);
         }
@@ -160,7 +161,7 @@ namespace MarBasAPICore.Controllers
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await broker.GetGrainTierAsync((Identifiable) id, cancellationToken);
+                var result = await broker.GetGrainTierAsync((Identifiable)id, cancellationToken);
                 return MarbasResultFactory.Create<string?>(true, result?.Name);
             }, _logger);
         }

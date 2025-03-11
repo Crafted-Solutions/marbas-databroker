@@ -1,9 +1,9 @@
 ﻿using System.Net.Mime;
 using System.Text.Json.Serialization;
-using MarBasSchema.GrainTier;
-using MarBasSchema.IO;
+using CraftedSolutions.MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasSchema.IO;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     public class GrainTierFile : IGrainTierFile
     {

@@ -1,4 +1,6 @@
-﻿namespace MarBasBrokerSQLCommon.Access
+﻿using CraftedSolutions.MarBasBrokerSQLCommon;
+
+namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
 {
     public class RoleConfig<TDialect> where TDialect : ISQLDialect, new()
     {

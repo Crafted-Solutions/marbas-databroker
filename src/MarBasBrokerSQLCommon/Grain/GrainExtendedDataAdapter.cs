@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasBrokerSQLCommon.Grain
+namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
 {
     public class GrainExtendedDataAdapter : AbstractDataAdapter, IGrainExtended
     {
@@ -117,7 +117,7 @@ namespace MarBasBrokerSQLCommon.Grain
             {
                 if (ExtensionColumn.Permissions == (ExtensionColumn.Permissions & _extensionColumn))
                 {
-                    return (GrainAccessFlag)(UInt32)_dataReader.GetInt64(_dataReader.GetOrdinal(GetMappedColumnName()));
+                    return (GrainAccessFlag)(uint)_dataReader.GetInt64(_dataReader.GetOrdinal(GetMappedColumnName()));
                 }
                 return GrainAccessFlag.None;
             }

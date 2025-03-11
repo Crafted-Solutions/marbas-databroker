@@ -1,4 +1,4 @@
-﻿namespace MarBasBrokerSQLCommon
+﻿namespace CraftedSolutions.MarBasBrokerSQLCommon
 {
     public class EngineSpec<TDialect> where TDialect : ISQLDialect, new()
     {

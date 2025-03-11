@@ -1,4 +1,4 @@
-﻿namespace MarBasBrokerSQLCommon.Grain
+﻿namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
 {
     public static class TraitBaseDefaults
     {

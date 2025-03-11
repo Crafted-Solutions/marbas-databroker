@@ -1,4 +1,4 @@
-﻿namespace MarBasBrokerSQLCommon.GrainTier
+﻿namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainTier
 {
     public static class GrainFileDefaults
     {

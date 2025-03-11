@@ -1,12 +1,12 @@
 ﻿using System.Security.Principal;
 using System.Text.Json.Serialization;
-using MarBasCommon;
-using MarBasCommon.Json;
-using MarBasSchema.Access;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasCommon.Json;
+using CraftedSolutions.MarBasSchema.Access;
 
-namespace MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema.Grain
 {
-    public class GrainExtended: GrainBase, IGrainExtended
+    public class GrainExtended : GrainBase, IGrainExtended
     {
         protected GrainAccessFlag _permissions;
         protected string? _typeXAttrs;

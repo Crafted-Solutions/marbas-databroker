@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace MarBasSchema
+namespace CraftedSolutions.MarBasSchema
 {
     public interface IUpdateable
     {

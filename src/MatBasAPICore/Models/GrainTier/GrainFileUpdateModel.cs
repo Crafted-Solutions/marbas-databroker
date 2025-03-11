@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using MarBasSchema.GrainTier;
-using MarBasSchema.IO;
+using CraftedSolutions.MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasSchema.IO;
 using Microsoft.AspNetCore.Http;
 
-namespace MarBasAPICore.Models.GrainTier
+namespace CraftedSolutions.MarBasAPICore.Models.GrainTier
 {
     public class GrainFileUpdateModel : IFileUploadModel
     {

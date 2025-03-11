@@ -1,10 +1,10 @@
 ﻿using System.Data.Common;
 using System.Globalization;
-using MarBasSchema;
-using MarBasSchema.Access;
-using static MarBasBrokerSQLCommon.AbstractDataAdapter;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using static CraftedSolutions.MarBasBrokerSQLCommon.AbstractDataAdapter;
 
-namespace MarBasBrokerSQLCommon
+namespace CraftedSolutions.MarBasBrokerSQLCommon
 {
     public interface IDbParameterFactory
     {

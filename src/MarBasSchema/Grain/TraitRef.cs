@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema.Grain
 {
     public class TraitRef : ITraitRef
     {

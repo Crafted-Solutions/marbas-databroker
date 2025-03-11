@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
-using MarBasCommon.Json;
+using CraftedSolutions.MarBasCommon.Json;
 
-namespace MarBasSchema.Access
+namespace CraftedSolutions.MarBasSchema.Access
 {
     public interface IAclSubject
     {

@@ -1,10 +1,10 @@
 ﻿using System.Reflection;
-using MarBasCommon.DependencyInjection;
+using CraftedSolutions.MarBasCommon.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasAPICore.Extensions
+namespace CraftedSolutions.MarBasAPICore.Extensions
 {
     public static class ConfigurableServicesExtension
     {

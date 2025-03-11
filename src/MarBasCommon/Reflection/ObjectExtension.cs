@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 
-namespace MarBasCommon.Reflection
+namespace CraftedSolutions.MarBasCommon.Reflection
 {
     public static class ObjectExtension
     {

@@ -2,12 +2,12 @@
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Grain;
-using MarBasSchema.Grain.Traits;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.Grain.Traits;
 
-namespace MarBasAPICore.Models.Trait
+namespace CraftedSolutions.MarBasAPICore.Models.Trait
 {
     public class TraitCreateModel : ITraitCreateModel
     {
@@ -24,7 +24,7 @@ namespace MarBasAPICore.Models.Trait
 
         public int? Ord { get; set; }
 
-        public int? Revision { get => _ref.Revision; set => _ref.Revision = (null == value ? 1 : (int)value); }
+        public int? Revision { get => _ref.Revision; set => _ref.Revision = null == value ? 1 : (int)value; }
 
         public TraitValueType? ValueType { get => (_ref.PropDef as IValueTypeConstraint)?.ValueType; set => _ref.PropDef = new SimpleValueTypeContraint((Identifiable)PropDefId, value ?? TraitValueType.Text); }
 

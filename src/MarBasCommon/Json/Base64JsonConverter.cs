@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace MarBasCommon.Json
+namespace CraftedSolutions.MarBasCommon.Json
 {
     public sealed class Base64JsonConverter : JsonConverter<byte[]>
     {

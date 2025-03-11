@@ -1,17 +1,17 @@
 ﻿using System.Data.Common;
 using System.Globalization;
 using System.Net.Mime;
-using MarBasBrokerSQLCommon.Grain;
-using MarBasBrokerSQLCommon.GrainTier;
-using MarBasCommon;
-using MarBasSchema;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.Grain;
-using MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema.GrainTier;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.BrokerImpl
+namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
     public abstract class FileManagementBroker<TDialect>
         : GrainDefManagementBroker<TDialect>, IFileManagementBroker, IAsyncFileManagementBroker

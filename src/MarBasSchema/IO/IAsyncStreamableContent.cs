@@ -1,4 +1,4 @@
-﻿namespace MarBasSchema.IO
+﻿namespace CraftedSolutions.MarBasSchema.IO
 {
     public interface IAsyncStreamableContent : IStreamableContent
     {

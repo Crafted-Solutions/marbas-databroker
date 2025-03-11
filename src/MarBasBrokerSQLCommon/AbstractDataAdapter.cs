@@ -2,11 +2,11 @@
 using System.Data.Common;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using MarBasSchema;
+using CraftedSolutions.MarBasSchema;
 
-namespace MarBasBrokerSQLCommon
+namespace CraftedSolutions.MarBasBrokerSQLCommon
 {
-    public abstract class AbstractDataAdapter: IUpdateable
+    public abstract class AbstractDataAdapter : IUpdateable
     {
         public static string GetAdapterColumnName<TAdapter>(string fieldName) where TAdapter : AbstractDataAdapter
         {

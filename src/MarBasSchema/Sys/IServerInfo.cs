@@ -1,4 +1,4 @@
-﻿namespace MarBasSchema.Sys
+﻿namespace CraftedSolutions.MarBasSchema.Sys
 {
     public interface IServerInfo
     {

@@ -1,6 +1,6 @@
-﻿using MarBasSchema;
+﻿using CraftedSolutions.MarBasSchema;
 
-namespace MarBasAPICore.Models.Trait
+namespace CraftedSolutions.MarBasAPICore.Models.Trait
 {
     public sealed class TraitValuesReplaceModel
     {

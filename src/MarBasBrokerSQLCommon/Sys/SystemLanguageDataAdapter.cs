@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Globalization;
-using MarBasSchema.Sys;
+using CraftedSolutions.MarBasSchema.Sys;
 
-namespace MarBasBrokerSQLCommon.Sys
+namespace CraftedSolutions.MarBasBrokerSQLCommon.Sys
 {
     public class SystemLanguageDataAdapter : AbstractDataAdapter, ISystemLanguage
     {

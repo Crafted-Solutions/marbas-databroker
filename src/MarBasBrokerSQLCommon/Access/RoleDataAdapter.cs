@@ -1,7 +1,8 @@
 ﻿using System.Data.Common;
-using MarBasSchema.Access;
+using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasSchema.Access;
 
-namespace MarBasBrokerSQLCommon.Access
+namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
 {
     public class RoleDataAdapter : AbstractDataAdapter, ISchemaRole
     {
@@ -9,7 +10,7 @@ namespace MarBasBrokerSQLCommon.Access
         {
         }
 
-        public RoleEntitlement Entitlement { get => (RoleEntitlement)(UInt32)_dataReader.GetInt32(_dataReader.GetOrdinal(GetMappedColumnName())); set => throw new NotImplementedException(); }
+        public RoleEntitlement Entitlement { get => (RoleEntitlement)(uint)_dataReader.GetInt32(_dataReader.GetOrdinal(GetMappedColumnName())); set => throw new NotImplementedException(); }
 
         public Guid Id => GetGuid(GetMappedColumnName());
 

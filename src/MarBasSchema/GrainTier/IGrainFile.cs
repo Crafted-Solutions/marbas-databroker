@@ -1,6 +1,6 @@
-﻿using MarBasSchema.Grain;
+﻿using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasSchema.GrainTier
+namespace CraftedSolutions.MarBasSchema.GrainTier
 {
     public enum GrainFileContentAccess
     {

@@ -2,7 +2,7 @@
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text.RegularExpressions;
 
-namespace MarBasAPICore.Swagger
+namespace CraftedSolutions.MarBasAPICore.Swagger
 {
     public class OptionalRouteParameterOperationFilter : IOperationFilter
     {

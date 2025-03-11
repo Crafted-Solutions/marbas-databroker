@@ -1,11 +1,12 @@
-﻿using MarBasBrokerSQLCommon.Access;
-using MarBasCommon;
-using MarBasSchema.Access;
-using MarBasSchema.Broker;
-using MarBasSchema.Event;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon;
+using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.Event;
 using Microsoft.Extensions.Logging;
 
-namespace MarBasBrokerSQLCommon.BrokerImpl
+namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
     public abstract class RoleManagementBroker<TDialect>
         : BaseSchemaBroker<TDialect>, IRoleManagementBroker, IAsyncRoleManagementBroker

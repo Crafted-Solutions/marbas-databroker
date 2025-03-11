@@ -1,10 +1,10 @@
 ﻿using System.Globalization;
 using System.Security.Principal;
-using MarBasSchema.Access;
-using MarBasSchema.GrainDef;
-using MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasSchema.GrainTier;
 
-namespace MarBasSchema
+namespace CraftedSolutions.MarBasSchema
 {
     public static class SchemaDefaults
     {

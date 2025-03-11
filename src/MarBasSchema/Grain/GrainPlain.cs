@@ -1,12 +1,14 @@
 ﻿
-namespace MarBasSchema.Grain
+using CraftedSolutions.MarBasSchema;
+
+namespace CraftedSolutions.MarBasSchema.Grain
 {
     public class GrainPlain : IGrain
     {
         public GrainPlain()
         {
         }
-        
+
         public GrainPlain(IGrain other)
         {
             Id = other.Id;

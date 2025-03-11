@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace MarBasAPICore.Http
+namespace CraftedSolutions.MarBasAPICore.Http
 {
     public class HttpResponseExceptionFilter : IActionFilter, IOrderedFilter
     {

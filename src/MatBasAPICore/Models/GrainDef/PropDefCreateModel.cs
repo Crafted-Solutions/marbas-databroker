@@ -1,4 +1,4 @@
-﻿namespace MarBasAPICore.Models.GrainDef
+﻿namespace CraftedSolutions.MarBasAPICore.Models.GrainDef
 {
     public class PropDefCreateModel : IPropDefCreateModel
     {

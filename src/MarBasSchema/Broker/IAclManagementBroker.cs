@@ -1,7 +1,7 @@
-﻿using MarBasCommon;
-using MarBasSchema.Access;
+﻿using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Access;
 
-namespace MarBasSchema.Broker
+namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface IAclManagementBroker
     {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MarBasAPICore.Models.GrainDef
+namespace CraftedSolutions.MarBasAPICore.Models.GrainDef
 {
     public class TypeDefCreateModel : ITypeDefCreateModel
     {

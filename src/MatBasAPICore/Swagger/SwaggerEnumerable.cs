@@ -1,11 +1,11 @@
 ﻿using System.Collections;
 using System.Text.Json;
-using MarBasCommon.Reflection;
+using CraftedSolutions.MarBasCommon.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
 
-namespace MarBasAPICore.Swagger
+namespace CraftedSolutions.MarBasAPICore.Swagger
 {
     public sealed class SwaggerEnumerable<T> : IModelBinder where T : IEnumerable
     {
@@ -28,7 +28,7 @@ namespace MarBasAPICore.Swagger
                     result += ",";
                 }
                 var v = element.Trim();
-                result += type.IsPrimitive || typeof(Decimal).IsAssignableFrom(type) || v.StartsWith('{') || v.StartsWith('[')
+                result += type.IsPrimitive || typeof(decimal).IsAssignableFrom(type) || v.StartsWith('{') || v.StartsWith('[')
                     ? $"{v}" : $"\"{v}\"";
                 return result;
             });

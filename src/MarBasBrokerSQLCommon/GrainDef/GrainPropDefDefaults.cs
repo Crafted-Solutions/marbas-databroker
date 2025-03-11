@@ -1,4 +1,4 @@
-﻿namespace MarBasBrokerSQLCommon.GrainDef
+﻿namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainDef
 {
     public static class GrainPropDefDefaults
     {

@@ -1,8 +1,8 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
-using MarBasCommon;
+using CraftedSolutions.MarBasCommon;
 
-namespace MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema.Grain
 {
     public class GrainTraitsMap : IDictionary<string, IList<ITraitBase>?>
     {

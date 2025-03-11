@@ -1,8 +1,9 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using MarBasSchema.Grain;
+using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Grain;
 
-namespace MarBasSchema.Transport
+namespace CraftedSolutions.MarBasSchema.Transport
 {
     [JsonDerivedType(typeof(TraitTransportableText), typeDiscriminator: (int)TraitValueType.Text)]
     [JsonDerivedType(typeof(TraitTransportableMemo), typeDiscriminator: (int)TraitValueType.Memo)]
@@ -12,7 +13,7 @@ namespace MarBasSchema.Transport
     [JsonDerivedType(typeof(TraitTransportableGrain), typeDiscriminator: (int)TraitValueType.Grain)]
     [JsonDerivedType(typeof(TraitTransportableFile), typeDiscriminator: (int)TraitValueType.File)]
     [JsonDerivedType(typeof(TraitTransportable))]
-    public interface ITraitTransportable: ITrait
+    public interface ITraitTransportable : ITrait
     {
         [JsonIgnore]
         [IgnoreDataMember]

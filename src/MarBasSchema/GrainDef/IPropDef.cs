@@ -1,6 +1,8 @@
-﻿namespace MarBasSchema.GrainDef
+﻿using CraftedSolutions.MarBasSchema;
+
+namespace CraftedSolutions.MarBasSchema.GrainDef
 {
-    public interface IPropDef: IValueTypeConstraint
+    public interface IPropDef : IValueTypeConstraint
     {
         Guid? ValueConstraintId { get; set; }
         string? ConstraintParams { get; set; }
