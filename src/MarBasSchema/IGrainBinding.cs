@@ -3,15 +3,14 @@ using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using CraftedSolutions.MarBasCommon;
 
-namespace CraftedSolutions.MarBasSchema.Grain
+namespace CraftedSolutions.MarBasSchema
 {
-    public interface ITraitRef : IGrainBinding, ILocalizable
+    public interface IGrainBinding
     {
         [ReadOnly(true)]
         [JsonIgnore]
         [IgnoreDataMember]
-        IIdentifiable PropDef { get; set; }
-        Guid PropDefId { get; }
-        int Revision { get; set; }
+        IIdentifiable Grain { get; set; }
+        Guid GrainId { get; }
     }
 }

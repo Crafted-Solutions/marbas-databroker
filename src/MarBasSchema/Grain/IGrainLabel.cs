@@ -2,7 +2,7 @@
 
 namespace CraftedSolutions.MarBasSchema.Grain
 {
-    public interface IGrainLocalized : IGrainExtended, ILabeled, ILocalized
+    public interface IGrainLabel: ILabeled, IGrainBinding, ILocalized
     {
     }
 }

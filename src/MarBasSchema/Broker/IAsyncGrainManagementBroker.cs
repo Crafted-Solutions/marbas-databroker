@@ -17,5 +17,6 @@ namespace CraftedSolutions.MarBasSchema.Broker
         Task<IEnumerable<IGrainLocalized>> ResolvePathAsync(string? path, CultureInfo? culture = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, IGrainQueryFilter? filter = null, CancellationToken cancellationToken = default);
         Task<IEnumerable<IGrainLocalized>> GetGrainAncestorsAsync(IIdentifiable grain, CultureInfo? culture = null, bool includeSelf = false, CancellationToken cancellationToken = default);
         Task<IDictionary<Guid, bool>> VerifyGrainsExistAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
+        Task<IEnumerable<IGrainLabel>> GetGrainLabelsAsync(IEnumerable<Guid> grainIds, IEnumerable<CultureInfo>? cultures = null, CancellationToken cancellationToken = default);
     }
 }

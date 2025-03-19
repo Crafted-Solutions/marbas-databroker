@@ -34,10 +34,11 @@ namespace CraftedSolutions.MarBasSchema
         public static readonly Guid ContentTrashID = Guid.Parse("00000000-0000-1000-a000-000000000010");
         public static readonly Guid SchemaTrashID = Guid.Parse("00000000-0000-1000-a000-000000000011");
         public static readonly Guid PropDefCommentID = Guid.Parse("00000000-0000-1000-a000-00000000000d");
+        public static readonly Guid LinkTargetID = Guid.Parse("00000000-0000-1000-a000-000000000012");
 
         public static readonly Guid ElementTypeDefID = Guid.Parse("00000000-0000-1000-a000-000000000004");
         public static readonly Guid ContainerTypeDefID = Guid.Parse("00000000-0000-1000-a000-000000000005");
-
+        public static readonly Guid LinkTypeDefID = Guid.Parse("00000000-0000-1000-a000-00000000000f");
 
         public static readonly Guid SuperuserRoleID = Guid.Parse("00000000-0000-1000-b000-000000000000");
         public static readonly Guid DeveloperRoleID = Guid.Parse("00000000-0000-1000-b000-000000000001");
@@ -65,12 +66,14 @@ namespace CraftedSolutions.MarBasSchema
             FilesContainerID,
             ContentTrashID,
             SchemaTrashID,
+            LinkTargetID,
             ElementTypeDefID,
             ContainerTypeDefID,
             PropDefTypeDefID,
             PropDefCommentID,
             FileTypeDefID,
             TrashbinTypeDefID,
+            LinkTypeDefID,
             SuperuserRoleID,
             DeveloperRoleID,
             SchemaManagerRoleID,
