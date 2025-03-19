@@ -2,7 +2,6 @@
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using CraftedSolutions.MarBasCommon;
-using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.Grain;
 using CraftedSolutions.MarBasSchema.Grain.Traits;
 
@@ -46,7 +45,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
         public IIdentifiable Grain { get => (Identifiable)_grainId; set => _grainId = value.Id; }
         [JsonIgnore]
         [IgnoreDataMember]
-        Guid ITraitRef.GrainId => _grainId;
+        Guid IGrainBinding.GrainId => _grainId;
 
         public int Ord { get; set; }
 

@@ -5,20 +5,12 @@ using CraftedSolutions.MarBasCommon;
 
 namespace CraftedSolutions.MarBasSchema.Grain
 {
-    public class TraitRef : ITraitRef
+    public class TraitRef(IIdentifiable grain, IIdentifiable propdef, CultureInfo? culture = null) : ITraitRef
     {
-        protected IIdentifiable _grain;
-        protected IIdentifiable _propdef;
-        protected CultureInfo? _culture;
-        protected int _revision;
-
-        public TraitRef(IIdentifiable grain, IIdentifiable propdef, CultureInfo? culture = null)
-        {
-            _grain = grain;
-            _propdef = propdef;
-            _culture = culture;
-            _revision = 1;
-        }
+        protected IIdentifiable _grain = grain;
+        protected IIdentifiable _propdef = propdef;
+        protected CultureInfo? _culture = culture;
+        protected int _revision = 1;
 
         [JsonIgnore]
         [IgnoreDataMember]

@@ -6,20 +6,16 @@ using CraftedSolutions.MarBasSchema.Grain;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
 {
-    public class GrainLocalizedDataAdapter : GrainExtendedDataAdapter, IGrainLocalized
+    public class GrainLabelAdapter(DbDataReader dataReader) : AbstractDataAdapter(dataReader), IGrainLabel
     {
-
-        public GrainLocalizedDataAdapter(DbDataReader dataReader) : base(dataReader)
-        {
-        }
-
         [Column(name: GeneralEntityDefaults.FieldLangCode)]
         public CultureInfo CultureInfo
         {
             get
             {
                 var ord = _dataReader.GetOrdinal(GetMappedColumnName());
-                return (_dataReader.IsDBNull(ord) ? null : CultureInfo.GetCultureInfo(_dataReader.GetString(ord)))!;
+                var val = _dataReader.IsDBNull(ord) ? null : _dataReader.GetString(ord);
+                return (null == val || "~" == val ? CultureInfo.InvariantCulture : CultureInfo.GetCultureInfo(val))!;
             }
         }
         [Column(name: GeneralEntityDefaults.FieldLangCode)]
@@ -37,5 +33,10 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
             set => throw new NotImplementedException();
         }
 
+        [Column(GeneralEntityDefaults.FieldGrainId)]
+        public IIdentifiable Grain { get => (Identifiable)GetGuid(GetMappedColumnName()); set => throw new NotImplementedException(); }
+
+        [Column(GeneralEntityDefaults.FieldGrainId)]
+        public Guid GrainId => GetGuid(GetMappedColumnName());
     }
 }

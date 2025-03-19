@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using CraftedSolutions.MarBasBrokerSQLCommon;
+using System.Text.RegularExpressions;
 using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
@@ -440,6 +440,87 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                     }
                 }
                 return result;
+            }, cancellationToken);
+        }
+
+        public IEnumerable<IGrainLabel> GetGrainLabels(IEnumerable<Guid> grainIds, IEnumerable<CultureInfo>? cultures = null)
+        {
+            return GetGrainLabelsAsync(grainIds, cultures).Result;
+        }
+
+        public async Task<IEnumerable<IGrainLabel>> GetGrainLabelsAsync(IEnumerable<Guid> grainIds, IEnumerable<CultureInfo>? cultures = null, CancellationToken cancellationToken = default)
+        {
+            if (grainIds?.Any() != true)
+            {
+                return Enumerable.Empty<IGrainLabel>();
+            }
+            CheckProfile();
+            return await ExecuteOnConnection<IEnumerable<IGrainLabel>>(Enumerable.Empty<IGrainLabel>(), async (cmd) =>
+            {
+                var i = 0;
+                var grainIdClause = $"IN ({grainIds.Aggregate(string.Empty, (aggr, id) =>
+                {
+                    var result = aggr;
+                    if (0 < result.Length)
+                    {
+                        result += ", ";
+                    }
+                    var paramName = $"{GeneralEntityDefaults.ParamGrainId}{i++}";
+                    result += $"@{paramName}";
+
+                    cmd.Parameters.Add(_profile.ParameterFactory.Create(paramName, id));
+                    return result;
+                })})";
+
+                if (cultures?.Count() == 1)
+                {
+                    cmd.CommandText =
+$@"SELECT g.{GeneralEntityDefaults.FieldId} AS {GeneralEntityDefaults.FieldGrainId}, l.{GeneralEntityDefaults.FieldLangCode}, COALESCE(l.{GrainLocalizedDefaults.FieldLabel}, g.{MapGrainBaseColumn(nameof(INamed.Name))}) AS {GrainLocalizedDefaults.FieldLabel}
+FROM {GrainBaseConfig.DataSource} AS g
+{GrainLocalizedConfig<TDialect>.SQLJoinLabel}
+WHERE g.{GeneralEntityDefaults.FieldId} {grainIdClause}";
+                    _profile.ParameterFactory.AddParametersForCultureLayer(cmd.Parameters, cultures.FirstOrDefault());
+                }
+                else
+                {
+                    cmd.CommandText = $"SELECT l.* FROM {GrainLocalizedDefaults.DataSourceLabel} AS l WHERE l.{GeneralEntityDefaults.FieldGrainId} {grainIdClause}";
+
+                    if (cultures?.Any() == true)
+                    {
+                        i = 0;
+                        cmd.CommandText += $" AND ({cultures.Aggregate(string.Empty, (aggr, culture) =>
+                        {
+                            var result = aggr;
+                            if (0 < result.Length)
+                            {
+                                result += " OR ";
+                            }
+
+                            var paramName = $"{GeneralEntityDefaults.ParamLangCode}{i}";
+                            cmd.Parameters.Add(_profile.ParameterFactory.Create(paramName, culture.IetfLanguageTag));
+                            result += $"l.{GeneralEntityDefaults.FieldLangCode} = @{paramName}";
+
+                            i++;
+                            return result;
+                        })})";
+                    }
+                    cmd.CommandText += $" ORDER BY {GeneralEntityDefaults.FieldGrainId}, {GeneralEntityDefaults.FieldLangCode}";
+                }
+
+                //if (_logger.IsEnabled(LogLevel.Debug))
+                //{
+                //    _logger.LogDebug("GetGrainLabelsAsync: {sql}", cmd.CommandText);
+                //}
+
+                using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
+                {
+                    var result = new List<IGrainLabel>();
+                    while (await rs.ReadAsync(cancellationToken))
+                    {
+                        result.Add(new GrainLabel(new GrainLabelAdapter(rs)));
+                    }
+                    return result;
+                }
             }, cancellationToken);
         }
 

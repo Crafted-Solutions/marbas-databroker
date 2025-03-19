@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using CraftedSolutions.MarBasAPICore;
 using CraftedSolutions.MarBasAPICore.Http;
 using CraftedSolutions.MarBasAPICore.Models;
 using CraftedSolutions.MarBasAPICore.Models.Grain;
@@ -18,13 +17,14 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
     using FlagResult = IMarBasResult<bool>;
-    using StringResult = IMarBasResult<string?>;
     using GrainTraitsMapResult = IMarBasResult<GrainTraitsMap>;
     using IGrainBaseResult = IMarBasResult<IGrainBase>;
+    using IGrainFlagMapResult = IMarBasResult<IDictionary<Guid, bool>>;
     using IGrainLocalizedResult = IMarBasResult<IGrainLocalized>;
     using IGrainsLocalizedResult = IMarBasResult<IEnumerable<IGrainLocalized>>;
+    using IGrainLabelsResult = IMarBasResult<IEnumerable<IGrainLabel>>;
     using ISchemaAclsResult = IMarBasResult<IEnumerable<ISchemaAclEntry>>;
-    using IGrainFlagMapResult = IMarBasResult<IDictionary<Guid, bool>>;
+    using StringResult = IMarBasResult<string?>;
 
     [Authorize]
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.Grain)]
@@ -200,6 +200,19 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
             {
                 var result = await broker.VerifyGrainsExistAsync(grainIdsToCheck, cancellationToken);
                 return MarbasResultFactory.Create(result.Any(), result);
+            }, _logger);
+        }
+
+        [HttpGet("{id}/Labels", Name = "GetGrainLabels")]
+        [ProducesResponseType(typeof(IGrainLabelsResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<IGrainLabelsResult> Labels([FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, [FromQuery] IEnumerable<string>? lang = null, CancellationToken cancellationToken = default)
+        {
+            HttpResponseException.Throw503IfOffline(broker);
+            return await HttpResponseException.DigestExceptionsAsync(async () =>
+            {
+                var result = await broker.GetGrainLabelsAsync(new[] { id }, lang?.Select(x => CultureInfo.GetCultureInfo(x)), cancellationToken);
+                return MarbasResultFactory.Create(true, result);
             }, _logger);
         }
 
