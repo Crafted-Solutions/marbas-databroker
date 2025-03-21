@@ -9,19 +9,18 @@
         <Description>Sample Web API application for MarBas databroker</Description>
         <UserSecretsId>d16b24b3-4570-4fb8-8c57-153e4044d8ee</UserSecretsId>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-      <Optimize>False</Optimize>
-      <NoWarn>1591;1701;1702</NoWarn>
+    <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+        <Optimize>False</Optimize>
+        <NoWarn>1591;1701;1702</NoWarn>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-      <Optimize>True</Optimize>
-      <NoWarn>1591;1701;1702</NoWarn>
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <Optimize>True</Optimize>
+        <DebugSymbols>False</DebugSymbols>
+        <DebugType>None</DebugType>
+        <NoWarn>1591;1701;1702</NoWarn>
     </PropertyGroup>
     <ItemGroup>
-      <Compile Remove="Data\**" />
-      <Content Remove="Data\**" />
-      <EmbeddedResource Remove="Data\**" />
-      <None Remove="Data\**" />
+      <Content Remove="libman.json" />
     </ItemGroup>
 
     <ItemGroup>
@@ -30,7 +29,19 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="wwwroot\" />
+        <Folder Include="wwwroot\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="libman.json">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Data\.gitkeep">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

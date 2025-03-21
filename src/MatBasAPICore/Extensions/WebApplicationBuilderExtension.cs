@@ -5,6 +5,7 @@ using CraftedSolutions.MarBasCommon.Json;
 using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.IO;
 using CraftedSolutions.MarBasSchema.Transport;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -36,7 +37,7 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
             return result;
         }
 
-        public static IServiceCollection ConfigureMarBasSwagger(this IServiceCollection services, bool addBasicAuth = false, Action<SwaggerGenOptions>? setupAction = null)
+        public static IServiceCollection ConfigureMarBasSwagger(this IServiceCollection services, IConfiguration configuration, Action<SwaggerGenOptions>? setupAction = null)
         {
             var result = services.AddSwaggerGen((options) =>
             {
@@ -53,7 +54,8 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                     options.IncludeXmlComments(docPath);
                 }
 
-                if (addBasicAuth)
+                var authSchema = configuration.GetValue("Auth:Schema", "Basic");
+                if ("Basic" == authSchema)
                 {
                     options.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
                     {
@@ -74,6 +76,11 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                         }
                     });
                 }
+                else
+                {
+                    // TODO JWT
+                    throw new NotImplementedException($"Unknown authentication schema: ${authSchema}");
+                }
 
                 setupAction?.Invoke(options);
             });
@@ -91,6 +98,20 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                 options.AddPolicy("Export", TimeSpan.FromSeconds(configuration.GetValue("Export", 360)));
             });
             return result;
+        }
+
+        public static AuthenticationBuilder ConfigureMarBasAuthentication(this IServiceCollection services, IConfiguration configuration)
+        {
+            var schema = configuration.GetValue("Schema", "Basic");
+            if ("Basic" == schema)
+            {
+                return services.AddAuthentication("BasicAuthentication").AddScheme<AuthenticationSchemeOptions, DevelBasicAuthHandler>("BasicAuthentication", null);
+            }
+            else
+            {
+                // TODO JWT
+                throw new NotImplementedException($"Unknown authentication schema: ${schema}");
+            }
         }
     }
 }
