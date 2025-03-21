@@ -11,3 +11,4 @@
 *.user
 MarBasBrokerEnginesDebug.sln
 /srcdbg
+/distr
