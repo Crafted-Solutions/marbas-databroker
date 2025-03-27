@@ -2,6 +2,7 @@
 using System.Globalization;
 using CraftedSolutions.MarBasBrokerSQLCommon;
 using CraftedSolutions.MarBasBrokerSQLCommon.Sys;
+using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.Access;
 using CraftedSolutions.MarBasSchema.Broker;
 using CraftedSolutions.MarBasSchema.Sys;
@@ -58,6 +59,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             var result = new List<ISystemLanguage>();
             return await ExecuteOnConnection(result, async (cmd) =>
             {
+                var codeCol = AbstractDataAdapter.GetAdapterColumnName<SystemLanguageDataAdapter>(nameof(ISystemLanguage.IsoCode));
+
                 cmd.CommandText = $"{SystemLanguageConfig<TDialect>.SQLSelectLang}";
                 if (null != cultures)
                 {
@@ -70,13 +73,23 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                     });
                     if (0 < clause.Length)
                     {
-                        cmd.CommandText += $"{AbstractDataAdapter.GetAdapterColumnName<SystemLanguageDataAdapter>(nameof(ISystemLanguage.IsoCode))} IN ({clause})";
+                        cmd.CommandText += $"{codeCol} IN ({clause})";
                     }
                 }
                 if (0 == cmd.Parameters.Count)
                 {
                     cmd.CommandText += "(1 = 1)";
                 }
+
+                cmd.CommandText += $@" ORDER BY
+	CASE
+		WHEN {codeCol} = @{GeneralEntityDefaults.ParamLangDefault} OR {codeCol} LIKE @{GeneralEntityDefaults.ParamLangPrefix} THEN 1
+		ELSE 2
+	END, {codeCol}";
+
+                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamLangDefault, SchemaDefaults.Culture.TwoLetterISOLanguageName));
+                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamLangPrefix, $"{SchemaDefaults.Culture.TwoLetterISOLanguageName}-%"));
+
                 using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
                 {
                     while (await rs.ReadAsync(cancellationToken))

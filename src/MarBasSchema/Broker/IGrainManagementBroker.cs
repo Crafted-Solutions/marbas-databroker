@@ -17,5 +17,6 @@ namespace CraftedSolutions.MarBasSchema.Broker
         IEnumerable<IGrainLocalized> ResolvePath(string? path, CultureInfo? culture = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, IGrainQueryFilter? filter = null);
         IEnumerable<IGrainLocalized> GetGrainAncestors(IIdentifiable grain, CultureInfo? culture = null, bool includeSelf = false);
         IDictionary<Guid, bool> VerifyGrainsExist(IEnumerable<Guid> ids);
+        IEnumerable<IGrainLabel> GetGrainLabels(IEnumerable<Guid> grainIds, IEnumerable<CultureInfo>? cultures = null);
     }
 }

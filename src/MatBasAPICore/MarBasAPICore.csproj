@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Version>0.1.16.1</Version>
+        <Version>0.1.17</Version>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <Description>Core Web API implementation for MarBas databroker</Description>
     </PropertyGroup>
@@ -22,7 +22,7 @@
   </ItemGroup>
   
     <ItemGroup>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="8.0.0" />
     </ItemGroup>
 
     <ItemGroup>

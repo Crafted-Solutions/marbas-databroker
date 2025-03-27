@@ -1,6 +1,5 @@
 ﻿using System.Data.Common;
 using System.Globalization;
-using CraftedSolutions.MarBasBrokerSQLCommon;
 using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
 using CraftedSolutions.MarBasCommon;
@@ -440,10 +439,18 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             }
             using (var cmd = ta.Connection!.CreateCommand())
             {
-                cmd.CommandText = $"{TraitBaseConfig<TDialect>.SQLDelete}{MapTraitColumn(nameof(ITraitBase.GrainId))} = @{GeneralEntityDefaults.ParamGrainId} AND {MapTraitColumn(nameof(ITraitRef.PropDefId))} = @{TraitBaseDefaults.ParamPropDefId} AND {MapTraitColumn(nameof(ITraitRef.Culture))} = @{GeneralEntityDefaults.ParamLangCode} AND {MapTraitColumn(nameof(ITraitRef.Revision))} = @{GeneralEntityDefaults.ParamRevision}";
+                cmd.CommandText = $"{TraitBaseConfig<TDialect>.SQLDelete}{MapTraitColumn(nameof(ITraitBase.GrainId))} = @{GeneralEntityDefaults.ParamGrainId} AND {MapTraitColumn(nameof(ITraitRef.PropDefId))} = @{TraitBaseDefaults.ParamPropDefId} AND {MapTraitColumn(nameof(ITraitRef.Revision))} = @{GeneralEntityDefaults.ParamRevision}";
+                if (null == traitRef.Culture)
+                {
+                    cmd.CommandText += $" AND {MapTraitColumn(nameof(ITraitRef.Culture))} IS NULL";
+                }
+                else
+                {
+                    cmd.CommandText += $" AND {MapTraitColumn(nameof(ITraitRef.Culture))} = @{GeneralEntityDefaults.ParamLangCode}";
+                    cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamLangCode, traitRef.Culture));
+                }
                 cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamGrainId, traitRef.GrainId));
                 cmd.Parameters.Add(_profile.ParameterFactory.Create(TraitBaseDefaults.ParamPropDefId, traitRef.PropDefId));
-                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamLangCode, traitRef.Culture));
                 cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamRevision, traitRef.Revision));
 
                 return await cmd.ExecuteNonQueryAsync(cancellationToken);

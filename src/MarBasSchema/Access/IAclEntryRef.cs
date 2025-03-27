@@ -5,17 +5,12 @@ using CraftedSolutions.MarBasCommon;
 
 namespace CraftedSolutions.MarBasSchema.Access
 {
-    public interface IAclEntryRef
+    public interface IAclEntryRef: IGrainBinding
     {
         Guid RoleId { get; }
         [ReadOnly(true)]
         [JsonIgnore]
         [IgnoreDataMember]
         IIdentifiable Role { get; set; }
-        Guid GrainId { get; }
-        [ReadOnly(true)]
-        [JsonIgnore]
-        [IgnoreDataMember]
-        IIdentifiable Grain { get; set; }
     }
 }
