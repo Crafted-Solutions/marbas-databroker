@@ -887,11 +887,17 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET {implCol} = {Eng
             var result = 0;
             using (var cmd = ta.Connection!.CreateCommand())
             {
-                var baseFields = new Dictionary<string, (Type, object?)> { { GeneralEntityDefaults.FieldBaseId, (typeof(Guid), grainId) } };
+                var valueTypeCol = MapPropDefColumn(nameof(IValueTypeConstraint.ValueType));
+                var baseFields = new Dictionary<string, (Type, object?)>
+                {
+                    { GeneralEntityDefaults.FieldBaseId, (typeof(Guid), grainId) },
+                    { valueTypeCol, (typeof(string), TraitValueFactory.GetValueTypeAsString(propDef.ValueType)) }
+                };
                 cmd.CommandText = @$"{GrainPropDefConfig<TDialect>.SQLInsertPropDef}{PrepareObjectInserParameters<IPropDef, GrainPropDefDataAdapter>(cmd.Parameters, propDef, baseFields)}
 ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
-                var props = typeof(IPropDef).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x =>
-                    true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
+
+                var props = typeof(IPropDef).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+                    .Where(x => true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
                 var first = true;
                 foreach (var prop in props)
                 {
@@ -909,6 +915,14 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
                 {
                     cmd.Parameters.RemoveAt(valTypeParam.ParameterName);
                 }
+                else
+                {
+                    if (!first)
+                    {
+                        cmd.CommandText += ", ";
+                    }
+                    cmd.CommandText += $"{valueTypeCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valueTypeCol)}";
+                }
                 cmd.Parameters.Add(valTypeParam);
 
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
@@ -923,12 +937,14 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
         protected async Task<int> UpdatePropDefTierInTA(DbTransaction ta, Guid grainId, IPropDef propDef, CancellationToken cancellationToken = default)
         {
             var grainPropDef = new GrainPropDef(grainId);
-            var props = typeof(IPropDef).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x => true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
+            var props = typeof(IPropDef).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+                .Where(x => true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
 
             foreach (var prop in props)
             {
                 prop.SetValue(grainPropDef, prop.GetValue(propDef));
             }
+            grainPropDef.ValueType = propDef.ValueType;
 
             return 0 < grainPropDef.GetDirtyFields<IGrainPropDef>().Count
                 ? await StoreGrainPropDefTiersInTA(ta, new[] { grainPropDef }, cancellationToken: cancellationToken)
