@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -32,7 +34,13 @@ namespace CraftedSolutions.MarBasAPICore.Http
 
         protected async override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            var authorizationHeader = Request.Headers["Authorization"].ToString();
+            var endpoint = Context.GetEndpoint();
+            if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null)
+            {
+                return await Task.FromResult(AuthenticateResult.NoResult());
+            }
+
+            var authorizationHeader = Request.Headers.Authorization.ToString();
             if (authorizationHeader != null && authorizationHeader.StartsWith("basic", StringComparison.OrdinalIgnoreCase))
             {
                 var token = authorizationHeader["Basic ".Length..].Trim();
@@ -55,7 +63,7 @@ namespace CraftedSolutions.MarBasAPICore.Http
                 }
             }
             Response.StatusCode = 401;
-            Response.Headers["WWW-Authenticate"] = "Basic realm=\"marbas.localhost\"";
+            Response.Headers.WWWAuthenticate = "Basic realm=\"marbas.localhost\"";
             return await Task.FromResult(AuthenticateResult.Fail("Invalid Authorization"));
         }
 

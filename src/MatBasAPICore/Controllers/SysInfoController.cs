@@ -1,11 +1,12 @@
-﻿using CraftedSolutions.MarBasAPICore;
-using CraftedSolutions.MarBasAPICore.Routing;
+﻿using CraftedSolutions.MarBasAPICore.Routing;
 using CraftedSolutions.MarBasSchema.Broker;
 using CraftedSolutions.MarBasSchema.Sys;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CraftedSolutions.MarBasAPICore.Controllers
 {
+    [AllowAnonymous]
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.SysInfo)]
     [ApiController]
     public sealed class SysInfoController : ControllerBase
