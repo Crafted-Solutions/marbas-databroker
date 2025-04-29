@@ -10,7 +10,7 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
     public sealed class SQLiteProfile : SQLBrokerProfile<SqliteConnection, SqliteConnectionStringBuilder>
     {
-        public static readonly Version SchemaVersion = new(0, 1, 15);
+        public static readonly Version SchemaVersion = new(0, 1, 16);
 
         public SQLiteProfile(IConfiguration configuration, ILogger<SQLiteProfile> logger)
             : base(configuration, logger)
