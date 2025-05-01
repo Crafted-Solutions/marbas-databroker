@@ -1,5 +1,6 @@
 ﻿using CraftedSolutions.MarBasCommon;
 using CraftedSolutions.MarBasSchema;
+using CraftedSolutions.MarBasSchema.Broker;
 using CraftedSolutions.MarBasSchema.Grain;
 using CraftedSolutions.MarBasSchema.Grain.Traits;
 using System.ComponentModel.DataAnnotations;
@@ -9,13 +10,10 @@ using System.Text.Json.Serialization;
 
 namespace CraftedSolutions.MarBasAPICore.Models.Trait
 {
-    public class TraitCreateModel : ITraitCreateModel
+    public sealed class TraitLookupModel: ITraitLookupModel
     {
         private readonly TraitRef _ref = new();
         private object? _value;
-
-        [Required]
-        public Guid GrainId { get => _ref.GrainId; set => _ref.Grain = (Identifiable)value; }
 
         [Required]
         public Guid PropDefId { get => _ref.PropDefId; set => _ref.PropDef = new SimpleValueTypeContraint((Identifiable)value, ValueType ?? TraitValueType.Text); }
@@ -40,6 +38,8 @@ namespace CraftedSolutions.MarBasAPICore.Models.Trait
             }
             set => _value = value;
         }
+
+        public IEnumerable<ListSortOption<GrainSortField>>? SortOptions { get; set; }
 
         [JsonIgnore]
         [IgnoreDataMember]

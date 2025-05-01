@@ -121,18 +121,19 @@ BEGIN
   WHERE rowid = new.rowid;
 END;
 
-CREATE TRIGGER mb_tg_grain_base_insert_parent_update
+CREATE TRIGGER mb_tg_grain_base_insert
   AFTER INSERT
   ON mb_grain_base
 BEGIN
   UPDATE mb_grain_base SET child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = new.parent_id) WHERE id = new.parent_id;
 END;
 
-CREATE TRIGGER mb_tg_grain_base_delete_parent_update
+CREATE TRIGGER mb_tg_grain_base_delete
   AFTER DELETE
   ON mb_grain_base
 BEGIN
   UPDATE mb_grain_base SET child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = old.parent_id) WHERE id = old.parent_id;
+  DELETE FROM mb_grain_trait WHERE val_guid = old.id;
 END;
 
 CREATE TRIGGER mb_tg_grain_base_update_parent_update
@@ -249,6 +250,7 @@ CREATE INDEX mb_fki_grain_label_grain
 CREATE TRIGGER mb_tg_grain_label_insert_grain_name
   BEFORE INSERT
   ON mb_grain_label
+  WHEN NOT EXISTS(SELECT 1 FROM mb_grain_label WHERE grain_id = new.grain_id AND lang_code = new.lang_code)
 BEGIN
   SELECT
   RAISE (IGNORE)
@@ -351,6 +353,10 @@ CREATE INDEX mb_idx_propdef_versionable
   ON mb_propdef
   (versionable);
 
+CREATE INDEX mb_idx_propdef_value_constraint
+  ON mb_propdef
+  (value_constraint);
+
 CREATE TRIGGER mb_tg_propdef_update_mtime
   AFTER UPDATE
   ON mb_propdef
@@ -401,6 +407,26 @@ CREATE TABLE mb_grain_trait (
 CREATE INDEX mb_idx_grain_trait_lang
   ON mb_grain_trait
   (lang_code);
+
+CREATE INDEX mb_idx_grain_trait_boolean
+  ON mb_grain_trait
+  (val_boolean);
+
+CREATE INDEX mb_idx_grain_trait_text
+  ON mb_grain_trait
+  (val_text);
+
+CREATE INDEX mb_idx_grain_trait_number
+  ON mb_grain_trait
+  (val_number);
+
+CREATE INDEX mb_idx_grain_trait_memo
+  ON mb_grain_trait
+  (val_memo);
+
+CREATE INDEX mb_idx_grain_trait_guid
+  ON mb_grain_trait
+  (val_guid);
 
 CREATE UNIQUE INDEX mb_idx_grain_trait_propdef
   ON mb_grain_trait
@@ -650,11 +676,12 @@ LEFT JOIN mb_typedef AS t
 
 CREATE VIEW mb_grain_trait_with_meta
 AS
-SELECT p.*, a.path, b.name, d.value_type, d.cardinality_min, d.cardinality_max, d.value_constraint
+SELECT p.*, a.path, b.name,
+    d.value_type, d.cardinality_min, d.cardinality_max, d.value_constraint, d.localizable, d.versionable
     FROM mb_grain_trait AS p
 LEFT JOIN mb_grain_with_path AS a
     ON a.id = p.grain_id
-LEFT JOIN "mb_grain_base" AS b
+LEFT JOIN mb_grain_base AS b
     ON b.id = p.propdef_id
 LEFT JOIN mb_propdef AS d
     ON d.base_id = p.propdef_id;
