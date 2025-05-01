@@ -15,5 +15,6 @@ namespace CraftedSolutions.MarBasSchema.Broker
         int ReplaceTraitValues<T>(ITraitRef traitRef, IEnumerable<T> values);
         int ResetTraitValues(ITraitRef traitRef);
         int ReindexTraits(IIdentifiable grain, IIdentifiable? propDef = null, CultureInfo? culture = null, int revision = -1, bool trimOverflow = false);
+        IEnumerable<IGrainLocalized> LookupGrainsByTrait(ITraitRef traitRef, object? value = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null);
     }
 }

@@ -15,5 +15,6 @@ namespace CraftedSolutions.MarBasSchema.Broker
         Task<int> ReplaceTraitValuesAsync<T>(ITraitRef traitRef, IEnumerable<T> values, CancellationToken cancellationToken = default);
         Task<int> ResetTraitValuesAsync(ITraitRef traitRef, CancellationToken cancellationToken = default);
         Task<int> ReindexTraitsAsync(IIdentifiable grain, IIdentifiable? propDef = null, CultureInfo? culture = null, int revision = -1, bool trimOverflow = false, CancellationToken cancellationToken = default);
+        Task<IEnumerable<IGrainLocalized>> LookupGrainsByTraitAsync(ITraitRef traitRef, object? value = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, CancellationToken cancellationToken = default);
     }
 }

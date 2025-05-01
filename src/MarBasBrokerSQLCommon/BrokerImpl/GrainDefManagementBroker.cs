@@ -1,6 +1,4 @@
-﻿using System.Data.Common;
-using System.Globalization;
-using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
 using CraftedSolutions.MarBasCommon;
 using CraftedSolutions.MarBasSchema;
@@ -10,6 +8,8 @@ using CraftedSolutions.MarBasSchema.Grain;
 using CraftedSolutions.MarBasSchema.Grain.Traits;
 using CraftedSolutions.MarBasSchema.GrainDef;
 using Microsoft.Extensions.Logging;
+using System.Data.Common;
+using System.Globalization;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
@@ -344,9 +344,13 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
                     using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
                     {
+                        if (_logger.IsEnabled(LogLevel.Trace))
+                        {
+                            _logger.LogTrace("GetTypeDefProperties: {sql}", cmd.CommandText);
+                        }
                         if (_logger.IsEnabled(LogLevel.Debug))
                         {
-                            _logger.LogDebug("GetTypeDefPropertiesAsync rs.HasRows={hasRows}, rs.FieldCount={fieldCount}, cmd={commadText}", rs.HasRows, rs.FieldCount, cmd.CommandText);
+                            _logger.LogDebug("GetTypeDefProperties rs.HasRows={hasRows}, rs.FieldCount={fieldCount}", rs.HasRows, rs.FieldCount);
                         }
                         return await EnumGrainDataReader<IGrainPropDefLocalized, GrainPropDef, GrainPropDefDataAdapter>(rs, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
                     }

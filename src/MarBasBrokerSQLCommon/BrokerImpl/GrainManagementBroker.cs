@@ -1,9 +1,4 @@
-﻿using System.Data.Common;
-using System.Globalization;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
 using CraftedSolutions.MarBasCommon;
@@ -14,6 +9,10 @@ using CraftedSolutions.MarBasSchema.Grain;
 using CraftedSolutions.MarBasSchema.GrainDef;
 using CraftedSolutions.MarBasSchema.GrainTier;
 using Microsoft.Extensions.Logging;
+using System.Data.Common;
+using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
@@ -273,7 +272,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 {
                     var parentId = container?.Id ?? SchemaDefaults.RootID;
                     cmd.CommandText = recursive && SchemaDefaults.RootID.Equals(parentId)
-                        ? $"{GrainLocalizedConfig<TDialect>.SQLSelectByAclLocalized}"
+                        ? GrainLocalizedConfig<TDialect>.SQLSelectByAclLocalized
                         : $"{GrainLocalizedConfig<TDialect>.SQLSelectByAclLocalized}{(recursive ? $"{GrainBaseConfig.GrainExtFieldIdPath} LIKE" : $"{MapGrainBaseColumn(nameof(IGrainBase.ParentId))} =")} @{GrainBaseConfig.ParamParentId}";
 
                     _profile.ParameterFactory.AddParametersForGrainAclCheck(cmd.Parameters, (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id);
@@ -507,10 +506,10 @@ WHERE g.{GeneralEntityDefaults.FieldId} {grainIdClause}";
                     cmd.CommandText += $" ORDER BY {GeneralEntityDefaults.FieldGrainId}, {GeneralEntityDefaults.FieldLangCode}";
                 }
 
-                //if (_logger.IsEnabled(LogLevel.Debug))
-                //{
-                //    _logger.LogDebug("GetGrainLabelsAsync: {sql}", cmd.CommandText);
-                //}
+                if (_logger.IsEnabled(LogLevel.Trace))
+                {
+                    _logger.LogTrace("GetGrainLabelsAsync: {sql}", cmd.CommandText);
+                }
 
                 using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
                 {
