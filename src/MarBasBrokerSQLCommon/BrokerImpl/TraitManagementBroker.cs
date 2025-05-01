@@ -1,6 +1,4 @@
-﻿using System.Data.Common;
-using System.Globalization;
-using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
 using CraftedSolutions.MarBasCommon;
 using CraftedSolutions.MarBasSchema;
@@ -9,6 +7,8 @@ using CraftedSolutions.MarBasSchema.Broker;
 using CraftedSolutions.MarBasSchema.Grain;
 using CraftedSolutions.MarBasSchema.Grain.Traits;
 using Microsoft.Extensions.Logging;
+using System.Data.Common;
+using System.Globalization;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
@@ -351,9 +351,58 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             }, cancellationToken);
         }
 
-        #region Helper Methods
+        public IEnumerable<IGrainLocalized> LookupGrainsByTrait(ITraitRef traitRef, object? value = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null)
+        {
+            return LookupGrainsByTraitAsync(traitRef, value, sortOptions).Result;
+        }
 
-        protected async Task<ITraitBase?> CreateTraitInTA(DbTransaction ta, ITraitRef traitRef, object? value = null, int ord = 0, bool aclWasChecked = false, Guid? useId = null, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<IGrainLocalized>> LookupGrainsByTraitAsync(ITraitRef traitRef, object? value = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, CancellationToken cancellationToken = default)
+        {
+            CheckProfile();
+            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) =>
+            {
+                using (cmd)
+                {
+                    var valType = (traitRef.PropDef as IValueTypeConstraint)?.ValueType ?? (traitRef as IValueTypeConstraint)?.ValueType ?? TraitValueType.Text;
+
+                    cmd.CommandText = @$"{GrainLocalizedConfig<TDialect>.SQLSelectByAclLocalizedTrunk}
+JOIN ({TraitBaseConfig<TDialect>.SQLSelectMeta}) AS t
+ON t.{GeneralEntityDefaults.FieldGrainId} = g.{GeneralEntityDefaults.FieldId} AND t.{GeneralEntityDefaults.FieldRevision} = g.{GeneralEntityDefaults.FieldRevision}
+WHERE t.{GeneralEntityDefaults.FieldRevision} = @{GeneralEntityDefaults.ParamRevision} AND t.{TraitBaseDataAdapter.GetValueColumn(valType)}";
+                    cmd.CommandText += null == value ? " IS NULL" : $" = @{TraitBaseDefaults.ParamValue}";
+
+                    var orderBy = PrepareListOrderByClause<GrainSortField, GrainLocalizedDataAdapter>(sortOptions, "g");
+                    if (string.IsNullOrEmpty(orderBy))
+                    {
+                        orderBy = $" ORDER BY g.{MapGrainBaseColumn(nameof(IGrainBase.Path))}";
+                    }
+                    cmd.CommandText += orderBy;
+
+                    _profile.ParameterFactory.AddParametersForGrainAclCheck(cmd.Parameters, (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id);
+                    _profile.ParameterFactory.AddParametersForCultureLayer(cmd.Parameters, traitRef.CultureInfo);
+
+                    cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamRevision, traitRef.Revision));
+                    if (null != value)
+                    {
+                        cmd.Parameters.Add(_profile.ParameterFactory.PrepareTraitValueParameter(TraitBaseDefaults.ParamValue, valType, value));
+                    }
+
+                    if (_logger.IsEnabled(LogLevel.Trace))
+                    {
+                        _logger.LogTrace("LookupGrainsByTrait: {sql}", cmd.CommandText);
+                    }
+
+                    using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
+                    {
+                        return await EnumGrainDataReader<IGrainLocalized, GrainLocalized, GrainLocalizedDataAdapter>(rs, GrainExtendedDataAdapter.ExtensionColumn.All, cancellationToken).ToListAsync(cancellationToken);
+                    }
+                }
+            }, cancellationToken);
+        }
+
+    #region Helper Methods
+
+    protected async Task<ITraitBase?> CreateTraitInTA(DbTransaction ta, ITraitRef traitRef, object? value = null, int ord = 0, bool aclWasChecked = false, Guid? useId = null, CancellationToken cancellationToken = default)
         {
             if (!aclWasChecked)
             {

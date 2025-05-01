@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using CraftedSolutions.MarBasAPICore.Http;
+﻿using CraftedSolutions.MarBasAPICore.Http;
 using CraftedSolutions.MarBasAPICore.Models;
 using CraftedSolutions.MarBasAPICore.Models.Trait;
 using CraftedSolutions.MarBasAPICore.Routing;
@@ -11,17 +10,18 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
+    using IGrainsLocalizedResult = IMarBasResult<IEnumerable<IGrainLocalized>>;
     using ITraitResult = IMarBasResult<ITraitBase>;
     using ITraitsResult = IMarBasResult<IEnumerable<ITraitBase>>;
 
     [Authorize]
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.Trait)]
     [ApiController]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "We want the token without interference with default parameters")]
     public sealed class TraitController : ControllerBase
     {
         private readonly ILogger _logger;
@@ -35,7 +35,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(ITraitResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<ITraitResult> Get(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id)
+        public async Task<ITraitResult> Get([FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -53,7 +53,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(CountResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<CountResult> Delete(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, Guid id)
+        public async Task<CountResult> Delete([FromServices] IAsyncSchemaBroker schemaBroker, Guid id, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -67,7 +67,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(CountResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<CountResult> Store(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, TraitUpdateModel model)
+        public async Task<CountResult> Store([FromServices] IAsyncSchemaBroker schemaBroker, TraitUpdateModel model, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -81,7 +81,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(ITraitResult), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<ITraitResult> Put(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, TraitCreateModel model)
+        public async Task<ITraitResult> Put([FromServices] IAsyncSchemaBroker schemaBroker, TraitCreateModel model, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -99,8 +99,8 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [HttpGet("Values/{grainId}/{propdefId}", Name = "GetTraitValues")]
         [ProducesResponseType(typeof(ITraitsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<ITraitsResult> GetTraitValues(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker,
-            [FromRoute] Guid grainId, [FromRoute] Guid propdefId, [FromQuery] int revision = 1, [FromQuery] string? lang = null)
+        public async Task<ITraitsResult> GetTraitValues([FromServices] IAsyncSchemaBroker schemaBroker,
+            [FromRoute] Guid grainId, [FromRoute] Guid propdefId, [FromQuery] int revision = 1, [FromQuery] string? lang = null, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -115,7 +115,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(CountResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<CountResult> SetTraitValues(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, TraitValuesReplaceModel model)
+        public async Task<CountResult> SetTraitValues([FromServices] IAsyncSchemaBroker schemaBroker, TraitValuesReplaceModel model, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -132,8 +132,8 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(CountResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<CountResult> DeleteTraitValues(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker,
-            [FromRoute] Guid grainId, [FromRoute] Guid propdefId, [FromQuery] int revision = 1, [FromQuery] string? lang = null)
+        public async Task<CountResult> DeleteTraitValues([FromServices] IAsyncSchemaBroker schemaBroker,
+            [FromRoute] Guid grainId, [FromRoute] Guid propdefId, [FromQuery] int revision = 1, [FromQuery] string? lang = null, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -141,6 +141,19 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
                 var traitRef = new TraitRef((Identifiable)grainId, (Identifiable)propdefId, string.IsNullOrEmpty(lang) ? null : CultureInfo.GetCultureInfo(lang)) { Revision = revision };
                 var result = await schemaBroker.ResetTraitValuesAsync(traitRef, cancellationToken);
                 return MarbasResultFactory.Create(0 < result, result);
+            }, _logger);
+        }
+
+        [HttpPost("LookupGrains")]
+        [ProducesResponseType(typeof(IGrainsLocalizedResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<IGrainsLocalizedResult> LookupGrains([FromServices] IAsyncSchemaBroker schemaBroker, TraitLookupModel model, CancellationToken cancellationToken = default)
+        {
+            HttpResponseException.Throw503IfOffline(schemaBroker);
+            return await HttpResponseException.DigestExceptionsAsync(async () =>
+            {
+                var result = await schemaBroker.LookupGrainsByTraitAsync(model.Ref, model.Value, model.SortOptions, cancellationToken);
+                return MarbasResultFactory.Create(true, result);
             }, _logger);
         }
     }
