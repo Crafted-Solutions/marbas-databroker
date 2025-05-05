@@ -368,7 +368,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                     cmd.CommandText = @$"{GrainLocalizedConfig<TDialect>.SQLSelectByAclLocalizedTrunk}
 JOIN ({TraitBaseConfig<TDialect>.SQLSelectMeta}) AS t
 ON t.{GeneralEntityDefaults.FieldGrainId} = g.{GeneralEntityDefaults.FieldId} AND t.{GeneralEntityDefaults.FieldRevision} = g.{GeneralEntityDefaults.FieldRevision}
-WHERE t.{GeneralEntityDefaults.FieldRevision} = @{GeneralEntityDefaults.ParamRevision} AND t.{TraitBaseDataAdapter.GetValueColumn(valType)}";
+WHERE t.{MapTraitColumn(nameof(ITrait.PropDefId))} = @{TraitBaseDefaults.ParamPropDefId} AND t.{GeneralEntityDefaults.FieldRevision} = @{GeneralEntityDefaults.ParamRevision} AND t.{TraitBaseDataAdapter.GetValueColumn(valType)}";
                     cmd.CommandText += null == value ? " IS NULL" : $" = @{TraitBaseDefaults.ParamValue}";
 
                     var orderBy = PrepareListOrderByClause<GrainSortField, GrainLocalizedDataAdapter>(sortOptions, "g");
@@ -381,6 +381,7 @@ WHERE t.{GeneralEntityDefaults.FieldRevision} = @{GeneralEntityDefaults.ParamRev
                     _profile.ParameterFactory.AddParametersForGrainAclCheck(cmd.Parameters, (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id);
                     _profile.ParameterFactory.AddParametersForCultureLayer(cmd.Parameters, traitRef.CultureInfo);
 
+                    cmd.Parameters.Add(_profile.ParameterFactory.Create(TraitBaseDefaults.ParamPropDefId, traitRef.PropDefId));
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamRevision, traitRef.Revision));
                     if (null != value)
                     {
