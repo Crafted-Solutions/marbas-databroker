@@ -51,8 +51,8 @@ namespace CraftedSolutions.MarBasSchema
 
         public const string AnonymousUserName = "anonymous";
         public const string SystemUserName = $"system{SystemPrincipalSuffix}";
-        public static readonly IPrincipal AnonymousUser = new GenericPrincipal(new GenericIdentity(AnonymousUserName), new string[] { SchemaRole.Everyone.Name });
-        public static readonly IPrincipal SystemUser = new GenericPrincipal(new GenericIdentity(SystemUserName), new string[] { SchemaRole.Superuser.Name });
+        public static readonly IPrincipal AnonymousUser = new GenericPrincipal(new GenericIdentity(AnonymousUserName), [SchemaRole.Everyone.Name]);
+        public static readonly IPrincipal SystemUser = new GenericPrincipal(new GenericIdentity(SystemUserName), [SchemaRole.Superuser.Name]);
 
 
         public static readonly ISet<Guid> BuiltInIds = new HashSet<Guid>()

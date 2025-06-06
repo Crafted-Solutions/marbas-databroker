@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+﻿using CraftedSolutions.MarBasAPICore.Auth;
 using CraftedSolutions.MarBasAPICore.Http;
 using CraftedSolutions.MarBasAPICore.Swagger;
 using CraftedSolutions.MarBasCommon.Json;
@@ -6,12 +6,16 @@ using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.IO;
 using CraftedSolutions.MarBasSchema.Transport;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Text.Json.Serialization;
 
 namespace CraftedSolutions.MarBasAPICore.Extensions
 {
@@ -54,37 +58,90 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                     options.IncludeXmlComments(docPath);
                 }
 
-                var authSchema = configuration.GetValue("Auth:Schema", "Basic");
-                if ("Basic" == authSchema)
+                var authConfig = AuthConfig.Bind(configuration.GetSection(configuration.GetValue(AuthConfig.SectionSwitch, AuthConfig.SectionName)), true);
+                switch (authConfig)
                 {
-                    options.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
-                    {
-                        Description = "Basic auth authentication",
-                        Name = "Authorization",
-                        In = ParameterLocation.Header,
-                        Scheme = "basic",
-                        Type = SecuritySchemeType.Http
-                    });
-                    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-                    {
+                    case IBasicAuthConfig basicAuth:
+                        options.AddSecurityDefinition(basicAuth.Schema, new OpenApiSecurityScheme
                         {
-                            new OpenApiSecurityScheme
+                            Description = "Basic auth authentication",
+                            Name = "Authorization",
+                            In = ParameterLocation.Header,
+                            Scheme = "basic",
+                            Type = SecuritySchemeType.Http
+                        });
+                        options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                        {
                             {
-                                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Basic" }
-                            },
-                            new List<string>()
-                        }
-                    });
-                }
-                else
-                {
-                    // TODO JWT
-                    throw new NotImplementedException($"Unknown authentication schema: ${authSchema}");
+                                new OpenApiSecurityScheme
+                                {
+                                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = basicAuth.Schema }
+                                },
+                                new List<string>()
+                            }
+                        });
+                        break;
+
+                    case OIDCAuthConfigBackend oidcConfig:
+                        var scheme = new OpenApiSecurityScheme
+                        {
+                            In = ParameterLocation.Header,
+                            Name = "Authorization",
+                            Flows = oidcConfig.GenerateFlows(),
+                            Type = SecuritySchemeType.OAuth2
+                        };
+                        options.AddSecurityDefinition("oauth2", scheme);
+
+                        options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                        {
+                            {
+                                new OpenApiSecurityScheme
+                                {
+                                    Reference = new OpenApiReference { Id = "oauth2", Type = ReferenceType.SecurityScheme }
+                                },
+                                oidcConfig.Scopes.Where(x => x.Value).Select(x => x.Key).ToList()
+                            }
+                        });
+                        break;
+
+                    default:
+                        throw new NotImplementedException($"Unknown authentication schema: ${authConfig?.Schema}");
                 }
 
                 setupAction?.Invoke(options);
             });
             return result;
+        }
+
+        public static IApplicationBuilder ConfigureMarBasSwaggerUI(this IApplicationBuilder app, IConfiguration configuration)
+        {
+            var authConfig = AuthConfig.Bind(configuration.GetSection(configuration.GetValue(AuthConfig.SectionSwitch, AuthConfig.SectionName)), true);
+            return app.UseSwagger()
+                .UseSwaggerUI(options =>
+                {
+                    options.DisplayRequestDuration();
+
+                    if (authConfig is OIDCAuthConfigBackend oidcConfig)
+                    {
+                        options.OAuthClientId(oidcConfig.ClientId);
+                        //options.OAuthAppName("Test OIDC");
+                        options.OAuthScopes(
+                            oidcConfig.Scopes.Where(x => x.Value).Select(x => x.Key).ToArray()
+                        );
+                        if (!string.IsNullOrEmpty(oidcConfig.ScopeSeparator))
+                        {
+                            options.OAuthScopeSeparator(oidcConfig.ScopeSeparator);
+                        }
+                        if (!string.IsNullOrEmpty(oidcConfig.ClientSecret))
+                        {
+                            options.OAuthClientSecret(oidcConfig.ClientSecret);
+                        }
+                        if (CapabilitySpec.NA < oidcConfig.PKCE)
+                        {
+                            options.OAuthUsePkce();
+                        }
+                    }
+                });
         }
 
         public static IServiceCollection ConfigureMarBasTimeouts(this IServiceCollection services, IConfiguration configuration)
@@ -100,18 +157,40 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
             return result;
         }
 
-        public static AuthenticationBuilder ConfigureMarBasAuthentication(this IServiceCollection services, IConfiguration configuration)
+        public static AuthenticationBuilder ConfigureMarBasAuthentication(this IServiceCollection services, IConfiguration configuration, ILogger? logger = null)
         {
-            var schema = configuration.GetValue("Schema", "Basic");
-            if ("Basic" == schema)
+            var authConfig = AuthConfig.Bind(configuration, true);
+            logger?.LogInformation("Adding {schema} authentication", authConfig?.Schema);
+            if (authConfig is IOIDCAuthConfig oidcConfig && oidcConfig.UseTokenProxy)
             {
-                return services.AddAuthentication("BasicAuthentication").AddScheme<AuthenticationSchemeOptions, DevelBasicAuthHandler>("BasicAuthentication", null);
+                services.AddHttpClient();
             }
-            else
+            if (authConfig is IAuthMappings authMappings && !string.IsNullOrEmpty(authMappings.MapClaimType))
             {
-                // TODO JWT
-                throw new NotImplementedException($"Unknown authentication schema: ${schema}");
+                services.AddTransient<IClaimsTransformation, MapClaimsTransformation>();
             }
+            return authConfig switch
+            {
+                IBasicAuthConfig basicAuth => services.AddAuthentication("BasicAuthentication")
+                                        .AddScheme<AuthenticationSchemeOptions, DevelBasicAuthHandler>("BasicAuthentication", null),
+
+                OIDCAuthConfigBackend oidcAuth => services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                                        .AddJwtBearer(options =>
+                                        {
+                                            options.Authority = oidcAuth.Authority;
+                                            if (!string.IsNullOrEmpty(oidcAuth.Audience))
+                                            {
+                                                options.Audience = oidcAuth.Audience;
+                                            }
+                                            if (false == oidcAuth.RequireHttpsMetadata)
+                                            {
+                                                options.RequireHttpsMetadata = false;
+                                            }
+                                            oidcAuth.TokenValidation?.Commit(options.TokenValidationParameters);
+                                        }),
+
+                _ => throw new NotImplementedException($"Unknown authentication schema: ${authConfig?.Schema}"),
+            };
         }
     }
 }

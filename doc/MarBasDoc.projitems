@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>d6a3d5b4-17a9-46fc-bd3e-76ec036248e5</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>MarBasDoc</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)marbas-sql-schema.jpg" />
+    <Content Include="$(MSBuildThisFileDirectory)marbas.png" />
+    <Content Include="$(MSBuildThisFileDirectory)oauth\keycloak\authsettings.json" />
+    <Content Include="$(MSBuildThisFileDirectory)oauth\keycloak\import\marbas.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)Authentication.md" />
+    <None Include="$(MSBuildThisFileDirectory)oauth\keycloak\docker-compose.yml" />
+  </ItemGroup>
+</Project>
