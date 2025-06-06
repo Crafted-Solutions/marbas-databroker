@@ -25,7 +25,7 @@ Aleternatively you can download pre-built binary archive of your choice from [Re
 ```sh
 ./MarBasAPI
 ```
-Per default the binary starts production HTTP server (no SSL) on a free port (mostly 5000), i.e. the API endpoints would be reachable via http://localhost:5000/api/marbas. In production mode Swagger is disabled and the only configured user is `reader` with password "*Change_Me*" (can be set in `appsettings.json`). We strongly recommend not using basic authentication with sensitive data, especially when the API is publically accessible - in the future releases we will provide more secure authentication modules.
+Per default the binary starts production HTTP server (no SSL) on a free port (mostly 5000), i.e. the API endpoints would be reachable via http://localhost:5000/api/marbas. In production mode Swagger is disabled and the only configured user is `reader` with password "*Change_Me*" (can be set in `appsettings.json`). We strongly recommend not using basic authentication with sensitive data, especially when the API is publically accessible - from version 0.1.19 on the application supports OAuth (s. [Confuguring Authentication](doc/Authentication.md)).
 
 If you wish that the pre-built executable behaves exactly like the project run by DotNet, set the following environment variables before running `MarBasAPI`
 ```sh
@@ -38,6 +38,26 @@ ASPNETCORE_URLS=https://localhost:7277
 curl -u reader:b "https://localhost:7277/api/marbas/Tree/**"
 curl -u reader:b "https://localhost:7277/api/marbas/Role/Current"
 ```
+
+## Configuration
+Like other ASP.Net applications configuration options are stored in `appsettings.json` and resp. `appsettings.<ASPNETCORE_ENVIRONMENT>.json` files in the working directory. Most of the options are a subset of standard .Net settings and should only be changed by experienced developers.
+### Configuration: BrokerProfile
+In this section DB profile is configured, available options are dependent from actual DB backend used - the basis version uses SQLite database.
+- `BrokerProfile:DataSource` - path pointing to the DB file (default is `Data/marbas.sqlite`).
+- `BrokerProfile:Pooling` - if `false` connection pooling is off (default is on).
+### Configuration: Cors
+This section provides CORS options for the exposed API.
+- `Cors:Enabled` - if `true` enables CORS (default is `false`), note that diabling CORS would disable access to the API from any host (domain) other than the same one where the API is running.
+- `Cors:Policies` - list of CORS policies to implement (for the time being only `Default` is actually used).
+- `Cors:Policies:<#>:Name` - use `Default`.
+- `Cors:Policies:<#>:AllowedOrigins` - either `*` (allow any origin) or comma separated list of origins to match the value sent by a client in the `ORIGIN` header, f.i. `http://localhost:5500,https://localhost:5500`. If the specified origin has an internationalized domain name (IDN), the punycoded value is used. If the origin specifies a default port (e.g. 443 for HTTPS or 80 for HTTP), this will be dropped as part of normalization.
+- `Cors:Policies:<#>:AllowedMethods` - either `*` (all HTTP methods are allowed) or a comma separated list of methods to allow like `GET,POST`. Only configure if you know what you are doing.
+- `Cors:Policies:<N>:AllowedHeaders` - use to restrict specific headers browsers are allowed to send to the API. Usually you would leave it at `*` (all headers allowed).
+- `Cors:Policies:<#>:AllowCredentials` - should be always `true`.
+### Configuration: StaticFiles
+- `StaticFiles:Enabled` - if `true` files found in the `wwwroot` directory are served to the browser statically. It can be used for example to deploy your frontend client application together with the MarBas API.
+### Configuration: Auth
+- In this section authentication methods used by the API can be configured, for details s. [Confuguring Authentication](doc/Authentication.md).
 
 ## Using NuGet Packages
 Packages needed to run databroker are published on https://www.nuget.org (keyword: "CraftedSolutions.MarBas"), for utilization example s. https://github.com/Crafted-Solutions/marbas-databroker-pgsql.

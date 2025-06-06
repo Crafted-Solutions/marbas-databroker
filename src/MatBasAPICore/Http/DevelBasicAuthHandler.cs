@@ -1,7 +1,5 @@
-﻿using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Encodings.Web;
+﻿using CraftedSolutions.MarBasAPICore.Auth;
+using CraftedSolutions.MarBasSchema.Access;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -9,26 +7,34 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Encodings.Web;
 
 namespace CraftedSolutions.MarBasAPICore.Http
 {
     public class DevelBasicAuthHandler: AuthenticationHandler<AuthenticationSchemeOptions>
     {
-        protected const string ConfigScopeMapRoles = "Auth:MapRoles:";
-        protected const string ConfigScopePrincipals = "Auth:Principals:";
-
         private static bool _isWarned = false;
 
-        protected readonly IConfiguration _configuration;
+        protected readonly BasicAuthConfigBackend? _authConfig;
 
         public DevelBasicAuthHandler(IConfiguration configuration, IHostEnvironment environment, IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
             : base(options, logger, encoder)
         {
-            _configuration = configuration;
-            if (!_isWarned && environment.IsProduction() && Logger.IsEnabled(LogLevel.Warning))
+            _authConfig = AuthConfig.Bind(configuration.GetSection(configuration.GetValue(AuthConfig.SectionSwitch, AuthConfig.SectionName)), true) as BasicAuthConfigBackend;
+            if (Logger.IsEnabled(LogLevel.Warning))
             {
-                Logger.LogWarning("Basic authentication is insecure, consider using different method in production");
-                _isWarned = true;
+                if (null == _authConfig)
+                {
+                    Logger.LogWarning("Configuration for basic authentication is missing");
+                }
+                else if (!_isWarned && environment.IsProduction())
+                {
+                    Logger.LogWarning("Basic authentication is insecure, consider using different method in production");
+                    _isWarned = true;
+                }
             }
         }
 
@@ -44,14 +50,13 @@ namespace CraftedSolutions.MarBasAPICore.Http
             if (authorizationHeader != null && authorizationHeader.StartsWith("basic", StringComparison.OrdinalIgnoreCase))
             {
                 var token = authorizationHeader["Basic ".Length..].Trim();
-                var credentialsAsEncodedString = Encoding.UTF8.GetString(Convert.FromBase64String(token));
-                var credentials = credentialsAsEncodedString.Split(':');
-                if (!string.IsNullOrEmpty(credentials[0]) && 2 < credentials[0].Length && VerifyCredentials(credentials[0], credentials[1]))
+                var (User, Pw) = ParseCredentials(token);
+                if (!string.IsNullOrEmpty(User) && 0 < Pw.Length && VerifyCredentials(User, Pw))
                 {
                     var claims = new[] {
-                        new Claim(ClaimTypes.Name, credentials[0]),
-                        new Claim(ClaimTypes.NameIdentifier, credentials[0]),
-                        new Claim(ClaimTypes.Role, MapUserRole(credentials[0]))
+                        new Claim(ClaimTypes.Name, User),
+                        new Claim(ClaimTypes.NameIdentifier, User),
+                        new Claim(ClaimTypes.Role, MapUserRole(User))
                     };
                     var identity = new ClaimsIdentity(claims, "Basic");
                     var claimsPrincipal = new ClaimsPrincipal(identity);
@@ -69,18 +74,52 @@ namespace CraftedSolutions.MarBasAPICore.Http
 
         protected string MapUserRole(string user)
         {
-            return _configuration.GetValue($"{ConfigScopeMapRoles}{user}", _configuration.GetValue($"{ConfigScopeMapRoles}*", "Everyone"))!;
+            if ((true != _authConfig?.MapRoles.TryGetValue(user, out var result) && true != _authConfig?.MapRoles.TryGetValue("*", out result)) || string.IsNullOrEmpty(result))
+            {
+                result = SchemaRole.Everyone.Name;
+            }
+            return result;
         }
 
-        protected bool VerifyCredentials(string user, string password)
+        protected bool VerifyCredentials(string user, byte[] password)
         {
-            string pwHash = _configuration.GetValue($"{ConfigScopePrincipals}{user}", _configuration.GetValue($"{ConfigScopePrincipals}*", string.Empty));
-            if (!string.IsNullOrEmpty(pwHash))
+            var pwHash = _authConfig?.GetPasswordHash(user);
+            return null != pwHash && SHA512.HashData(password).AsSpan()
+                    .SequenceEqual(pwHash.AsSpan());
+        }
+
+        protected static (string User, byte[] Pw) ParseCredentials(string token)
+        {
+            var user = new StringBuilder();
+            var pw = Array.Empty<byte>();
+
+            var sepFound = false;
+            using (var bin = new MemoryStream(Convert.FromBase64String(token)))
+            using (var reader = new BinaryReader(bin, Encoding.UTF8))
+            using (var bout = new MemoryStream())
+            using(var writer = new BinaryWriter(bout, Encoding.UTF8))
             {
-                var msg = Encoding.UTF8.GetBytes(password);
-                return SHA512.HashData(msg).AsSpan().SequenceEqual(Convert.FromHexString(pwHash).AsSpan());
+                while (-1 != reader.PeekChar())
+                {
+                    var c = reader.ReadChar();
+                    if (!sepFound && ':' == c)
+                    {
+                        sepFound = true;
+                        continue;
+                    }
+                    if (sepFound)
+                    {
+                        writer.Write(c);
+                    }
+                    else
+                    {
+                        user.Append(c);
+                    }
+                }
+                writer.Flush();
+                pw = bout.ToArray();
             }
-            return false;
+            return (user.ToString(), pw);
         }
     }
 }

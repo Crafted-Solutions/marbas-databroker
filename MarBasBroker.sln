@@ -32,11 +32,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHub", "GitHub", "{8D85AE
 		.github\workflows\publish.yml = .github\workflows\publish.yml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{BA694FE4-EC50-41CA-A187-BC7553918C9C}"
-	ProjectSection(SolutionItems) = preProject
-		doc\marbas-sql-schema.jpg = doc\marbas-sql-schema.jpg
-		doc\marbas.png = doc\marbas.png
-	EndProjectSection
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MarBasDoc", "doc\MarBasDoc.shproj", "{D6A3D5B4-17A9-46FC-BD3E-76EC036248E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -74,5 +70,8 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E4F474E-AE01-409A-BDFB-69B865E344C2}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		doc\MarBasDoc.projitems*{d6a3d5b4-17a9-46fc-bd3e-76ec036248e5}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal
