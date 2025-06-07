@@ -4,6 +4,9 @@ namespace CraftedSolutions.MarBasAPICore.Auth
 {
     public class OIDCAuthConfig : AuthConfig, IOIDCAuthConfig
     {
+        [JsonIgnore]
+        public override string Schema => "OIDC";
+
         public required string Authority { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string? Audience { get; set; }
@@ -25,5 +28,6 @@ namespace CraftedSolutions.MarBasAPICore.Auth
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public CapabilitySpec PKCE { get; set; } = CapabilitySpec.NA;
         public bool UseTokenProxy { get; set; }
+
     }
 }

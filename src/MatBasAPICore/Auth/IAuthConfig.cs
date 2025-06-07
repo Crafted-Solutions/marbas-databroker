@@ -8,16 +8,17 @@ namespace CraftedSolutions.MarBasAPICore.Auth
     [JsonDerivedType(typeof(BasicAuthConfig), typeDiscriminator: "Basic")]
     public interface IAuthConfig
     {
-        [JsonPropertyName("schema")]
-        string Schema { get; set; }
+        [JsonIgnore]
+        string Schema { get; }
     }
 
-    public class AuthConfig : IAuthConfig
+    public abstract class AuthConfig : IAuthConfig
     {
         public const string SectionName = "Auth";
         public const string SectionSwitch = "UseAuth";
 
-        public required string Schema { get; set; }
+        [JsonIgnore]
+        public abstract string Schema { get; }
 
         public static IAuthConfig? Bind(IConfiguration configuration, bool backend = false)
         {
