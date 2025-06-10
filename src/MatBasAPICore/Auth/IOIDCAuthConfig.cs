@@ -31,6 +31,10 @@ namespace CraftedSolutions.MarBasAPICore.Auth
         string AuthorizationUrl { get; set; }
         string TokenUrl { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public string? RefreshUrl { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public string? LogoutUrl { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string? UserInfoUrl { get; set; }
         string ClientId { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
