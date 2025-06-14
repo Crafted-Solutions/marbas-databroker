@@ -1,3 +1,4 @@
+using CraftedSolutions.MarBasAPICore.Auth;
 using CraftedSolutions.MarBasAPICore.Extensions;
 using CraftedSolutions.MarBasAPICore.Routing;
 
@@ -8,6 +9,9 @@ namespace CraftedSolutions.MarBasAPI
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Configuration.AddJsonFile("authsettings.json", true, true);
+            builder.Configuration.AddJsonFile($"authsettings.{builder.Environment.EnvironmentName}.json", true, true);
 
             // Add services to the container.
             builder.Services.Configure<RouteOptions>(options =>
@@ -29,7 +33,7 @@ namespace CraftedSolutions.MarBasAPI
             {
                 options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{nameof(MarBasAPI)}.xml"));
             });
-            builder.Services.ConfigureMarBasAuthentication(builder.Configuration.GetSection("Auth"));
+            builder.Services.ConfigureMarBasAuthentication(builder.Configuration.GetSection(builder.Configuration.GetValue(AuthConfig.SectionSwitch, AuthConfig.SectionName)), bootstrapLogger);
             builder.Services.AddHttpContextAccessor();
 
             var corsEnabled = builder.Services.ConfigureCors(builder.Configuration.GetSection("Cors"), bootstrapLogger);
@@ -45,11 +49,7 @@ namespace CraftedSolutions.MarBasAPI
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI(options =>
-                {
-                    options.DisplayRequestDuration();
-                });
+                app.ConfigureMarBasSwaggerUI(builder.Configuration);
             }
 
             app.UseHttpsRedirection();

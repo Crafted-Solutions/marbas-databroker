@@ -1,0 +1,24 @@
+{
+  "UseAuth": "AuthKeycloak",
+  "AuthKeycloak": {
+    "Schema": "OIDC",
+    "Authority": "http://localhost:3001/realms/marbas",
+    "AuthorizationUrl": "http://localhost:3001/realms/marbas/protocol/openid-connect/auth",
+    "TokenUrl": "http://localhost:3001/realms/marbas/protocol/openid-connect/token",
+    "LogoutUrl": "http://localhost:3001/realms/marbas/protocol/openid-connect/logout",
+    "UserInfoUrl": "http://localhost:3001/realms/marbas/protocol/openid-connect/userinfo",
+    "ClientId": "databroker",
+    "TokenValidation": {
+      "Unset": "ValidateAudience"
+    },
+    "RequireHttpsMetadata": false,
+    "Flow": "AuthorizationCode",
+    "PKCE": "Available",
+    "Scopes": {
+      "openid": true,
+      "profile": true,
+      "roles": true,
+      "offline_access": false
+    }
+  }
+}

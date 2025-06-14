@@ -1,0 +1,18 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2.4
+    environment:
+      KC_HOSTNAME_PORT: 3001
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_LOG_LEVEL: info
+    command: ["start-dev", "--import-realm", "--http-port", "3001", "--metrics-enabled=true", "--db-url", "jdbc:h2:file:/opt/keycloak/data/h2/keycloakdb;NON_KEYWORDS=VALUE;AUTO_SERVER=true"]
+    ports:
+      - 3001:3001
+    restart: unless-stopped
+    volumes:
+      - ./import:/opt/keycloak/data/import
+
