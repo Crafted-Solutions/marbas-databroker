@@ -36,6 +36,8 @@ namespace CraftedSolutions.MarBasAPICore.Auth
         public bool? RequireHttpsMetadata { get; set; } = true;
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public string? UserIdClaimType { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string? MapClaimType { get; set; }
         public Dictionary<string, string> MapRoles { get; set; } = [];
 

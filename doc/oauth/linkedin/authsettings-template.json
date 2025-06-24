@@ -1,0 +1,26 @@
+﻿{
+  "UseAuth": "AuthLinkedIn",
+  "AuthLinkedIn": {
+    "Schema": "OIDC",
+    "Authority": "https://www.linkedin.com/oauth",
+    "AuthorizationUrl": "https://www.linkedin.com/oauth/v2/authorization",
+    "TokenUrl": "https://www.linkedin.com/oauth/v2/accessToken",
+    "UserInfoUrl": "https://api.linkedin.com/v2/userinfo",
+    "UseTokenProxy": true,
+    "ClientId": "<YOUR_CLIENT_ID>",
+    "ClientSecret": "<YOUR_CLIENT_SECRET>",
+    "Audience": "<YOUR_CLIENT_ID>",
+    "BearerTokenName": "id_token",
+    "Flow": "AuthorizationCode",
+    "Scopes": {
+      "openid": true,
+      "profile": true,
+      "email": true
+    },
+    "MapClaimType": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+    "MapRoles": {
+      "<YOUR_EMAIL_ADDRESS>": "Developer"
+    }
+  }
+
+}

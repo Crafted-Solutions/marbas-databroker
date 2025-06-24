@@ -6,14 +6,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace CraftedSolutions.MarBasAPICore.Http
 {
-    public sealed class HttpBrokerContext : IBrokerContext
+    public sealed class HttpBrokerContext(IHttpContextAccessor httpContextAccessor) : IBrokerContext
     {
-        private readonly IPrincipal _user;
-
-        public HttpBrokerContext(IHttpContextAccessor httpContextAccessor)
-        {
-            _user = httpContextAccessor?.HttpContext?.User ?? SchemaDefaults.AnonymousUser;
-        }
+        private readonly IPrincipal _user = httpContextAccessor?.HttpContext?.User ?? SchemaDefaults.AnonymousUser;
 
         public IPrincipal User => _user;
 

@@ -1,0 +1,33 @@
+﻿{
+  "UseAuth": "AuthNextcloud",
+  "AuthNextcloud": {
+    "Schema": "OIDC",
+    "Authority": "http://localhost:8066",
+    "AuthorizationUrl": "http://localhost:8066/apps/oidc/authorize",
+    "TokenUrl": "http://localhost:8066/apps/oidc/token",
+    "LogoutUrl": "http://localhost:8066/apps/oidc/logout",
+    "UserInfoUrl": "http://localhost:8066/apps/oidc/userinfo",
+    "UseTokenProxy": true,
+    "ClientId": "<YOUR_CLIENT_ID>",
+    "Flow": "AuthorizationCode",
+    "RequireHttpsMetadata": false,
+    "TokenValidation": {
+      "Unset": "ValidateAudience"
+    },
+    "Scopes": {
+      "openid": true,
+      "profile": true,
+      "roles": false,
+      "groups": true,
+      "email": true
+    },
+    "MapClaimType": "groups",
+    "MapRoles": {
+      "MarBas Admins": "Superuser",
+      "MarBas Developers": "Developer",
+      "MarBas Managers": "Schema_Manager",
+      "MarBas Editors": "Content_Contributor",
+      "MarBas Readers": "Content_Consumer"
+    }
+  }
+}

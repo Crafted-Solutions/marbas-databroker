@@ -47,10 +47,13 @@ namespace CraftedSolutions.MarBasSchema
         public static readonly Guid ContentConsumerRoleID = Guid.Parse("00000000-0000-1000-b000-000000000004");
         public static readonly Guid EveryoneRoleID = Guid.Parse("00000000-0000-1000-b000-000000000005");
 
-        public const string SystemPrincipalSuffix = "@marbas";
+        public const string InternalClaimIssuer = "marbas";
+        public const string InternalPrincipalSuffix = $"@{InternalClaimIssuer}";
+
+        public const string UserIdentifierClaimType = $"UserIdentifier{InternalPrincipalSuffix}";
 
         public const string AnonymousUserName = "anonymous";
-        public const string SystemUserName = $"system{SystemPrincipalSuffix}";
+        public const string SystemUserName = $"system{InternalPrincipalSuffix}";
         public static readonly IPrincipal AnonymousUser = new GenericPrincipal(new GenericIdentity(AnonymousUserName), [SchemaRole.Everyone.Name]);
         public static readonly IPrincipal SystemUser = new GenericPrincipal(new GenericIdentity(SystemUserName), [SchemaRole.Superuser.Name]);
 
