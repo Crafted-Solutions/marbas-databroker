@@ -39,6 +39,8 @@ namespace CraftedSolutions.MarBasAPICore.Auth
         string ClientId { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         string? ClientSecret { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        string? BearerTokenName { get; set; }
         AuthFlow Flow { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         CapabilitySpec PKCE { get; set; }

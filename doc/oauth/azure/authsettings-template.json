@@ -1,0 +1,29 @@
+﻿{
+  "UseAuth": "AuthAzure",
+  "AuthAzure": {
+    "Schema": "OIDC",
+    "Authority": "https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0",
+    "Audience": "<YOUR_CLIENT_ID>",
+    "AuthorizationUrl": "https://login.microsoftonline.com/<YOUR_TENANT_ID>/oauth2/v2.0/authorize",
+    "TokenUrl": "https://login.microsoftonline.com/<YOUR_TENANT_ID>/oauth2/v2.0/token",
+    "LogoutUrl": "https://login.microsoftonline.com/<YOUR_TENANT_ID>/oauth2/v2.0/logout",
+    "UserInfoUrl": "https://graph.microsoft.com/oidc/userinfo",
+    "ClientId": "<YOUR_CLIENT_ID>",
+    "BearerTokenName": "id_token",
+    "Scopes": {
+      "<YOUR_CLIENT_ID>/.default": true,
+      "openid": true,
+      "profile": true,
+      "email": true,
+      "offline_access": false
+    },
+    "ScopeSeparator": " ",
+    "Flow": "AuthorizationCode",
+    "PKCE": "Required",
+    // claim containing user.groups, can be configured at https://entra.microsoft.com/ under Enterprise applications / APP_NAME / Single sign-on
+    "MapClaimType": "memberOf",
+    "MapRoles": {
+      "<YOUR_GROUP_ID>": "Developer"
+    }
+  }
+}

@@ -28,7 +28,7 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
             : base(name, parent, creator, culture)
         {
             _fieldTracker.AddScope<IGrainPropDef>();
-            _cardinality = new int[] { 1, 1 };
+            _cardinality = [1, 1];
             _versionable = true;
             _localizable = true;
         }
@@ -41,13 +41,13 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
             {
                 _valueConstraint = propDef.ValueConstraint;
                 _constraintParams = propDef.ConstraintParams;
-                _cardinality = new int[] { propDef.CardinalityMin, propDef.CardinalityMax };
+                _cardinality = [propDef.CardinalityMin, propDef.CardinalityMax];
                 _versionable = propDef.Versionable;
                 _localizable = propDef.Localizable;
             }
             else
             {
-                _cardinality = new int[] { 1, 1 };
+                _cardinality = [1, 1];
                 _versionable = true;
                 _localizable = true;
             }

@@ -18,7 +18,9 @@ namespace CraftedSolutions.MarBasSchema
             GetScope<TScope>().Add(propertyName);
         }
 
+#pragma warning disable IDE0060 // Remove unused parameter
         public bool IsChangeAccepted<T>(T? oldValue, T? newValue, [CallerMemberName] string propertyName = "")
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             return _acceptAlways || !EqualityComparer<T>.Default.Equals(oldValue, newValue);
         }

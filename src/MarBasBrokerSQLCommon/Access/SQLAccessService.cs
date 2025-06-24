@@ -34,8 +34,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
 
         public IEnumerable<ISchemaRole> GetContextRoles()
         {
-            var sfxLen = SchemaDefaults.SystemPrincipalSuffix.Length;
-            return _profile.SchemaRoles.Where(x => _contextRoles.Contains(x.Name.EndsWith(SchemaDefaults.SystemPrincipalSuffix) ? x.Name.Remove(x.Name.Length - sfxLen) : x.Name));
+            var sfxLen = SchemaDefaults.InternalPrincipalSuffix.Length;
+            return _profile.SchemaRoles.Where(x => _contextRoles.Contains(x.Name.EndsWith(SchemaDefaults.InternalPrincipalSuffix) ? x.Name.Remove(x.Name.Length - sfxLen) : x.Name));
         }
 
         public Task<IEnumerable<ISchemaRole>> GetContextRolesAsync(CancellationToken cancellationToken = default)

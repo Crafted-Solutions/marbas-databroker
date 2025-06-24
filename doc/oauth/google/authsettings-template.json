@@ -1,0 +1,33 @@
+﻿{
+  "UseAuth": "AuthGoogle",
+  "AuthGoogle": {
+    "Schema": "OIDC",
+    "Authority": "https://accounts.google.com",
+    // CleintSecret isn't necessary with PKCE but Google won't accept requests without it
+    "ClientSecret": "<YOUR_CLIENT_SECRET>",
+    "AuthorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+    "TokenUrl": "https://oauth2.googleapis.com/token",
+    // don't use, manual deletion of ACSID cookies is required
+    // "LogoutUrl": "https://www.google.com/accounts/Logout",
+    "UserInfoUrl": "https://openidconnect.googleapis.com/v1/userinfo",
+    "ClientId": "<YOUR_CLIENT_ID>",
+    "BearerTokenName": "id_token",
+    "TokenValidation": {
+      "Unset": "ValidateAudience"
+    },
+    "Flow": "AuthorizationCode",
+    "PKCE": "Required",
+    "Scopes": {
+      "openid": true,
+      "profile": true,
+      "email": true
+    },
+    // if you have enterprise account enable access to Admin SDK API,
+    // add https://www.googleapis.com/auth/admin.directory.group.member.readonly claim to your scopes
+    // and use the claim to map groups to roles
+    "MapClaimType": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+    "MapRoles": {
+      "<YOUR_EMAIL_ADDRESS>": "Developer"
+    }
+  }
+}

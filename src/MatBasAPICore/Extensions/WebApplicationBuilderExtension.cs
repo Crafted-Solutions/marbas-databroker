@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text.Json.Serialization;
@@ -90,6 +92,15 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                             Flows = oidcConfig.GenerateFlows(),
                             Type = SecuritySchemeType.OAuth2
                         };
+                        if (!string.IsNullOrEmpty(oidcConfig.BearerTokenName))
+                        {
+                            scheme.Extensions = new Dictionary<string, IOpenApiExtension>()
+                            {
+                                // Setting x-tokenName to id_token will send response_type=token id_token and the nonce to the auth provider.
+                                // x-tokenName also specifieds the name of the value from the response of the auth provider to use as bearer token.
+                                { "x-tokenName", new OpenApiString(oidcConfig.BearerTokenName) }
+                            };
+                        }
                         options.AddSecurityDefinition("oauth2", scheme);
 
                         options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -165,9 +176,9 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
             {
                 services.AddHttpClient();
             }
-            if (authConfig is IAuthMappings authMappings && !string.IsNullOrEmpty(authMappings.MapClaimType))
+            if (authConfig is not IBasicAuthConfig)
             {
-                services.AddTransient<IClaimsTransformation, MapClaimsTransformation>();
+                services.AddScoped<IClaimsTransformation, MapClaimsTransformation>();
             }
             return authConfig switch
             {

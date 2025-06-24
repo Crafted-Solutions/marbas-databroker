@@ -1,0 +1,32 @@
+{
+  "UseAuth": "AuthAuthentik",
+  "AuthAuthentik": {
+    "Schema": "OIDC",
+    "Authority": "http://localhost:9000/application/o/databroker/",
+    "AuthorizationUrl": "http://localhost:9000/application/o/authorize/",
+    "TokenUrl": "http://localhost:9000/application/o/token/",
+    "LogoutUrl": "http://localhost:9000/application/o/databroker/end-session/",
+    "UserInfoUrl": "http://localhost:9000/application/o/userinfo/",
+    "ClientId": "3YQXNMX7aplwI0gQoSRbc4TBADtwuGajxHpYf3ud",
+    "RequireHttpsMetadata": false,
+    "TokenValidation": {
+      "Unset": "ValidateAudience"
+    },
+    "Flow": "AuthorizationCode",
+    "PKCE": "Required",
+    "Scopes": {
+      "openid": true,
+      "profile": true,
+      "email": true,
+      "offline_access": false
+    },
+    "MapClaimType": "groups",
+    "MapRoles": {
+      "MarBas Admins": "Superuser",
+      "MarBas Developers": "Developer",
+      "MarBas Managers": "Schema_Manager",
+      "MarBas Editors": "Content_Contributor",
+      "MarBas Readers": "Content_Consumer"
+    }
+  }
+}
