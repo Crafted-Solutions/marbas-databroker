@@ -86,7 +86,7 @@
     ],
     "web": {
       "homePageUrl": null,
-      "logoutUrl": "https://localhost:7277/silo/index.html",
+      "logoutUrl": "https://localhost:7277/silo/login.html",
       "redirectUris": [],
       "implicitGrantSettings": {
         "enableAccessTokenIssuance": true,
@@ -96,8 +96,8 @@
     },
     "spa": {
       "redirectUris": [
-        "https://localhost:7277/silo/index.html",
-        "http://localhost:5500/",
+        "https://localhost:7277/silo/login.html",
+        "http://localhost:5500/login.html",
         "https://localhost:7277/swagger/oauth2-redirect.html"
       ]
     }

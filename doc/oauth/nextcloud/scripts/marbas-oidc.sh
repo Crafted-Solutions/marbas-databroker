@@ -19,4 +19,4 @@ $OCC user:add --password-from-env --display-name='MarBas\ Developer' --group='Ma
 $OCC user:add --password-from-env --display-name='MarBas\ Editor' --group='MarBas\ Editors' --email='editor@nextcloud.local' mb-editor
 $OCC user:add --password-from-env --display-name='MarBas\ Reader' --group='MarBas\ Readers' --email='reader@nextcloud.local' mb-reader
 $OCC app:install oidc -q
-$OCC oidc:create -t public --token_type=jwt 'MarBas\ Databroker' https://localhost:7277/swagger/oauth2-redirect.html https://localhost:7277/silo/index.html http://localhost:5500/ > $THIS_DIR/marbas-oidc.json
+$OCC oidc:create -t public --token_type=jwt 'MarBas\ Databroker' https://localhost:7277/swagger/oauth2-redirect.html https://localhost:7277/silo/login.html http://localhost:5500/login.html > $THIS_DIR/marbas-oidc.json

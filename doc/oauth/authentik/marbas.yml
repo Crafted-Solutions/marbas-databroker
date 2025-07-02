@@ -257,9 +257,9 @@ entries:
     - matching_mode: strict
       url: https://localhost:7277/swagger/oauth2-redirect.html
     - matching_mode: strict
-      url: https://localhost:7277/silo/index.html
+      url: https://localhost:7277/silo/login.html
     - matching_mode: strict
-      url: http://localhost:5500/
+      url: http://localhost:5500/login.html
     refresh_token_validity: days=30
     signing_key: !Find [authentik_crypto.certificatekeypair, [name, 'authentik Self-signed Certificate']]
     sub_mode: hashed_user_id
