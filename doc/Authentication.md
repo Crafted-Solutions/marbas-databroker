@@ -45,7 +45,7 @@ MarBas databroker is designed and tested to work with any OAuth provider which s
 OAuth provider configuration is unfortunately far too specific for each provider to describe it here. Important points to pay attention to:
 - the provider should support [authrization code grant flow](https://oauth.net/2/grant-types/authorization-code/) and the client should be configured accordingly
 - the provider should support at least `openid` [authorization scope](https://auth0.com/docs/get-started/apis/scopes/openid-connect-scopes), this scope should be active
-- all client applications your use have to be registered with their [redirect URL](https://www.oauth.com/oauth2-servers/redirect-uris/) where they accept provider callbacks (for MarBas apps in development mode, you would register: https://localhost:7277/silo/index.html, http://localhost:5500/, https://localhost:7277/swagger/oauth2-redirect.html)
+- all client applications your use have to be registered with their [redirect URL](https://www.oauth.com/oauth2-servers/redirect-uris/) where they accept provider callbacks (for MarBas apps in development mode, you would register: https://localhost:7277/silo/login.html, http://localhost:5500/login.html, https://localhost:7277/swagger/oauth2-redirect.html)
 - the provider should support JWT claims like `role` or `groups` to allow role mapping within MarBas
 
 ### Ready-to-use Test Drive With [Keycloak](https://www.keycloak.org/)
