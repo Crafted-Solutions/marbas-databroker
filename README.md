@@ -25,7 +25,7 @@ Aleternatively you can download pre-built binary archive of your choice from [Re
 ```sh
 ./MarBasAPI
 ```
-Per default the binary starts production HTTP server (no SSL) on a free port (mostly 5000), i.e. the API endpoints would be reachable via http://localhost:5000/api/marbas. In production mode Swagger is disabled and the only configured user is `reader` with password "*Change_Me*" (can be set in `appsettings.json`). We strongly recommend not using basic authentication with sensitive data, especially when the API is publically accessible - from version 0.1.19 on the application supports OAuth (s. [Confuguring Authentication](doc/Authentication.md)).
+Per default the binary starts production HTTP server (no SSL) on the port 5001, i.e. the API endpoints would be reachable via http://localhost:5001/api/marbas. In production mode Swagger is disabled and the only configured user is `reader` with password "*Change_Me*" (can be set in `appsettings.json`). We strongly recommend not using basic authentication with sensitive data, especially when the API is publically accessible - from version 0.1.19 on the application supports OAuth (s. [Confuguring Authentication](doc/Authentication.md)).
 
 If you wish that the pre-built executable behaves exactly like the project run by DotNet, set the following environment variables before running `MarBasAPI`
 ```sh

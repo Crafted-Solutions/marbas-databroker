@@ -52,7 +52,7 @@ namespace CraftedSolutions.MarBasAPI
                 app.ConfigureMarBasSwaggerUI(builder.Configuration);
             }
 
-            app.UseHttpsRedirection();
+            app.ConfigureHttpsRedirection();
 
             if (corsEnabled)
             {
