@@ -4,18 +4,11 @@ using Microsoft.Extensions.Logging;
 
 namespace CraftedSolutions.MarBasAPICore.Services
 {
-    public class InitHostedService : IHostedService
+    public class InitHostedService(IInitializerService initializerService, IServiceProvider serviceProvider, ILogger<InitHostedService> logger) : IHostedService
     {
-        protected readonly ILogger _logger;
-        protected readonly IInitializerService _initializerService;
-        protected readonly IServiceProvider _serviceProvider;
-
-        public InitHostedService(IInitializerService initializerService, IServiceProvider serviceProvider, ILogger<InitHostedService> logger)
-        {
-            _logger = logger;
-            _initializerService = initializerService;
-            _serviceProvider = serviceProvider;
-        }
+        protected readonly ILogger _logger = logger;
+        protected readonly IInitializerService _initializerService = initializerService;
+        protected readonly IServiceProvider _serviceProvider = serviceProvider;
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {

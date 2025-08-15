@@ -1,5 +1,7 @@
 ﻿using CraftedSolutions.MarBasSchema.Broker;
+using CraftedSolutions.MarBasSchema.IO;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 namespace CraftedSolutions.MarBasAPICore.Http
@@ -39,6 +41,11 @@ namespace CraftedSolutions.MarBasAPICore.Http
             {
                 throw new HttpResponseException(e);
             }
+            catch (StorageQuotaExceededException e)
+            {
+                logger?.LogWarning(e, "Storage error: {error}", e.Message);
+                throw new HttpResponseException(StatusCodes.Status413PayloadTooLarge, e.Message);
+            }
             catch (ArgumentException e)
             {
                 logger?.LogWarning(e, "Argument validation failed");
@@ -51,7 +58,11 @@ namespace CraftedSolutions.MarBasAPICore.Http
             catch (Exception e)
             {
                 logger?.LogError(e, "Unexpected error occured");
-                throw new HttpResponseException(StatusCodes.Status500InternalServerError, e.GetType().Name);
+                throw new HttpResponseException(StatusCodes.Status500InternalServerError, new ProblemDetails()
+                {
+                    Title = e.GetType().Name,
+                    Detail = e.Message
+                });
             }
         }
     }

@@ -12,12 +12,13 @@ using Microsoft.Extensions.Logging;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon
 {
-    public interface ISQLBrokerProfile : IBrokerProfile, IDbConnectionProvider, IDbParameterFactoryProvider
+    public interface ISQLBrokerProfile
+        : IBrokerProfile, IDbConnectionProvider, IDbParameterFactoryProvider, IConfigurable
     {
     }
 
     public abstract class SQLBrokerProfile<TConn, TConnSettings>
-        : ISQLBrokerProfile, IDbConnectionProvider<TConn>, IAsyncInitService
+        : ISQLBrokerProfile, IDbConnectionProvider<TConn>, IAsyncInitService, IDisposable
         where TConn : DbConnection, new()
         where TConnSettings : DbConnectionStringBuilder, new()
     {
@@ -25,10 +26,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
         protected readonly ILogger _logger;
         protected readonly IList<ISchemaRole> _rolesCache;
         protected readonly TConnSettings _connectionSettings = new();
-        protected readonly object _locker = new();
         protected readonly SemaphoreSlim _semaphore = new(1, 1);
 
         protected bool _isOnline;
+        protected bool _isInitialized;
+
+        private bool _disposed;
 
         public event EventHandler<SchemaModifiedEventArgs<IIdentifiable>>? SchemaModified;
 
@@ -44,7 +47,30 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
             SchemaModified += OnSchemaModfied;
         }
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _semaphore.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
         public virtual bool IsOnline => _isOnline;
+
+        public virtual Task<bool> IsOnlineAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_isOnline);
+        }
 
         public abstract Version Version { get; }
 
@@ -75,12 +101,21 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
 
         protected virtual TConnSettings ConnectionSettings => _connectionSettings;
 
+        public IConfiguration Configuration => _configuration;
+
+        protected virtual bool IsSilentInit => false;
+
         public async Task<bool> InitServiceAsync(CancellationToken cancellationToken = default)
         {
             await _semaphore.WaitAsync(cancellationToken);
             try
             {
+                if (_isInitialized)
+                {
+                    return _isOnline;
+                }
                 var result = false;
+                var silent = IsSilentInit;
                 if (await CanConnectAsync(cancellationToken))
                 {
                     using (var conn = Connection)
@@ -94,9 +129,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
                             {
                                 result = ver == Version;
                             }
-                            if (!result && _logger.IsEnabled(LogLevel.Warning))
+                            if (!result && _logger.IsEnabled(LogLevel.Error))
                             {
-                                _logger.LogWarning("Incompatible schema version {ver}", ver);
+                                _logger.LogError("Incompatible schema version {ver}", ver);
                             }
                         }
                         if (result)
@@ -121,7 +156,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
                                 using (var r = await cmd.ExecuteReaderAsync(cancellationToken))
                                 {
                                     result = r.Read() && SchemaDefaults.RootID.Equals(r.GetGuid(0));
-                                    if (_logger.IsEnabled(LogLevel.Information))
+                                    if (!silent && _logger.IsEnabled(LogLevel.Information))
                                     {
                                         _logger.LogInformation("Profile {typeName} ({version}) initialized successfully: {result}", GetType().Name, Version, result);
                                     }
@@ -139,7 +174,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
                                     {
                                         _rolesCache.Add(new SchemaRole(new RoleDataAdapter(rs)));
                                     }
-                                    if (_logger.IsEnabled(LogLevel.Information))
+                                    if (!silent && _logger.IsEnabled(LogLevel.Information))
                                     {
                                         _logger.LogInformation("Loaded {rolesCount} schema roles", _rolesCache.Count);
                                     }
@@ -148,6 +183,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
                         }
                     }
                 }
+                _isInitialized = true;
                 return _isOnline = result;
             }
             finally

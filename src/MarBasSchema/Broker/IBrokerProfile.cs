@@ -7,6 +7,7 @@ namespace CraftedSolutions.MarBasSchema.Broker
     public interface IBrokerProfile
     {
         bool IsOnline { get; }
+        Task<bool> IsOnlineAsync(CancellationToken cancellationToken = default);
         Version Version { get; }
         Guid InstanceId { get; }
         IEnumerable<ISchemaRole> SchemaRoles { get; }

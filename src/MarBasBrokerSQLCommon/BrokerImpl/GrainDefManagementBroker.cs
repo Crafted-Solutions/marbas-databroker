@@ -33,7 +33,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IGrainTypeDefLocalized?> GetTypeDefAsync(Guid id, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             using (var conn = _profile.Connection)
             {
                 await conn.OpenAsync(cancellationToken);
@@ -68,7 +68,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IGrainTypeDef?> CreateTypeDefAsync(string name, IIdentifiable? parent, string? implKey = null, IEnumerable<IIdentifiable>? mixins = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             IGrainTypeDef? result = null;
             result = await WrapInTransaction(result, async (ta) =>
             {
@@ -137,7 +137,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return -1;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             var result = 0;
             return await WrapInTransaction(result, async (ta) =>
             {
@@ -155,7 +155,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IGrainBase?> GetOrCreateTypeDefDefaultsAsync(IIdentifiable typeDef, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync(new[] { typeDef }, GrainAccessFlag.Read, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Read);
@@ -209,7 +209,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IGrainPropDefLocalized?> GetPropDefAsync(Guid id, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             using (var conn = _profile.Connection)
             {
                 await conn.OpenAsync(cancellationToken);
@@ -242,7 +242,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IGrainPropDef?> CreatePropDefAsync(string name, IIdentifiable typeContainer, TraitValueType valueType = TraitValueType.Text, int cardinalityMin = 1, int cardinalityMax = 1, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             IGrainPropDef? result = null;
             await WrapInTransaction(result, async (ta) =>
             {
@@ -309,7 +309,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return -1;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync(propdefs, GrainAccessFlag.Write, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Write);
@@ -330,7 +330,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IEnumerable<IGrainPropDefLocalized>> GetTypeDefPropertiesAsync(IIdentifiable typedef, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             using (var conn = _profile.Connection)
             {
                 await conn.OpenAsync(cancellationToken);

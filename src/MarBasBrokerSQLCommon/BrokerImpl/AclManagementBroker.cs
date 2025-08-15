@@ -27,7 +27,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<ISchemaAclEntry?> GetAclEntryAsync(IIdentifiable role, IIdentifiable grain, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (role.Id != (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id && !await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ReadAcl, false, cancellationToken))
             {
                 return null;
@@ -65,7 +65,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<ISchemaAclEntry?> CreateAclEntryAsync(IIdentifiable role, IIdentifiable grain, GrainAccessFlag permissionMask = GrainAccessFlag.Read, GrainAccessFlag restrictionMask = GrainAccessFlag.None, bool inherit = true, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.WriteAcl, cancellationToken: cancellationToken))
             {
                 throw new UnauthorizedAccessException("Not entitled to create ACL");
@@ -131,7 +131,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<int> DeleteAclAsync(IEnumerable<IAclEntryRef> acl, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             var requiredEntitlement = RoleEntitlement.DeleteAcl;
             if (acl.Any(x => SchemaDefaults.BuiltInAcl.Contains((x.GrainId, x.RoleId))))
             {
@@ -173,7 +173,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<int> StoreAclAsync(IEnumerable<ISchemaAclEntry> acl, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.WriteAcl, cancellationToken: cancellationToken))
             {
                 throw new UnauthorizedAccessException("Not entitled to modify ACL");
@@ -224,7 +224,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IEnumerable<ISchemaAclEntry>> GetEffectiveAclAsync(IIdentifiable grain, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             var result = new List<ISchemaAclEntry>();
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ReadAcl, cancellationToken: cancellationToken))
             {

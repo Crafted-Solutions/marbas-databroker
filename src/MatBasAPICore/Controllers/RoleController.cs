@@ -1,5 +1,4 @@
-﻿using CraftedSolutions.MarBasAPICore;
-using CraftedSolutions.MarBasAPICore.Http;
+﻿using CraftedSolutions.MarBasAPICore.Http;
 using CraftedSolutions.MarBasAPICore.Models;
 using CraftedSolutions.MarBasAPICore.Models.Access;
 using CraftedSolutions.MarBasAPICore.Routing;
@@ -21,14 +20,9 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.Role)]
     [ApiController]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "We want the token without interference with default parameters")]
-    public sealed class RoleController : ControllerBase
+    public sealed class RoleController(ILogger<RoleController> logger) : ControllerBase
     {
-        private readonly ILogger _logger;
-
-        public RoleController(ILogger<RoleController> logger)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger _logger = logger;
 
         [HttpGet("{id}", Name = "GetRole")]
         [ProducesResponseType(typeof(ISchemaRoleResult), StatusCodes.Status200OK)]
@@ -92,11 +86,13 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
 
         [HttpGet("Current", Name = "GetCurrentRoles")]
         [ProducesResponseType(typeof(ISchemaRolesResult), StatusCodes.Status200OK)]
-        public async Task<ISchemaRolesResult> GetCurrent(CancellationToken cancellationToken, [FromServices] IAsyncAccessService broker)
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<ISchemaRolesResult> GetCurrent(CancellationToken cancellationToken, [FromServices] IAsyncAccessService service)
         {
+            HttpResponseException.Throw503IfOffline(service as IProfileProvider);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await broker.GetContextRolesAsync(cancellationToken);
+                var result = await service.GetContextRolesAsync(cancellationToken);
                 return MarbasResultFactory.Create(true, result);
             }, _logger);
         }

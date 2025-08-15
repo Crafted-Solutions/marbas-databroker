@@ -60,7 +60,7 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                 }
                 services.Add(new ServiceDescriptor(typeIfaces[0], impl, lt));
 
-                var asyncIfaces = impl.FindInterfaces((m, filterCriteria) => Equals(m.FullName, filterCriteria), typeof(IAsyncInitService).FullName);
+                var asyncIfaces = impl.FindInterfaces((m, filterCriteria) => ServiceLifetime.Singleton == lt && Equals(m.FullName, filterCriteria), typeof(IAsyncInitService).FullName);
                 if (0 < asyncIfaces.Length)
                 {
                     result.Add(typeIfaces[0]);

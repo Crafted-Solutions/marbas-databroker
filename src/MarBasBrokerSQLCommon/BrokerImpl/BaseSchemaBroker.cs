@@ -76,9 +76,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             return result;
         }
 
-        protected void CheckProfile()
+        protected async Task CheckProfile(CancellationToken cancellationToken)
         {
-            if (!_profile.IsOnline)
+            if (!await _profile.IsOnlineAsync(cancellationToken))
             {
                 throw new InvalidOperationException("Schema is offline");
             }

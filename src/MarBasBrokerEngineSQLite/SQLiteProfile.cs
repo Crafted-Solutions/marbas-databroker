@@ -9,12 +9,12 @@ using Microsoft.Extensions.Hosting;
 
 namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
-    public sealed class SQLiteProfile(IConfiguration configuration, IHostEnvironment environment, ILogger<SQLiteProfile> logger)
+    public class SQLiteProfile(IConfiguration configuration, IHostEnvironment environment, ILogger<SQLiteProfile> logger)
         : SQLBrokerProfile<SqliteConnection, SqliteConnectionStringBuilder>(configuration, logger)
     {
-        public static readonly Version SchemaVersion = new(0, 1, 16);
+        public static readonly Version SchemaVersion = new(0, 1, 17);
 
-        private readonly IHostEnvironment _environment = environment;
+        protected readonly IHostEnvironment _environment = environment;
 
         public override Version Version => SchemaVersion;
 
@@ -27,7 +27,6 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
                 if (string.IsNullOrEmpty(_connectionSettings.DataSource))
                 {
                     _connectionSettings.DataSource = Path.Combine(_environment.ContentRootPath, Environment.ExpandEnvironmentVariables(_configuration.GetValue("BrokerProfile:DataSource", "Data/marbas.sqlite")));
-                    //_connectionSettings.Version = _configuration.GetValue("BrokerProfile:Version", 3);
                     _connectionSettings.Pooling = _configuration.GetValue("BrokerProfile:Pooling", true);
                 }
                 return _connectionSettings;

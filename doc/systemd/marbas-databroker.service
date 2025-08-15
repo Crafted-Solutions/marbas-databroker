@@ -1,0 +1,13 @@
+[Unit]
+Description=MarBas Databroker Server
+After=syslog.target network.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/opt/marbas-databroker
+ExecStart=/opt/marbas-databroker/MarBasAPI
+SyslogIdentifier=MarBasAPI
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target

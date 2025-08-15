@@ -6,7 +6,7 @@ namespace CraftedSolutions.MarBasAPI
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public async static Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -19,9 +19,9 @@ namespace CraftedSolutions.MarBasAPI
                 options.ConstraintMap.Add("DownloadDisposition", typeof(DownloadDispositionRouteConstraint));
             });
 
-            using var loggerFactory = LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConfiguration(
-                builder.Configuration.GetSection("Logging")).AddConsole().AddDebug().AddEventSourceLogger()
-                );
+            builder.ConfigureTraceFileLogging();
+
+            using var loggerFactory = builder.GetBootstrapLoggerFactory();
             var bootstrapLogger = loggerFactory.CreateLogger<Program>();
 
             builder.Services.ConfigureMarBasTimeouts(builder.Configuration.GetSection("RequestTimeouts"));
@@ -68,7 +68,7 @@ namespace CraftedSolutions.MarBasAPI
 
             app.MapControllers();
 
-            app.Run();
+            await app.RunAsync();
         }
     }
 }
