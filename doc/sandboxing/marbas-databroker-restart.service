@@ -1,0 +1,10 @@
+[Unit]
+Description=Restart MarBasAPI cleaning sandboxes
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl try-restart marbas-databroker.service
+
+[Install]
+WantedBy=multi-user.target
+

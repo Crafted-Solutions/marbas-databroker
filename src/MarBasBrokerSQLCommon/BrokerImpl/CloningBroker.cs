@@ -40,7 +40,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         protected async Task<IGrainBase?> CloneGrainInternal(IIdentifiable grain, IIdentifiable? newParent = null, GrainCloneDepth depth = GrainCloneDepth.Self, bool copyAcl = false, int currentDepth = 0, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync(new[] { grain }, GrainAccessFlag.Read, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Read);

@@ -19,6 +19,7 @@
     <Content Include="$(MSBuildThisFileDirectory)oauth\keycloak\import\marbas.json" />
     <Content Include="$(MSBuildThisFileDirectory)oauth\linkedin\authsettings-template.json" />
     <Content Include="$(MSBuildThisFileDirectory)oauth\nextcloud\authsettings.json" />
+    <Content Include="$(MSBuildThisFileDirectory)sandboxing\appsettings.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)Authentication.md" />
@@ -31,5 +32,10 @@
     <None Include="$(MSBuildThisFileDirectory)oauth\nextcloud\docker-compose.yml" />
     <None Include="$(MSBuildThisFileDirectory)oauth\nextcloud\scripts\marbas-oidc.sh" />
     <None Include="$(MSBuildThisFileDirectory)oauth\nextcloud\scripts\xocc" />
+    <None Include="$(MSBuildThisFileDirectory)sandboxing\marbas-databroker-restart.service" />
+    <None Include="$(MSBuildThisFileDirectory)sandboxing\marbas-databroker-restart.timer" />
+    <None Include="$(MSBuildThisFileDirectory)sandboxing\marbas-silo.ext.de.js" />
+    <None Include="$(MSBuildThisFileDirectory)sandboxing\marbas-silo.ext.js" />
+    <None Include="$(MSBuildThisFileDirectory)systemd\marbas-databroker.service" />
   </ItemGroup>
 </Project>

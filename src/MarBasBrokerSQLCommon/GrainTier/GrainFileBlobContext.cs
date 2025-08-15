@@ -4,24 +4,16 @@ using CraftedSolutions.MarBasBrokerSQLCommon.Lob;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainTier
 {
-    public class GrainFileBlobContext<TDialect, TParamFactory>
+    public class GrainFileBlobContext<TDialect, TParamFactory>(IDbConnectionProvider connectionProvider, Guid fileId, string column)
         : IBlobContext
         where TDialect : ISQLDialect, new()
         where TParamFactory : IDbParameterFactory, new()
     {
-        private bool _disposed;
-        private readonly Guid _id;
-        private readonly IDbConnectionProvider _provider;
+        private bool _disposed = false;
+        private readonly Guid _id = fileId;
+        private readonly IDbConnectionProvider _provider = connectionProvider;
         private DbConnection? _connection;
         private DbCommand? _command;
-
-        public GrainFileBlobContext(IDbConnectionProvider connectionProvider, Guid fileId, string column)
-        {
-            _id = fileId;
-            _provider = connectionProvider;
-            DataColumn = column;
-            _disposed = false;
-        }
 
         public DbCommand Command => GetCommandAsync().Result;
 
@@ -51,7 +43,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainTier
             }
         }
 
-        public string DataColumn { get; set; }
+        public string DataColumn { get; set; } = column;
 
         public void Dispose()
         {

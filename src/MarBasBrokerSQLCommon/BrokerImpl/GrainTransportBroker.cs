@@ -65,7 +65,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return 0;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await WrapInTransaction(0, async (ta) =>
             {
                 return await UpdateGrainTimestampsInTA(ta, grains, timestamp, cancellationToken: cancellationToken);
@@ -84,7 +84,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return result;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ExportSchema | RoleEntitlement.ReadAcl, false, cancellationToken))
             {
                 throw new UnauthorizedAccessException("Not entitled to export from schema");
@@ -164,7 +164,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return result;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ImportSchema | RoleEntitlement.WriteAcl | RoleEntitlement.DeleteAcl | RoleEntitlement.SkipPermissionCheck, false, cancellationToken))
             {
                 throw new UnauthorizedAccessException("Not entitled to import into schema");

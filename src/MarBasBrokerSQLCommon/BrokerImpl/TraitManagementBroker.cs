@@ -31,12 +31,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<GrainTraitsMap> GetGrainTraitsAsync(IIdentifiable grain, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync(new[] { grain }, GrainAccessFlag.Read, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Read);
             }
-            GrainTraitsMap result = new();
+            GrainTraitsMap result = [];
             return await ExecuteOnConnection(result, async (cmd) =>
             {
                 using (cmd)
@@ -64,7 +64,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<ITraitBase?> GetTraitAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await ExecuteOnConnection(null, async (cmd) =>
             {
                 using (cmd)
@@ -101,7 +101,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<int> DeleteTraitsAsync(IEnumerable<IIdentifiable> ids, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             CheckBuiltIns(ids);
             var result = 0;
             result = await WrapInTransaction(result, async (ta) =>
@@ -148,7 +148,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return -1;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync(traits.Select(x => x.Grain), GrainAccessFlag.Write, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Write);
@@ -191,7 +191,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<ITraitBase?> CreateTraitAsync(ITraitRef traitRef, object? value = null, int ord = 0, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await WrapInTransaction(null, async (ta) =>
             {
                 var result = await CreateTraitInTA(ta, traitRef, value, ord, cancellationToken: cancellationToken);
@@ -207,7 +207,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IEnumerable<ITraitBase>> GetTraitValuesAsync(ITraitRef traitRef, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync(new[] { traitRef.Grain }, GrainAccessFlag.Read, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Read);
@@ -252,7 +252,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return -1;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync(new[] { traitRef.Grain }, GrainAccessFlag.Write, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Write);
@@ -334,7 +334,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<int> ResetTraitValuesAsync(ITraitRef traitRef, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await WrapInTransaction(0, async (ta) => await DeleteTraitsByRefInTA(ta, traitRef, cancellationToken: cancellationToken), cancellationToken);
         }
 
@@ -358,7 +358,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IEnumerable<IGrainLocalized>> LookupGrainsByTraitAsync(ITraitRef traitRef, object? value = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) =>
             {
                 using (cmd)

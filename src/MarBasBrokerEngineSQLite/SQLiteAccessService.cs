@@ -4,10 +4,8 @@ using Microsoft.Extensions.Logging;
 
 namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
-    public sealed class SQLiteAccessService : SQLAccessService<SQLiteDialect>
+    public sealed class SQLiteAccessService(IBrokerContext context, IBrokerProfile profile, ILogger<SQLiteAccessService> logger)
+        : SQLAccessService<SQLiteDialect>(context, profile, logger)
     {
-        public SQLiteAccessService(IBrokerContext context, IBrokerProfile profile, ILogger<SQLiteAccessService> logger) : base(context, profile, logger)
-        {
-        }
     }
 }
