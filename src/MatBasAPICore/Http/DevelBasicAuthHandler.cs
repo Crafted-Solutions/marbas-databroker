@@ -1,4 +1,5 @@
 ﻿using CraftedSolutions.MarBasAPICore.Auth;
+using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.Access;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -46,19 +47,22 @@ namespace CraftedSolutions.MarBasAPICore.Http
                 return await Task.FromResult(AuthenticateResult.NoResult());
             }
 
+            var schema = _authConfig?.Schema ?? "Basic";
             var authorizationHeader = Request.Headers.Authorization.ToString();
-            if (authorizationHeader != null && authorizationHeader.StartsWith("basic", StringComparison.OrdinalIgnoreCase))
+            if (authorizationHeader != null && authorizationHeader.StartsWith(schema, StringComparison.OrdinalIgnoreCase))
             {
-                var token = authorizationHeader["Basic ".Length..].Trim();
-                var (User, Pw) = ParseCredentials(token);
-                if (!string.IsNullOrEmpty(User) && 0 < Pw.Length && VerifyCredentials(User, Pw))
+                var token = authorizationHeader[$"{schema} ".Length..].Trim();
+                var (user, pw) = ParseCredentials(token);
+                if (!string.IsNullOrEmpty(user) && 0 < pw.Length && VerifyCredentials(user, pw))
                 {
+                    var idClaim = $"{user}{SchemaDefaults.InternalPrincipalSuffix}";
                     var claims = new[] {
-                        new Claim(ClaimTypes.Name, User),
-                        new Claim(ClaimTypes.NameIdentifier, User),
-                        new Claim(ClaimTypes.Role, MapUserRole(User))
+                        new Claim(ClaimTypes.Name, user),
+                        new Claim(SchemaDefaults.UserIdentifierClaimType, idClaim),
+                        new Claim(ClaimTypes.NameIdentifier, idClaim),
+                        new Claim(ClaimTypes.Role, MapUserRole(user))
                     };
-                    var identity = new ClaimsIdentity(claims, "Basic");
+                    var identity = new ClaimsIdentity(claims, schema, SchemaDefaults.UserIdentifierClaimType, null);
                     var claimsPrincipal = new ClaimsPrincipal(identity);
                     if (Logger.IsEnabled(LogLevel.Debug))
                     {
@@ -68,7 +72,7 @@ namespace CraftedSolutions.MarBasAPICore.Http
                 }
             }
             Response.StatusCode = 401;
-            Response.Headers.WWWAuthenticate = "Basic realm=\"marbas.localhost\"";
+            Response.Headers.WWWAuthenticate = $"{schema} realm=\"marbas.localhost\"";
             return await Task.FromResult(AuthenticateResult.Fail("Invalid Authorization"));
         }
 

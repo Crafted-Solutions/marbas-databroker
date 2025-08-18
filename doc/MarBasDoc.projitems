@@ -11,11 +11,31 @@
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)marbas-sql-schema.jpg" />
     <Content Include="$(MSBuildThisFileDirectory)marbas.png" />
+    <Content Include="$(MSBuildThisFileDirectory)oauth\authentik\authsettings.json" />
+    <Content Include="$(MSBuildThisFileDirectory)oauth\azure\app-manifest-template.json" />
+    <Content Include="$(MSBuildThisFileDirectory)oauth\azure\authsettings-template.json" />
+    <Content Include="$(MSBuildThisFileDirectory)oauth\google\authsettings-template.json" />
     <Content Include="$(MSBuildThisFileDirectory)oauth\keycloak\authsettings.json" />
     <Content Include="$(MSBuildThisFileDirectory)oauth\keycloak\import\marbas.json" />
+    <Content Include="$(MSBuildThisFileDirectory)oauth\linkedin\authsettings-template.json" />
+    <Content Include="$(MSBuildThisFileDirectory)oauth\nextcloud\authsettings.json" />
+    <Content Include="$(MSBuildThisFileDirectory)sandboxing\appsettings.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)Authentication.md" />
+    <None Include="$(MSBuildThisFileDirectory)oauth\authentik\.env" />
+    <None Include="$(MSBuildThisFileDirectory)oauth\authentik\docker-compose-shared-pg.yml" />
+    <None Include="$(MSBuildThisFileDirectory)oauth\authentik\docker-compose-standalone.yml" />
+    <None Include="$(MSBuildThisFileDirectory)oauth\authentik\marbas.yml" />
     <None Include="$(MSBuildThisFileDirectory)oauth\keycloak\docker-compose.yml" />
+    <None Include="$(MSBuildThisFileDirectory)oauth\nextcloud\config\nginx\site-confs\default.conf" />
+    <None Include="$(MSBuildThisFileDirectory)oauth\nextcloud\docker-compose.yml" />
+    <None Include="$(MSBuildThisFileDirectory)oauth\nextcloud\scripts\marbas-oidc.sh" />
+    <None Include="$(MSBuildThisFileDirectory)oauth\nextcloud\scripts\xocc" />
+    <None Include="$(MSBuildThisFileDirectory)sandboxing\marbas-databroker-restart.service" />
+    <None Include="$(MSBuildThisFileDirectory)sandboxing\marbas-databroker-restart.timer" />
+    <None Include="$(MSBuildThisFileDirectory)sandboxing\marbas-silo.ext.de.js" />
+    <None Include="$(MSBuildThisFileDirectory)sandboxing\marbas-silo.ext.js" />
+    <None Include="$(MSBuildThisFileDirectory)systemd\marbas-databroker.service" />
   </ItemGroup>
 </Project>

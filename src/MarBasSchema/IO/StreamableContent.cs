@@ -3,14 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace CraftedSolutions.MarBasSchema.IO
 {
-    public class StreamableContent : IStreamableContent
+    public class StreamableContent(byte[]? data = null) : IStreamableContent
     {
-        protected byte[]? _data;
-
-        public StreamableContent(byte[]? data = null)
-        {
-            _data = data;
-        }
+        protected byte[]? _data = data;
 
         public virtual byte[]? Data
         {

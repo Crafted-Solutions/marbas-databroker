@@ -1,5 +1,4 @@
-﻿using CraftedSolutions.MarBasBrokerSQLCommon;
-using CraftedSolutions.MarBasCommon;
+﻿using CraftedSolutions.MarBasCommon;
 using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.Access;
 using CraftedSolutions.MarBasSchema.Broker;
@@ -8,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
 {
     public abstract class SQLAccessService<TDialect>
-        : IAccessService, IAsyncAccessService
+        : IAccessService, IAsyncAccessService, IProfileProvider
         where TDialect : ISQLDialect, new()
     {
         protected readonly ISQLBrokerProfile _profile;
@@ -22,6 +21,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
             _logger = logger;
         }
 
+        public IBrokerProfile Profile => _profile;
+
         public ISchemaRole GetContextPrimaryRole()
         {
             return GetContextPrimaryRoleAsync().Result;
@@ -34,13 +35,17 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
 
         public IEnumerable<ISchemaRole> GetContextRoles()
         {
-            var sfxLen = SchemaDefaults.SystemPrincipalSuffix.Length;
-            return _profile.SchemaRoles.Where(x => _contextRoles.Contains(x.Name.EndsWith(SchemaDefaults.SystemPrincipalSuffix) ? x.Name.Remove(x.Name.Length - sfxLen) : x.Name));
+            return GetContextRolesAsync().Result;
         }
 
-        public Task<IEnumerable<ISchemaRole>> GetContextRolesAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<ISchemaRole>> GetContextRolesAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(GetContextRoles());
+            if (!await _profile.IsOnlineAsync(cancellationToken))
+            {
+                return Enumerable.Empty<ISchemaRole>();
+            }
+            var sfxLen = SchemaDefaults.InternalPrincipalSuffix.Length;
+            return _profile.SchemaRoles.Where(x => _contextRoles.Contains(x.Name.EndsWith(SchemaDefaults.InternalPrincipalSuffix) ? x.Name.Remove(x.Name.Length - sfxLen) : x.Name));
         }
 
         public bool VerfifyAccess(IEnumerable<IIdentifiable> grains, GrainAccessFlag desiredAccess)
@@ -50,7 +55,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
 
         public async Task<bool> VerfifyAccessAsync(IEnumerable<IIdentifiable> grains, GrainAccessFlag desiredAccess, CancellationToken cancellationToken = default)
         {
-            if (!_profile.IsOnline)
+            if (!await _profile.IsOnlineAsync(cancellationToken))
             {
                 return false;
             }

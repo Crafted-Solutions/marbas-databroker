@@ -9,6 +9,8 @@ using CraftedSolutions.MarBasSchema.Access;
 using CraftedSolutions.MarBasSchema.Broker;
 using CraftedSolutions.MarBasSchema.Grain;
 using CraftedSolutions.MarBasSchema.GrainTier;
+using CraftedSolutions.MarBasSchema.IO;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
@@ -17,13 +19,19 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         : GrainDefManagementBroker<TDialect>, IFileManagementBroker, IAsyncFileManagementBroker
         where TDialect : ISQLDialect, new()
     {
+        #region Variables
+        protected readonly (ulong PerUser, ulong PerInstance) _storageQuota;
+        #endregion
+
         #region Construction
         protected FileManagementBroker(IBrokerProfile profile, ILogger logger) : base(profile, logger)
         {
+            _storageQuota = ( _profile.Configuration.GetValue("StorageQuota:PerUser", 0UL), _profile.Configuration.GetValue("StorageQuota:PerInstance", 0UL));
         }
 
         protected FileManagementBroker(IBrokerProfile profile, IBrokerContext context, IAsyncAccessService accessService, ILogger logger) : base(profile, context, accessService, logger)
         {
+            _storageQuota = (_profile.Configuration.GetValue("StorageQuota:PerUser", 0UL), _profile.Configuration.GetValue("StorageQuota:PerInstance", 0UL));
         }
         #endregion
 
@@ -35,7 +43,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public virtual async Task<IGrainFile?> GetGrainFileAsync(Guid id, GrainFileContentAccess loadContent = GrainFileContentAccess.OnDemand, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             using (var conn = _profile.Connection)
             {
                 await conn.OpenAsync(cancellationToken);
@@ -64,7 +72,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public virtual async Task<IGrainFile?> CreateGrainFileAsync(string name, string mimeType, Stream content, IIdentifiable? parent = null, long size = -1, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
+            await ValidateStorageQuota(0 > size ? content.Length : size, cancellationToken: cancellationToken);
+
             IGrainFile? result = null;
             await WrapInTransaction(result, async (ta) =>
             {
@@ -98,7 +108,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return -1;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
+            await ValidateStorageQuota(files.Sum(x => x.Size), cancellationToken: cancellationToken);
+
             if (!await _accessService.VerfifyAccessAsync(files, GrainAccessFlag.Write, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Write);
@@ -239,10 +251,58 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             return Task.FromResult(0);
         }
 
-        protected static string MapFileColumn(string fieldName)
+        protected async Task<bool> ValidateStorageQuota(long bytesToStore, bool throwIfExceeded = true, CancellationToken cancellationToken = default)
+        {
+            if (0 >= bytesToStore || 0 == _storageQuota.PerUser + _storageQuota.PerInstance)
+            {
+                return true;
+            }
+            var result = true;
+            if ((0 < _storageQuota.PerUser && (ulong)bytesToStore >= _storageQuota.PerUser) || (0 < _storageQuota.PerInstance && (ulong)bytesToStore >= _storageQuota.PerInstance))
+            {
+                result = false;
+            }
+            if (result && 0 < _storageQuota.PerUser)
+            {
+                result = await ExecuteOnConnection(result, async (cmd) =>
+                {
+                    cmd.CommandText = $"{GrainFileConfig<TDialect>.SQLSelectFileSizes} JOIN {GrainBaseConfig.DataSource} AS g ON g.{GeneralEntityDefaults.FieldId} = f.{GeneralEntityDefaults.FieldBaseId} WHERE g.{MapGrainBaseColumn(nameof(IGrain.Owner))} = @{GrainBaseConfig.ParamOwner}";
+                    cmd.Parameters.Add(_profile.ParameterFactory.Create(GrainBaseConfig.ParamOwner, _context.User.Identity?.Name ?? SchemaDefaults.SystemUserName));
+
+                    var total = await cmd.ExecuteScalarAsync(cancellationToken);
+                    if (null == total || (ulong)(long)total + (ulong)bytesToStore > _storageQuota.PerUser)
+                    {
+                        return false;
+                    }
+                    return true;
+                }, cancellationToken);
+            }
+            if (result && 0 < _storageQuota.PerInstance)
+            {
+                result = await ExecuteOnConnection(result, async (cmd) =>
+                {
+                    cmd.CommandText = GrainFileConfig<TDialect>.SQLSelectFileSizes;
+ 
+                    var total = await cmd.ExecuteScalarAsync(cancellationToken);
+                    if (null == total || (ulong)(long)total + (ulong)bytesToStore > _storageQuota.PerInstance)
+                    {
+                        return false;
+                    }
+                    return true;
+                }, cancellationToken);
+            }
+            if (!result && throwIfExceeded)
+            {
+                throw new StorageQuotaExceededException($"Current quota vorbids storing of {bytesToStore} B");
+            }
+            return result;
+        }
+
+         protected static string MapFileColumn(string fieldName)
         {
             return AbstractDataAdapter.GetAdapterColumnName<GrainFileInlineDataAdapter>(fieldName);
         }
-        #endregion
+
+         #endregion
     }
 }

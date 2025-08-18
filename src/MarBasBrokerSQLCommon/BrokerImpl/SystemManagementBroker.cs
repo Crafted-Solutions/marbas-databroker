@@ -29,7 +29,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<ISystemLanguage?> GetSystemLanguageAsync(CultureInfo culture, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await ExecuteOnConnection(null, async (cmd) =>
             {
                 using (cmd)
@@ -55,7 +55,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IEnumerable<ISystemLanguage>> ListSystemLanguagesAsync(IEnumerable<CultureInfo>? cultures = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             var result = new List<ISystemLanguage>();
             return await ExecuteOnConnection(result, async (cmd) =>
             {
@@ -109,7 +109,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<ISystemLanguage?> CreateSystemLanguageAsync(CultureInfo culture, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ModifySystemSettings, cancellationToken: cancellationToken))
             {
                 throw new UnauthorizedAccessException("Not entitled to add language");
@@ -127,7 +127,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<int> StoreSystemLanguagesAsync(IEnumerable<ISystemLanguage> languages, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             var langMod = languages.Where(a => 0 < a.GetDirtyFields<ISystemLanguage>().Count);
             if (!langMod.Any())
             {
@@ -169,7 +169,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<int> DeleteSystemLanguagesAsync(IEnumerable<ISystemLanguageRef> languages, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ModifySystemSettings, cancellationToken: cancellationToken))
             {
                 throw new UnauthorizedAccessException("Not entitled to delete language");
@@ -206,7 +206,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return result;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await ExecuteOnConnection(result, async (cmd) =>
             {
                 using (cmd)

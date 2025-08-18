@@ -41,5 +41,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainTier
         public const string SQLUpdateFile = $"UPDATE {GrainFileDefaults.DataSourceFile} SET ";
         public const string SQLDeleteFile = $"DELETE FROM {GrainFileDefaults.DataSourceFile} WHERE ";
 
+        public const string SQLSelectFileSizes = $"SELECT SUM(f.{GrainFileDefaults.FieldSize}) AS total FROM {GrainFileDefaults.DataSourceFile} AS f";
+
     }
 }

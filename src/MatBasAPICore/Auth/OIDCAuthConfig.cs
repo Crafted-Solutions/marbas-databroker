@@ -21,6 +21,8 @@ namespace CraftedSolutions.MarBasAPICore.Auth
         public string ClientId { get; set; } = "databroker";
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string? ClientSecret { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public string? BearerTokenName { get; set; }
         public Dictionary<string, bool> Scopes { get; set; } = [];
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string? ScopeSeparator { get; set; }

@@ -1,0 +1,342 @@
+version: 1
+
+metadata:
+  name: "MarBas Authentication"
+  labels:
+    purpose: "marbas-realm"
+
+entries:
+
+# Roles
+- identifiers:
+    name: Superuser@marbas
+  model: authentik_rbac.role
+  conditions: []
+  permissions: []
+  state: present
+- identifiers:
+    name: Developer@marbas
+  model: authentik_rbac.role
+  conditions: []
+  permissions: []
+  state: present
+- identifiers:
+    name: Schema_Manager@marbas
+  model: authentik_rbac.role
+  conditions: []
+  permissions: []
+  state: present
+- identifiers:
+    name: Content_Contributor@marbas
+  model: authentik_rbac.role
+  conditions: []
+  permissions: []
+  state: present
+- identifiers:
+    name: Content_Consumer@marbas
+  model: authentik_rbac.role
+  conditions: []
+  permissions: []
+  state: present
+- identifiers:
+    name: Everyone@marbas
+  model: authentik_rbac.role
+  conditions: []
+  permissions: []
+  state: present
+
+# Groups
+- attrs:
+    attributes: {}
+    roles:
+    - !Find [authentik_rbac.role, [name, 'Superuser@marbas']]
+  conditions: []
+  identifiers:
+    name: MarBas Admins
+  model: authentik_core.group
+  permissions: []
+  state: present
+- attrs:
+    attributes: {}
+    roles:
+    - !Find [authentik_rbac.role, [name, 'Developer@marbas']]
+  conditions: []
+  identifiers:
+    name: MarBas Developers
+  model: authentik_core.group
+  permissions: []
+  state: present
+- attrs:
+    attributes: {}
+    roles:
+    - !Find [authentik_rbac.role, [name, 'Schema_Manager@marbas']]
+  conditions: []
+  identifiers:
+    name: MarBas Managers
+  model: authentik_core.group
+  permissions: []
+  state: present
+- attrs:
+    attributes: {}
+    roles:
+    - !Find [authentik_rbac.role, [name, 'Content_Contributor@marbas']]
+  conditions: []
+  identifiers:
+    name: MarBas Editors
+  model: authentik_core.group
+  permissions: []
+  state: present
+- attrs:
+    attributes: {}
+    roles:
+    - !Find [authentik_rbac.role, [name, 'Content_Consumer@marbas']]
+  conditions: []
+  identifiers:
+    name: MarBas Readers
+  model: authentik_core.group
+  permissions: []
+  state: present
+
+# Users
+- attrs:
+    attributes: {}
+    groups:
+    - !Find [authentik_core.group, [name, 'MarBas Admins']]
+    is_active: true
+    name: MarBas Admin
+    password: b
+    path: marbas
+    type: external
+    username: root
+  conditions: []
+  identifiers:
+    email: root@authentik.local
+  model: authentik_core.user
+  permissions: []
+  state: present
+- attrs:
+    attributes: {}
+    groups:
+    - !Find [authentik_core.group, [name, 'MarBas Developers']]
+    is_active: true
+    name: MarBas Developer
+    password: b
+    path: marbas
+    type: external
+    username: developer
+  conditions: []
+  identifiers:
+    email: devel@authentik.local
+  model: authentik_core.user
+  permissions: []
+  state: present
+- attrs:
+    attributes: {}
+    groups:
+    - !Find [authentik_core.group, [name, 'MarBas Managers']]
+    is_active: true
+    name: MarBas Manager
+    password: b
+    path: marbas
+    type: external
+    username: manager
+  conditions: []
+  identifiers:
+    email: manager@authentik.local
+  model: authentik_core.user
+  permissions: []
+  state: present
+- attrs:
+    attributes: {}
+    groups:
+    - !Find [authentik_core.group, [name, 'MarBas Editors']]
+    is_active: true
+    name: MarBas Editor
+    password: b
+    path: marbas
+    type: external
+    username: editor
+  conditions: []
+  identifiers:
+    email: editor@authentik.local
+  model: authentik_core.user
+  permissions: []
+  state: present
+- attrs:
+    attributes: {}
+    groups:
+    - !Find [authentik_core.group, [name, 'MarBas Readers']]
+    is_active: true
+    name: MarBas Reader
+    password: b
+    path: marbas
+    type: external
+    username: reader
+  conditions: []
+  identifiers:
+    email: reader@authentik.local
+  model: authentik_core.user
+  permissions: []
+  state: present
+
+# Auth Flows
+- attrs:
+    authentication: none
+    denied_action: message_continue
+    designation: invalidation
+    layout: stacked
+    name: Logged out of application (OIDC)
+    policy_engine_mode: any
+    title: You've logged out of %(app)s.
+  conditions: []
+  identifiers:
+    slug: oidc-provider-invalidation-flow
+  model: authentik_flows.flow
+  permissions: []
+  state: present
+- attrs:
+    expression: "from django.http import QueryDict\nredirect_url = QueryDict(request.http_request.GET.get(\"\
+      query\")).get(\"post_logout_redirect_uri\")\nif redirect_url:\n    context['flow_plan'].redirect(redirect_url)\n\
+      return True"
+  conditions: []
+  identifiers:
+    name: oidc-logout-redirect
+  model: authentik_policies_expression.expressionpolicy
+  permissions: []
+  state: present
+- attrs: {}
+  conditions: []
+  identifiers:
+    name: oidc-invalidation-logout
+  model: authentik_stages_user_logout.userlogoutstage
+  permissions: []
+  state: present
+- attrs:
+    invalid_response_action: retry
+    policy_engine_mode: any
+    re_evaluate_policies: true
+  conditions: []
+  identifiers:
+    order: 0
+    pk: ed20cc39-e28e-4d00-8ea5-da8fe18fc1ed
+    stage: !Find [authentik_stages_user_logout.userlogoutstage, [name, oidc-invalidation-logout]]
+    target: !Find [authentik_flows.flow, [slug, oidc-provider-invalidation-flow]]
+  model: authentik_flows.flowstagebinding
+  permissions: []
+  state: present
+- attrs:
+    enabled: true
+    failure_result: true
+    timeout: 30
+  conditions: []
+  identifiers:
+    order: 100
+    policy: !Find [authentik_policies_expression.expressionpolicy, [name, oidc-logout-redirect]]
+    target: ed20cc39-e28e-4d00-8ea5-da8fe18fc1ed
+  model: authentik_policies.policybinding
+  permissions: []
+  state: present
+
+
+# Provider
+- attrs:
+    access_code_validity: minutes=1
+    access_token_validity: minutes=5
+    authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+    client_id: 3YQXNMX7aplwI0gQoSRbc4TBADtwuGajxHpYf3ud
+    client_secret: HGdiziLoGpZvKF5lZ3GExTK4VVRNNZw832jc0gYeXJa7bwz5WgOtGNu3gDZ9EpumWiqtQWpLhxK1jEPzIwtfFgsg0CKALTEHHQOqPdVXR8KUXscpQNzbj83Ksst9KLgz
+    client_type: public
+    include_claims_in_id_token: true
+    invalidation_flow: !Find [authentik_flows.flow, [slug, oidc-provider-invalidation-flow]]
+    issuer_mode: per_provider
+    property_mappings:
+    - !Find [authentik_providers_oauth2.scopemapping, [name, 'authentik default OAuth Mapping: OpenID ''openid''']]
+    - !Find [authentik_providers_oauth2.scopemapping, [name, 'authentik default OAuth Mapping: OpenID ''email''']]
+    - !Find [authentik_providers_oauth2.scopemapping, [name, 'authentik default OAuth Mapping: OpenID ''profile''']]
+    redirect_uris:
+    - matching_mode: strict
+      url: https://localhost:7277/swagger/oauth2-redirect.html
+    - matching_mode: strict
+      url: https://localhost:7277/silo/login.html
+    - matching_mode: strict
+      url: http://localhost:5500/login.html
+    refresh_token_validity: days=30
+    signing_key: !Find [authentik_crypto.certificatekeypair, [name, 'authentik Self-signed Certificate']]
+    sub_mode: hashed_user_id
+  conditions: []
+  id: "marbas-oidc-provider"
+  identifiers:
+    name: MarBas OIDC
+  model: authentik_providers_oauth2.oauth2provider
+  permissions: []
+  state: present
+
+# Application
+- attrs:
+    name: MarBas Databroker
+    policy_engine_mode: any
+    provider: !Find [authentik_providers_oauth2.oauth2provider, [name, 'MarBas OIDC']]
+    slug: databroker
+  conditions: []
+  id: "marbas-databroker-application"
+  identifiers:
+    name: MarBas Databroker
+  model: authentik_core.application
+  permissions: []
+  state: present
+# Policy Bindings
+- attrs:
+    enabled: true
+    timeout: 30
+  conditions: []
+  identifiers:
+    group: !Find [authentik_core.group, [name, 'MarBas Admins']]
+    order: 0
+    target: !Find [authentik_core.application, [slug, databroker]]
+  model: authentik_policies.policybinding
+  permissions: []
+  state: present
+- attrs:
+    enabled: true
+    timeout: 30
+  conditions: []
+  identifiers:
+    group: !Find [authentik_core.group, [name, 'MarBas Developers']]
+    order: 0
+    target: !Find [authentik_core.application, [slug, databroker]]
+  model: authentik_policies.policybinding
+  permissions: []
+  state: present
+- attrs:
+    enabled: true
+    timeout: 30
+  conditions: []
+  identifiers:
+    group: !Find [authentik_core.group, [name, 'MarBas Managers']]
+    order: 0
+    target: !Find [authentik_core.application, [slug, databroker]]
+  model: authentik_policies.policybinding
+  permissions: []
+  state: present
+- attrs:
+    enabled: true
+    timeout: 30
+  conditions: []
+  identifiers:
+    group: !Find [authentik_core.group, [name, 'MarBas Editors']]
+    order: 0
+    target: !Find [authentik_core.application, [slug, databroker]]
+  model: authentik_policies.policybinding
+  permissions: []
+  state: present
+- attrs:
+    enabled: true
+    timeout: 30
+  conditions: []
+  identifiers:
+    group: !Find [authentik_core.group, [name, 'MarBas Readers']]
+    order: 0
+    target: !Find [authentik_core.application, [slug, databroker]]
+  model: authentik_policies.policybinding
+  permissions: []
+  state: present

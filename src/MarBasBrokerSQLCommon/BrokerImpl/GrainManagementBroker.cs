@@ -35,7 +35,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IGrainLocalized?> GetGrainAsync(Guid id, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await ExecuteOnConnection<IGrainLocalized?>(null, async (cmd) =>
             {
                 using (cmd)
@@ -67,7 +67,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IGrainBase?> CreateGrainAsync(string name, IIdentifiable parent, IIdentifiable? typedef, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             IGrainBase? result = null;
             return await WrapInTransaction(result, async (ta) =>
             {
@@ -82,7 +82,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<int> DeleteGrainsAsync(IEnumerable<IIdentifiable> ids, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             var result = 0;
             await WrapInTransaction(result, async (ta) =>
             {
@@ -104,7 +104,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return -1;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             var result = 0;
             return await WrapInTransaction(result, async (ta) =>
             {
@@ -120,7 +120,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IGrainBase?> MoveGrainAsync(IIdentifiable grain, IIdentifiable newParent, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync(new[] { grain }, GrainAccessFlag.Read, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Read);
@@ -162,7 +162,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<bool> IsGrainInstanceOfAsync(IIdentifiable grain, IIdentifiable typedef, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             Guid? typeDefId = null;
             if (grain is IGrainBase grainBase)
             {
@@ -265,7 +265,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IEnumerable<IGrainLocalized>> ListGrainsAsync(IIdentifiable? container, bool recursive = false, CultureInfo? culture = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, IGrainQueryFilter? filter = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) =>
             {
                 using (cmd)
@@ -318,7 +318,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IEnumerable<IGrainLocalized>> ResolvePathAsync(string? path, CultureInfo? culture = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, IGrainQueryFilter? filter = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (string.IsNullOrEmpty(path) || string.IsNullOrWhiteSpace(path))
             {
                 var root = await GetGrainAsync(SchemaDefaults.RootID, culture, cancellationToken);
@@ -379,7 +379,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IEnumerable<IGrainLocalized>> GetGrainAncestorsAsync(IIdentifiable grain, CultureInfo? culture = null, bool includeSelf = false, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) =>
             {
                 using (cmd)
@@ -415,7 +415,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return result;
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await ExecuteOnConnection(result, async (cmd) =>
             {
                 using (cmd)
@@ -453,7 +453,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return Enumerable.Empty<IGrainLabel>();
             }
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             return await ExecuteOnConnection<IEnumerable<IGrainLabel>>(Enumerable.Empty<IGrainLabel>(), async (cmd) =>
             {
                 var i = 0;

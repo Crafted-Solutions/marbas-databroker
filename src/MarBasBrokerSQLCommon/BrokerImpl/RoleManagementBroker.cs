@@ -29,7 +29,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<ISchemaRole?> GetRoleAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (id != (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id && !await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ReadRoles, cancellationToken: cancellationToken))
             {
                 return null;
@@ -61,7 +61,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<ISchemaRole?> CreateRoleAsync(string name, RoleEntitlement entitlement = RoleEntitlement.None, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.WriteRoles, cancellationToken: cancellationToken))
             {
                 throw new UnauthorizedAccessException("Unsufficient entitlement for creating roles");
@@ -108,7 +108,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<int> DeleteRolesAsync(IEnumerable<IIdentifiable> ids, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             CheckBuiltIns(ids);
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.DeleteRoles, cancellationToken: cancellationToken))
             {
@@ -156,7 +156,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<int> StoreRolesAsync(IEnumerable<ISchemaRole> roles, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.WriteRoles, cancellationToken: cancellationToken))
             {
                 throw new UnauthorizedAccessException("Unsufficient entitlement for modifying roles");
@@ -206,7 +206,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         public async Task<IEnumerable<ISchemaRole>> ListRolesAsync(IEnumerable<IListSortOption<RoleSortField>>? sortOptions = null, CancellationToken cancellationToken = default)
         {
-            CheckProfile();
+            await CheckProfile(cancellationToken);
             var result = new List<ISchemaRole>();
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ReadRoles, cancellationToken: cancellationToken))
             {

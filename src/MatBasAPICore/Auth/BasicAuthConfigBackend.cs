@@ -4,8 +4,10 @@ namespace CraftedSolutions.MarBasAPICore.Auth
 {
     public class BasicAuthConfigBackend : BasicAuthConfig, IAuthMappings
     {
-        private Dictionary<string, byte[]> _pwHashes = [];
+        private readonly Dictionary<string, byte[]> _pwHashes = [];
 
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public string? UserIdClaimType { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string? MapClaimType { get; set; }
         public Dictionary<string, string> MapRoles { get; set; } = [];

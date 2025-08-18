@@ -3,17 +3,12 @@ using CraftedSolutions.MarBasSchema.IO;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.Lob
 {
-    public sealed class SimpleStreamableBlob : StreamableContent, IAsyncStreamableContent
+    public sealed class SimpleStreamableBlob(IBlobContext context) : StreamableContent, IAsyncStreamableContent
     {
-        private readonly IBlobContext _context;
+        private readonly IBlobContext _context = context;
         private DbDataReader? _reader;
         private bool _disposed;
         private Stream? _stream;
-
-        public SimpleStreamableBlob(IBlobContext context)
-        {
-            _context = context;
-        }
 
         ~SimpleStreamableBlob() => Dispose(false);
 
