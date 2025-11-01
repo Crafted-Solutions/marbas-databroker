@@ -7,14 +7,9 @@ using Microsoft.Extensions.Options;
 
 namespace CraftedSolutions.MarBasAPICore.Swagger
 {
-    public sealed class SwaggerEnumerable<T> : IModelBinder where T : IEnumerable
+    public sealed class SwaggerEnumerable<T>(IOptions<JsonOptions> options) : IModelBinder where T : IEnumerable
     {
-        private readonly IOptions<JsonOptions> _options;
-
-        public SwaggerEnumerable(IOptions<JsonOptions> options)
-        {
-            _options = options;
-        }
+        private readonly JsonSerializerOptions _serializerOptions = options.Value.JsonSerializerOptions;
 
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
@@ -32,7 +27,7 @@ namespace CraftedSolutions.MarBasAPICore.Swagger
                     ? $"{v}" : $"\"{v}\"";
                 return result;
             });
-            var model = JsonSerializer.Deserialize<T>($"[{json}]", _options.Value.JsonSerializerOptions);
+            var model = JsonSerializer.Deserialize<T>($"[{json}]", _serializerOptions);
             bindingContext.Result = ModelBindingResult.Success(model);
             return Task.CompletedTask;
         }

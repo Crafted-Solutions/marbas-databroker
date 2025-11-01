@@ -11,7 +11,12 @@ namespace CraftedSolutions.MarBasAPICore.Http
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
-            if (context.Exception is HttpResponseException httpResponseException)
+            var httpResponseException = context.Exception as HttpResponseException;
+            if (null == httpResponseException && null != context.Exception)
+            {
+                httpResponseException = context.Exception?.InnerException as HttpResponseException;
+            }
+            if (null != httpResponseException)
             {
                 context.Result = new ObjectResult(httpResponseException.Value)
                 {

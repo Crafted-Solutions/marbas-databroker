@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Version>0.1.20</Version>
+        <Version>0.1.21</Version>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <Description>Sample Web API application for MarBas databroker</Description>
         <UserSecretsId>d16b24b3-4570-4fb8-8c57-153e4044d8ee</UserSecretsId>
@@ -36,6 +36,10 @@
       <None Include="libman.json">
         <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="[8.0.21,9.0)" />
     </ItemGroup>
 
     <ItemGroup>

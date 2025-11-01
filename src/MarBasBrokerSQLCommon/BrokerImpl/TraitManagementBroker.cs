@@ -395,7 +395,7 @@ WHERE t.{MapTraitColumn(nameof(ITrait.PropDefId))} = @{TraitBaseDefaults.ParamPr
 
                     using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
                     {
-                        return await EnumGrainDataReader<IGrainLocalized, GrainLocalized, GrainLocalizedDataAdapter>(rs, GrainExtendedDataAdapter.ExtensionColumn.All, cancellationToken).ToListAsync(cancellationToken);
+                        return await EnumGrainsFromDataReader<IGrainLocalized, GrainLocalized, GrainLocalizedDataAdapter>(rs, GrainExtendedDataAdapter.ExtensionColumn.All, cancellationToken);
                     }
                 }
             }, cancellationToken);

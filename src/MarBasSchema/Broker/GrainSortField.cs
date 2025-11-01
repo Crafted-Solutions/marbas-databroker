@@ -2,6 +2,6 @@
 {
     public enum GrainSortField
     {
-        Id, Name, Path, Label, SortKey, CTime, MTime, Creator, TypeName, TypeDefId
+        Id, Name, Path, Label, SortKey, CTime, MTime, Creator, TypeName, TypeDefId, ParentId
     }
 }

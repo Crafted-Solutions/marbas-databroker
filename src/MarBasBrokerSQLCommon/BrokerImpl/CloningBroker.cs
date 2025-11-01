@@ -1,7 +1,4 @@
-﻿using System.Data.Common;
-using System.Globalization;
-using CraftedSolutions.MarBasBrokerSQLCommon;
-using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.Access;
 using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
@@ -13,6 +10,8 @@ using CraftedSolutions.MarBasSchema.Grain;
 using CraftedSolutions.MarBasSchema.GrainDef;
 using CraftedSolutions.MarBasSchema.GrainTier;
 using Microsoft.Extensions.Logging;
+using System.Data.Common;
+using System.Globalization;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
@@ -41,7 +40,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         protected async Task<IGrainBase?> CloneGrainInternal(IIdentifiable grain, IIdentifiable? newParent = null, GrainCloneDepth depth = GrainCloneDepth.Self, bool copyAcl = false, int currentDepth = 0, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            if (!await _accessService.VerfifyAccessAsync(new[] { grain }, GrainAccessFlag.Read, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([grain], GrainAccessFlag.Read, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Read);
             }
@@ -57,7 +56,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             }
 
             IGrainBase? result = null;
-            if (0 < depth || GrainCloneDepth.Self == (GrainCloneDepth.Self & depth))
+            if (0 < currentDepth || depth.HasFlag(GrainCloneDepth.Self))
             {
                 await WrapInTransaction(result, async (ta) =>
                 {
@@ -84,7 +83,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
                         if (null == srcGrain.TypeDefId)
                         {
-                            if (1 > await CloneGrainTypeDetailsInTA(srcGrain.Id, result.Id, new[] { MapTypeDefColumn(nameof(IGrainTypeDef.Impl)) },
+                            if (1 > await CloneGrainTypeDetailsInTA(srcGrain.Id, result.Id, [MapTypeDefColumn(nameof(IGrainTypeDef.Impl))],
                                 GrainTypeDefConfig<TDialect>.SQLInsertTypeDef, GrainTypeDefDefaults.DataSourceTypeDef, ta, cancellationToken))
                             {
                                 throw new ApplicationException($"Failed to clone TypeDef details from {srcGrain.Id} to {result.Id}");
@@ -103,15 +102,15 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         }
                         else if (await IsGrainInstanceOfAsync(srcGrain, (Identifiable)SchemaDefaults.PropDefTypeDefID))
                         {
-                            if (1 > await CloneGrainTypeDetailsInTA(srcGrain.Id, result.Id, new[]
-                                {
+                            if (1 > await CloneGrainTypeDetailsInTA(srcGrain.Id, result.Id,
+                                [
                                 MapPropDefColumn(nameof(IGrainPropDef.ValueType)),
                                 MapPropDefColumn(nameof(IGrainPropDef.CardinalityMin)),
                                 MapPropDefColumn(nameof(IGrainPropDef.CardinalityMax)),
                                 MapPropDefColumn(nameof(IGrainPropDef.Versionable)),
                                 MapPropDefColumn(nameof(IGrainPropDef.Localizable)),
                                 MapPropDefColumn(nameof(IGrainPropDef.ValueConstraint))
-                            },
+                            ],
                                 GrainPropDefConfig<TDialect>.SQLInsertPropDef, GrainPropDefDefaults.DataSourcePropDef, ta, cancellationToken))
                             {
                                 throw new ApplicationException($"Failed to clone PropDef details from {srcGrain.Id} to {result.Id}");
@@ -147,7 +146,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 result = srcGrain;
             }
 
-            if (GrainCloneDepth.Infinite == (GrainCloneDepth.Infinite & depth) || 2 > currentDepth && GrainCloneDepth.Immediate == (GrainCloneDepth.Infinite & depth))
+            if (depth.HasFlag(GrainCloneDepth.Infinite) || (2 > currentDepth && depth.HasFlag(GrainCloneDepth.Immediate)))
             {
                 var children = new List<IGrainBase>();
                 await ExecuteOnConnection(children, async (cmd) =>
@@ -189,7 +188,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             }
 
             var tgtParentId = newParent?.Id ?? sourceGrain.ParentId;
-            if (null == tgtParentId || !await _accessService.VerfifyAccessAsync(new[] { (Identifiable)tgtParentId }, GrainAccessFlag.CreateSubelement, cancellationToken))
+            if (null == tgtParentId || !await _accessService.VerfifyAccessAsync([(Identifiable)tgtParentId], GrainAccessFlag.CreateSubelement, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.CreateSubelement);
             }

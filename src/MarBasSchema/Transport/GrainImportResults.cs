@@ -21,11 +21,22 @@ namespace CraftedSolutions.MarBasSchema.Transport
             {
                 if (null == _feedback)
                 {
-                    _feedback = new List<IBrokerOperationFeedback>();
+                    _feedback = [];
                 }
                 _feedback.Add(item);
             }
 
+        }
+
+        public static GrainImportResults Merge(IGrainImportResults first, IGrainImportResults second)
+        {
+            return new ()
+            {
+                ImportedCount = first.ImportedCount + second.ImportedCount,
+                IgnoredCount = first.IgnoredCount + second.IgnoredCount,
+                DeletedCount = first.DeletedCount + second.DeletedCount,
+                Feedback = null == second.Feedback ? first.Feedback : first.Feedback?.Concat(second.Feedback) ?? second.Feedback
+            };
         }
     }
 }
