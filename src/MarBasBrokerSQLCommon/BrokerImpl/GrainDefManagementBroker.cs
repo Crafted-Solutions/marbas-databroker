@@ -156,7 +156,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IGrainBase?> GetOrCreateTypeDefDefaultsAsync(IIdentifiable typeDef, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            if (!await _accessService.VerfifyAccessAsync(new[] { typeDef }, GrainAccessFlag.Read, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([typeDef], GrainAccessFlag.Read, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Read);
             }
@@ -352,7 +352,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         {
                             _logger.LogDebug("GetTypeDefProperties rs.HasRows={hasRows}, rs.FieldCount={fieldCount}", rs.HasRows, rs.FieldCount);
                         }
-                        return await EnumGrainDataReader<IGrainPropDefLocalized, GrainPropDef, GrainPropDefDataAdapter>(rs, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
+                        return await EnumGrainsFromDataReader<IGrainPropDefLocalized, GrainPropDef, GrainPropDefDataAdapter>(rs, cancellationToken: cancellationToken);
                     }
                 }
             }

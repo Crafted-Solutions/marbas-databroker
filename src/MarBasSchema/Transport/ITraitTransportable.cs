@@ -1,7 +1,6 @@
-﻿using System.Runtime.Serialization;
+﻿using CraftedSolutions.MarBasSchema.Grain;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using CraftedSolutions.MarBasSchema;
-using CraftedSolutions.MarBasSchema.Grain;
 
 namespace CraftedSolutions.MarBasSchema.Transport
 {

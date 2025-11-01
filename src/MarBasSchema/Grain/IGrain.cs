@@ -1,6 +1,5 @@
-﻿using System.ComponentModel;
-using CraftedSolutions.MarBasCommon;
-using CraftedSolutions.MarBasSchema;
+﻿using CraftedSolutions.MarBasCommon;
+using System.ComponentModel;
 
 namespace CraftedSolutions.MarBasSchema.Grain
 {

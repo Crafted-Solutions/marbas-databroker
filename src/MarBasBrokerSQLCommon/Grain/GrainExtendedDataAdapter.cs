@@ -18,10 +18,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         protected readonly ExtensionColumn _extensionColumn;
 
         public GrainExtendedDataAdapter(DbDataReader dataReader, ExtensionColumn extensionColumn = ExtensionColumn.All)
-            : base(dataReader)
-        {
-            _extensionColumn = extensionColumn;
-        }
+            : base(dataReader) => _extensionColumn = extensionColumn;
 
         public Guid Id => GetGuid(GetMappedColumnName());
 
@@ -78,7 +75,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         {
             get
             {
-                if (ExtensionColumn.Type == (ExtensionColumn.Type & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.Type))
                 {
                     return GetNullableField<string>(GetMappedColumnName());
                 }
@@ -91,7 +88,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         {
             get
             {
-                if (ExtensionColumn.Type == (ExtensionColumn.Type & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.Type))
                 {
                     return GetNullableField<string>(GetMappedColumnName());
                 }
@@ -103,7 +100,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         {
             get
             {
-                if (ExtensionColumn.Path == (ExtensionColumn.Path & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.Path))
                 {
                     return _dataReader.GetString(_dataReader.GetOrdinal(GetMappedColumnName()));
                 }
@@ -115,7 +112,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         {
             get
             {
-                if (ExtensionColumn.Permissions == (ExtensionColumn.Permissions & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.Permissions))
                 {
                     return (GrainAccessFlag)(uint)_dataReader.GetInt64(_dataReader.GetOrdinal(GetMappedColumnName()));
                 }
@@ -128,7 +125,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         {
             get
             {
-                if (ExtensionColumn.Container == (ExtensionColumn.Container & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.Container))
                 {
                     return _dataReader.GetInt32(_dataReader.GetOrdinal(GetMappedColumnName()));
                 }

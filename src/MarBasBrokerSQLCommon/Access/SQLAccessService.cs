@@ -6,20 +6,13 @@ using Microsoft.Extensions.Logging;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
 {
-    public abstract class SQLAccessService<TDialect>
+    public abstract class SQLAccessService<TDialect>(IBrokerContext context, IBrokerProfile profile, ILogger logger)
         : IAccessService, IAsyncAccessService, IProfileProvider
         where TDialect : ISQLDialect, new()
     {
-        protected readonly ISQLBrokerProfile _profile;
-        protected readonly ILogger _logger;
-        protected readonly IEnumerable<string> _contextRoles;
-
-        protected SQLAccessService(IBrokerContext context, IBrokerProfile profile, ILogger logger)
-        {
-            _contextRoles = context.UserRoles.ToList();
-            _profile = (ISQLBrokerProfile)profile;
-            _logger = logger;
-        }
+        protected readonly ISQLBrokerProfile _profile = (ISQLBrokerProfile)profile;
+        protected readonly ILogger _logger = logger;
+        protected readonly IEnumerable<string> _contextRoles = context.UserRoles.ToList();
 
         public IBrokerProfile Profile => _profile;
 
@@ -42,7 +35,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
         {
             if (!await _profile.IsOnlineAsync(cancellationToken))
             {
-                return Enumerable.Empty<ISchemaRole>();
+                return [];
             }
             var sfxLen = SchemaDefaults.InternalPrincipalSuffix.Length;
             return _profile.SchemaRoles.Where(x => _contextRoles.Contains(x.Name.EndsWith(SchemaDefaults.InternalPrincipalSuffix) ? x.Name.Remove(x.Name.Length - sfxLen) : x.Name));
@@ -126,7 +119,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
         {
             var roles = await GetContextRolesAsync(cancellationToken);
             return includeAllRoles
-                ? roles.Any(x => (roleCapability & x.Entitlement) == roleCapability)
+                ? roles.Any(x => x.Entitlement.HasFlag(roleCapability))
                 : (roleCapability & roles.FirstOrDefault()?.Entitlement) == roleCapability;
         }
     }

@@ -1,25 +1,22 @@
 ﻿namespace CraftedSolutions.MarBasSchema.Access
 {
-    public class SchemaAccessDeniedException : UnauthorizedAccessException
+    public class SchemaAccessDeniedException(GrainAccessFlag requestedAcces)
+        : UnauthorizedAccessException(FormatMessage(requestedAcces))
     {
-        public SchemaAccessDeniedException(GrainAccessFlag requestedAcces)
-            : base(FormatMessage(requestedAcces))
-            => RequestedAcces = requestedAcces;
-
-        public GrainAccessFlag RequestedAcces { get; set; }
+        public GrainAccessFlag RequestedAcces { get; set; } = requestedAcces;
 
         protected static string FormatMessage(GrainAccessFlag requestedAcces)
         {
             var mod = "Access to";
-            if (GrainAccessFlag.Write == (GrainAccessFlag.Write & requestedAcces) || GrainAccessFlag.WriteTraits == (GrainAccessFlag.WriteTraits & requestedAcces))
+            if (requestedAcces.HasFlag(GrainAccessFlag.Write) || requestedAcces.HasFlag(GrainAccessFlag.WriteTraits))
             {
                 mod = "Modifying of";
             }
-            else if (GrainAccessFlag.Delete == (GrainAccessFlag.Delete & requestedAcces))
+            else if (requestedAcces.HasFlag(GrainAccessFlag.Delete))
             {
                 mod = "Deleting of";
             }
-            else if (GrainAccessFlag.CreateSubelement == (GrainAccessFlag.CreateSubelement & requestedAcces))
+            else if (requestedAcces.HasFlag(GrainAccessFlag.CreateSubelement))
             {
                 mod = "Creating objects under";
             }
