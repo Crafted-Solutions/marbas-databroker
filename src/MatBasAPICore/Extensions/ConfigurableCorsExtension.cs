@@ -14,7 +14,7 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                 logger?.LogInformation("Enabling CORS");
                 services.AddCors(options =>
                 {
-                    var builder = (CorsPolicyBuilder policyBuilder, IConfigurationSection policyConfig) =>
+                    void BuilderFunc(CorsPolicyBuilder policyBuilder, IConfigurationSection policyConfig)
                     {
                         var val = policyConfig.GetValue<string>("AllowedOrigins");
                         if ("*".Equals(val, StringComparison.OrdinalIgnoreCase))
@@ -43,12 +43,21 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                         {
                             policyBuilder.WithHeaders(val.Split(","));
                         }
+                        val = policyConfig.GetValue<string>("ExposeHeaders");
+                        if (!string.IsNullOrEmpty(val))
+                        {
+                            if (true == logger?.IsEnabled(LogLevel.Warning) && "*".Equals(val, StringComparison.OrdinalIgnoreCase))
+                            {
+                                logger?.LogWarning("ExposeHeaders option wildcard (*) won't work with authorized requests, s. https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Expose-Headers");
+                            }
+                            policyBuilder.WithExposedHeaders(val.Split(","));
+                        }
 
                         if (policyConfig.GetValue<bool>("AllowCredentials"))
                         {
                             policyBuilder.AllowCredentials();
                         }
-                    };
+                    }
 
                     var policies = configuration.GetSection("Policies").GetChildren();
                     foreach (var policy in policies)
@@ -57,12 +66,12 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                         if (string.IsNullOrEmpty(name) || "Default".Equals(name, StringComparison.Ordinal))
                         {
                             logger?.LogInformation("Adding default CORS policy");
-                            options.AddDefaultPolicy(policyBuilder => builder(policyBuilder, policy));
+                            options.AddDefaultPolicy(policyBuilder => BuilderFunc(policyBuilder, policy));
                         }
                         else
                         {
-                            logger?.LogInformation("Adding CORS policy {0}", name);
-                            options.AddPolicy(name, policyBuilder => builder(policyBuilder, policy));
+                            logger?.LogInformation("Adding CORS policy {name}", name);
+                            options.AddPolicy(name, policyBuilder => BuilderFunc(policyBuilder, policy));
                         }
                     }
                 });

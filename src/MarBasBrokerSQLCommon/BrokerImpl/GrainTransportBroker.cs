@@ -137,6 +137,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             await Parallel.ForEachAsync(await grainEnumerator(cancellationToken), new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cancellationToken }, async (grainRef, token) =>
             {
 #pragma warning disable CA1859 // Use concrete types when possible for improved performance
+                // UNDER NO CIRCUMSTANCES change IGrainTransportable to GrainTransportable on the next line!!! ignore IDE0079 false positive
                 if (grainRef is not IGrainTransportable grain)
                 {
                     grain = new GrainTransportable(grainRef);
