@@ -335,7 +335,8 @@ namespace CraftedSolutions.MarBasSchema.Transport
                         continue;
                     }
                     var grain = await _cacheDir.ReadGrain(id, cancellationToken);
-                    jobContext.Stage = $"Import-{grain.Id}-{grain.Name}";
+                    var stage = $"Import-{grain.Id}-{grain.Name}";
+                    jobContext.Stage = stage;
 
                     var dependencies = grain.GetDependencies(GrainDependencyFlags.IncludeLinks | GrainDependencyFlags.IncludeTypeDefs | GrainDependencyFlags.IncludeParent, true).ToList();
                     var missing = (await _broker.VerifyGrainsExistAsync(dependencies.Where(x => !_processedGrains.ContainsKey(x.Id) && !_cacheDir.ContainsFile(x.MakeSerializedFileName())).Select(x => x.Id), cancellationToken))
@@ -351,9 +352,11 @@ namespace CraftedSolutions.MarBasSchema.Transport
                             result.IgnoredCount = 1;
                             result.AddFeedback(new BrokerOperationFeedback($"Grain {id} skipped due to missing dependencies {string.Join(", ", missing)}", "PackageImport", 404, LogLevel.Warning, id));
                             _processedGrains[id] = 0;
+                            continue;
                         }
                         else
                         {
+                            var placeholders = new List<IGrainTransportable>();
                             foreach (var missingId in missing)
                             {
                                 var missingGrain = (IGrain?)dependencies.FirstOrDefault(x => x.Id == missingId);
@@ -361,33 +364,34 @@ namespace CraftedSolutions.MarBasSchema.Transport
                                 {
                                     continue;
                                 }
-                                var tgrain = new GrainTransportable(missingGrain)
+                                var placeholder = new GrainTransportable(missingGrain)
                                 {
                                     ParentId = (await GetPlaceholderParent(missingGrain, grain, cancellationToken)).Id,
                                     Name = $"{missingId:D}{(null == missingGrain.Name ? string.Empty : $"_{missingGrain.Name}")}"
                                 };
-                                if (!string.IsNullOrEmpty(tgrain.Path))
+                                if (!string.IsNullOrEmpty(placeholder.Path))
                                 {
-                                    tgrain.Localized = new Dictionary<string, IGrainLocalizedLayer>() { { SchemaDefaults.Culture.IetfLanguageTag, new GrainLocalizedLayer() { Label = tgrain.Path } } };
+                                    placeholder.Localized = new Dictionary<string, IGrainLocalizedLayer>() { { SchemaDefaults.Culture.IetfLanguageTag, new GrainLocalizedLayer() { Label = placeholder.Path } } };
                                 }
-                                result = GrainImportResults.Merge(result, await _broker.ImportGrainsAsync([tgrain], duplicatesHandling: _duplicatesHandling, cancellationToken: cancellationToken));
+                                placeholders.Add(placeholder);
                                 _processedGrains[missingId] = 1;
                             }
+                            result = GrainImportResults.Merge(result, await _broker.ImportGrainsAsync(placeholders, duplicatesHandling: _duplicatesHandling, cancellationToken: cancellationToken));
                         }
                     }
 
-                    if (1 > result.IgnoredCount && !cancellationToken.IsCancellationRequested)
+                    if (!cancellationToken.IsCancellationRequested)
                     {
                         result = GrainImportResults.Merge(result, await ProcessGrains(dependencies.Select(x => x.Id), jobContext));
 
-                        jobContext.Stage = $"Import-{grain.Id}-{grain.Name}";
+                        jobContext.Stage = stage;
                         var currentResult = await _broker.ImportGrainsAsync([grain], duplicatesHandling: _duplicatesHandling, cancellationToken: cancellationToken);
                         result = GrainImportResults.Merge(result, currentResult);
                         _processedGrains[id] = 1;
                     }
 
                     var childrenEntry = grain.MakeSerializedFileName(extension: GrainChildrenNameSuffix);
-                    if (_cacheDir.ContainsFile(childrenEntry))
+                    if (!cancellationToken.IsCancellationRequested && _cacheDir.ContainsFile(childrenEntry))
                     {
                         var children = await _cacheDir.ReadEntry<IEnumerable<Guid>>(childrenEntry, cancellationToken);
                         result = GrainImportResults.Merge(result, await ProcessGrains(children, jobContext));
@@ -482,14 +486,11 @@ namespace CraftedSolutions.MarBasSchema.Transport
 #if PROFILE_PKG_EXPORT
                 var listing = basetraverse;
 #endif
-                var children = await _broker.ExportGrainsAsync(async (token) =>
-                {
-                    var childGrains = (await _broker.ListGrainsAsync(grain, ReferenceDepth.Indefinite == grainOptions.ChildrenTraversal, cancellationToken: token)).Where(x => !CheckGrainCached(x.Id));
+                var childGrains = (await _broker.ListGrainsAsync(grain, ReferenceDepth.Indefinite == grainOptions.ChildrenTraversal, cancellationToken: cancellationToken));
 #if PROFILE_PKG_EXPORT
                     listing = DateTime.UtcNow.Ticks - basetraverse - start;
 #endif
-                    return childGrains;
-                }, cancellationToken);
+                var children = await _broker.ExportGrainsAsync(childGrains.Where(x => !CheckGrainCached(x.Id)), cancellationToken);
 #if PROFILE_PKG_EXPORT
                 Console.WriteLine($"PERF: TraverseAndCacheGrain {grain.Id} listing = {(new TimeSpan(listing)).TotalMilliseconds}, exporting = {(new TimeSpan(DateTime.UtcNow.Ticks - basetraverse - listing - start)).TotalMilliseconds}");
 #endif
@@ -499,16 +500,15 @@ namespace CraftedSolutions.MarBasSchema.Transport
                     grainOptions.ChildrenTraversal = ReferenceDepth.None;
                 }
 
-                var parents = new HashSet<Guid>();
                 foreach (var child in children)
                 {
-                    parents.Add((Guid)child.ParentId!);
                     result += await TraverseAndCacheGrain(child, cacheDir, grainOptions, currentDepth + 1, cancellationToken);
                 }
-                await Parallel.ForEachAsync(parents, new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cancellationToken }, async (parent, token) =>
+
+                await Parallel.ForEachAsync(childGrains.GroupBy(x => (Guid)x.ParentId!), new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cancellationToken }, async (parentGroup, token) =>
                 {
-                    await cacheDir.WriteEntry(children.Where(x => x.ParentId == parent).Select(x => x.Id)
-                        , parent.MakeSerializedFileName(GrainTransportableExtension.GrainQualifier, extension: GrainChildrenNameSuffix), token);
+                    await cacheDir.WriteEntry(parentGroup.Select(x => x.Id).OrderBy(x => x)
+                        , parentGroup.Key.MakeSerializedFileName(GrainTransportableExtension.GrainQualifier, extension: GrainChildrenNameSuffix), token);
 
                 });
             }
