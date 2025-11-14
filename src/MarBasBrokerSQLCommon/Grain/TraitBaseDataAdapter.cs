@@ -1,11 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Common;
-using System.Globalization;
-using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
 using CraftedSolutions.MarBasCommon;
 using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.Grain;
 using CraftedSolutions.MarBasSchema.Grain.Traits;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Common;
+using System.Globalization;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
 {
@@ -117,12 +117,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
             }
         }
 
-        public sealed class TraitTextAdapter : TraitBaseDataAdapter, ITraitValue<string>
+        public sealed class TraitTextAdapter(DbDataReader dataReader, TraitValueType valueType = TraitValueType.Text)
+            : TraitBaseDataAdapter(dataReader, valueType), ITraitValue<string>
         {
-            public TraitTextAdapter(DbDataReader dataReader, TraitValueType valueType = TraitValueType.Text) : base(dataReader, valueType)
-            {
-            }
-
             string? ITraitValue<string>.Value { get => _dataReader.IsDBNull(_valueColumn) ? null : _dataReader.GetString(_valueColumn); set => throw new NotImplementedException(); }
 
             public override ITraitBase? Adapt()
@@ -131,12 +128,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
             }
         }
 
-        public sealed class TraitNumberAdapter : TraitBaseDataAdapter, ITraitValue<decimal?>
+        public sealed class TraitNumberAdapter(DbDataReader dataReader)
+            : TraitBaseDataAdapter(dataReader, TraitValueType.Number), ITraitValue<decimal?>
         {
-            public TraitNumberAdapter(DbDataReader dataReader) : base(dataReader, TraitValueType.Number)
-            {
-            }
-
             decimal? ITraitValue<decimal?>.Value { get => _dataReader.IsDBNull(_valueColumn) ? null : _dataReader.GetDecimal(_valueColumn); set => throw new NotImplementedException(); }
 
             public override ITraitBase? Adapt()
@@ -145,12 +139,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
             }
         }
 
-        public sealed class TraitBoolAdapter : TraitBaseDataAdapter, ITraitValue<bool>
+        public sealed class TraitBoolAdapter(DbDataReader dataReader)
+            : TraitBaseDataAdapter(dataReader, TraitValueType.Boolean), ITraitValue<bool>
         {
-            public TraitBoolAdapter(DbDataReader dataReader) : base(dataReader, TraitValueType.Boolean)
-            {
-            }
-
             bool ITraitValue<bool>.Value { get => !_dataReader.IsDBNull(_valueColumn) && _dataReader.GetBoolean(_valueColumn); set => throw new NotImplementedException(); }
 
             public override ITraitBase? Adapt()
@@ -159,13 +150,21 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
             }
         }
 
-        public sealed class TraitDateTimeAdapter : TraitBaseDataAdapter, ITraitValue<DateTime?>
+        public sealed class TraitDateTimeAdapter(DbDataReader dataReader)
+            : TraitBaseDataAdapter(dataReader, TraitValueType.DateTime), ITraitValue<DateTime?>
         {
-            public TraitDateTimeAdapter(DbDataReader dataReader) : base(dataReader, TraitValueType.DateTime)
+            DateTime? ITraitValue<DateTime?>.Value
             {
+                get {
+                    if (_dataReader.IsDBNull(_valueColumn))
+                    {
+                        return null;
+                    }
+                    var result = _dataReader.GetDateTime(_valueColumn);
+                    return DateTimeKind.Unspecified == result.Kind ? DateTime.SpecifyKind(result, DateTimeKind.Utc) : result.ToUniversalTime();
+                }
+                set => throw new NotImplementedException();
             }
-
-            DateTime? ITraitValue<DateTime?>.Value { get => _dataReader.IsDBNull(_valueColumn) ? null : _dataReader.GetDateTime(_valueColumn); set => throw new NotImplementedException(); }
 
             public override ITraitBase? Adapt()
             {
@@ -173,12 +172,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
             }
         }
 
-        public class TraitGrainAdapter : TraitBaseDataAdapter, ITraitValue<Guid?>
+        public class TraitGrainAdapter(DbDataReader dataReader, TraitValueType valueType = TraitValueType.Grain)
+            : TraitBaseDataAdapter(dataReader, valueType), ITraitValue<Guid?>
         {
-            public TraitGrainAdapter(DbDataReader dataReader, TraitValueType valueType = TraitValueType.Grain) : base(dataReader, valueType)
-            {
-            }
-
             Guid? ITraitValue<Guid?>.Value { get => _dataReader.IsDBNull(_valueColumn) ? null : _dataReader.GetGuid(_valueColumn); set => throw new NotImplementedException(); }
 
             public override ITraitBase? Adapt()
@@ -187,12 +183,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
             }
         }
 
-        public sealed class TraitFileAdapter : TraitGrainAdapter
+        public sealed class TraitFileAdapter(DbDataReader dataReader) : TraitGrainAdapter(dataReader, TraitValueType.File)
         {
-            public TraitFileAdapter(DbDataReader dataReader) : base(dataReader, TraitValueType.File)
-            {
-            }
-
             public override ITraitBase? Adapt()
             {
                 return new TraitFile(this);
