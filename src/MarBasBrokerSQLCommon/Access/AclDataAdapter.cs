@@ -1,12 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Common;
-using CraftedSolutions.MarBasBrokerSQLCommon;
-using CraftedSolutions.MarBasCommon;
+﻿using CraftedSolutions.MarBasCommon;
 using CraftedSolutions.MarBasSchema.Access;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Common;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
 {
-    public class AclDataAdapter : AbstractDataAdapter, ISchemaAclEntry
+    public class AclDataAdapter(DbDataReader dataReader, AclDataAdapter.ExtensionColumn extensionColumn = AclDataAdapter.ExtensionColumn.All)
+        : AbstractDataAdapter(dataReader), ISchemaAclEntry
     {
         [Flags]
         public enum ExtensionColumn
@@ -14,13 +14,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
             None = 0, SourceGrain = 1, All = SourceGrain
         }
 
-        protected readonly ExtensionColumn _extensionColumn;
-
-        public AclDataAdapter(DbDataReader dataReader, ExtensionColumn extensionColumn = ExtensionColumn.All)
-            : base(dataReader)
-        {
-            _extensionColumn = extensionColumn;
-        }
+        protected readonly ExtensionColumn _extensionColumn = extensionColumn;
 
         [Column(AclDefaults.FieldRoleId)]
         public Guid RoleId => Role.Id;
@@ -45,7 +39,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Access
         {
             get
             {
-                if (ExtensionColumn.SourceGrain == (ExtensionColumn.SourceGrain & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.SourceGrain))
                 {
                     return (Identifiable?)GetNullableGuid(GetMappedColumnName());
                 }

@@ -1,5 +1,6 @@
 ﻿using CraftedSolutions.MarBasAPICore.Auth;
 using CraftedSolutions.MarBasAPICore.Http;
+using CraftedSolutions.MarBasAPICore.Models.Transport;
 using CraftedSolutions.MarBasAPICore.Swagger;
 using CraftedSolutions.MarBasCommon.Json;
 using CraftedSolutions.MarBasSchema;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
@@ -39,6 +41,11 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                 options.JsonSerializerOptions.Converters.Add(new InterfaceJsonConverter<IAclEntryTransportable, AclEntryTransportable>());
                 options.JsonSerializerOptions.Converters.Add(new InterfaceJsonConverter<IGrainLocalizedLayer, GrainLocalizedLayer>());
                 options.JsonSerializerOptions.Converters.Add(new InterfaceJsonConverter<IStreamableContent, StreamableContent>());
+                options.JsonSerializerOptions.Converters.Add(new InterfaceJsonConverter<IGrainPackagingOptions, GrainPackagingOptions>());
+            });
+            services.AddSingleton((services) =>
+            {
+                return services.GetRequiredService<IOptions<JsonOptions>>().Value.JsonSerializerOptions;
             });
             return result;
         }

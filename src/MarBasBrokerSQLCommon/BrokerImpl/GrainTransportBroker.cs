@@ -2,6 +2,7 @@
 using System.Data.Common;
 using System.Globalization;
 using System.Reflection;
+using System.Reflection.PortableExecutable;
 using CraftedSolutions.MarBasBrokerSQLCommon.Access;
 using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
@@ -24,16 +25,10 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         CloningBroker<TDialect>, IGrainTransportBroker, IAsyncGrainTransportBroker
         where TDialect : ISQLDialect, new()
     {
-        class ImportGrainState
+        class ImportGrainState(IGrainTransportable grain, bool success = false)
         {
-            public ImportGrainState(IGrainTransportable grain, bool success = false)
-            {
-                Grain = grain;
-                Success = false;
-            }
-
-            public IGrainTransportable Grain;
-            public bool Success;
+            public IGrainTransportable Grain = grain;
+            public bool Success = success;
         };
 
         #region Variables
@@ -77,46 +72,79 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             return ExportGrainsAsync(grains).Result;
         }
 
+        public IEnumerable<IGrainTransportable> ExportGrains(Func<IEnumerable<IGrain>> grainEnumerator)
+        {
+            return ExportGrainsAsync((token) => Task.FromResult(grainEnumerator())).Result;
+        }
+
         public async Task<IEnumerable<IGrainTransportable>> ExportGrainsAsync(IEnumerable<IIdentifiable> grains, CancellationToken cancellationToken = default)
         {
-            var result = new List<IGrainTransportable>();
             if (!grains.Any())
             {
-                return result;
+                return [];
             }
+
+            return await ExportGrainsAsync(async (token) =>
+            {
+                if (true == grains.GetType().GetGenericArguments().FirstOrDefault()?.IsAssignableTo(typeof(IGrain)))
+                {
+                    return (IEnumerable<IGrain>)grains;
+                }
+                if (grains.FirstOrDefault() is IGrain)
+                {
+                    return grains.Cast<IGrain>();
+                }
+
+                var result = new List<IGrain>(grains.Count());
+                return await ExecuteOnConnection(result, async (cmd) =>
+                {
+                    using (cmd)
+                    {
+                        var vals = grains.Select((x, index) =>
+                        {
+                            var paramName = $"{GeneralEntityDefaults.ParamId}{index}";
+                            cmd.Parameters.Add(_profile.ParameterFactory.Create(paramName, x.Id));
+                            return paramName;
+                        });
+                        cmd.CommandText = $"{GrainExtendedConfig<TDialect>.SQLSelectByAcl}g.{GeneralEntityDefaults.FieldId} IN (@{string.Join(",@", vals)})";
+                        _profile.ParameterFactory.AddParametersForGrainAclCheck(cmd.Parameters, (await _accessService.GetContextPrimaryRoleAsync(token)).Id);
+
+                        using (var rs = await cmd.ExecuteReaderAsync(token))
+                        {
+                            while (!rs.IsClosed && !token.IsCancellationRequested && await rs.ReadAsync(token))
+                            {
+                                var grain = new GrainTransportable(new GrainExtendedDataAdapter(rs, GrainExtendedDataAdapter.ExtensionColumn.Type | GrainExtendedDataAdapter.ExtensionColumn.Path));
+                                result.Add(grain);
+                            }
+                        }
+                    }
+                    return result;
+
+                }, token);
+            }, cancellationToken);
+        }
+
+        public async Task<IEnumerable<IGrainTransportable>> ExportGrainsAsync(Func<CancellationToken, Task<IEnumerable<IGrain>>> grainEnumerator, CancellationToken cancellationToken = default)
+        {
             await CheckProfile(cancellationToken);
             if (!await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.ExportSchema | RoleEntitlement.ReadAcl, false, cancellationToken))
             {
                 throw new UnauthorizedAccessException("Not entitled to export from schema");
             }
-            result = await ExecuteOnConnection(result, async (cmd) =>
+
+            var result = new List<IGrainTransportable>(10);
+
+            await Parallel.ForEachAsync(await grainEnumerator(cancellationToken), new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cancellationToken }, async (grainRef, token) =>
             {
-                using (cmd)
+#pragma warning disable CA1859 // Use concrete types when possible for improved performance
+                // UNDER NO CIRCUMSTANCES change IGrainTransportable to GrainTransportable on the next line!!! ignore IDE0079 false positive
+                if (grainRef is not IGrainTransportable grain)
                 {
-                    var vals = grains.Select((x, index) =>
-                    {
-                        var paramName = $"{GeneralEntityDefaults.ParamId}{index}";
-                        cmd.Parameters.Add(_profile.ParameterFactory.Create(paramName, x.Id));
-                        return paramName;
-                    });
-                    cmd.CommandText = $"{GrainExtendedConfig<TDialect>.SQLSelectByAcl}g.{GeneralEntityDefaults.FieldId} IN (@{string.Join(",@", vals)})";
-                    _profile.ParameterFactory.AddParametersForGrainAclCheck(cmd.Parameters, (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id);
-
-                    using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
-                    {
-                        while (await rs.ReadAsync(cancellationToken))
-                        {
-                            var grain = new GrainTransportable(new GrainExtendedDataAdapter(rs, GrainExtendedDataAdapter.ExtensionColumn.Type | GrainExtendedDataAdapter.ExtensionColumn.Path));
-                            result.Add(grain);
-                        }
-                    }
+                    grain = new GrainTransportable(grainRef);
                 }
-                return result;
+#pragma warning restore CA1859 // Use concrete types when possible for improved performance
+                result.Add(grain);
 
-            }, cancellationToken);
-
-            await Parallel.ForEachAsync(result, new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cancellationToken }, async (grain, token) =>
-            {
                 if (null == grain.TypeDefId)
                 {
                     grain.Tier = await GetGrainTierTypeDef(grain, token);
@@ -271,7 +299,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                     }
 
 
-                    var existing = await VerifyGrainsExistAsync(null == item.Grain.ParentId ? new[] { item.Grain.Id } : new[] { item.Grain.Id, (Guid)item.Grain.ParentId }, cancellationToken);
+                    var existing = await VerifyGrainsExistAsync(null == item.Grain.ParentId ? [item.Grain.Id] : new[] { item.Grain.Id, (Guid)item.Grain.ParentId }, cancellationToken);
                     if (null != item.Grain.ParentId && !existing[(Guid)item.Grain.ParentId])
                     {
                         if (0 == pass)
@@ -495,7 +523,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                     }
 
                     _ = await ImportGrainAclInTA(ta, grain, cancellationToken);
-                    _ = await UpdateGrainTimestampsInTA(ta, new[] { grain }, grain.MTime, true, cancellationToken);
+                    _ = await UpdateGrainTimestampsInTA(ta, [grain], grain.MTime, true, cancellationToken);
 
                     _ = await EnableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
                     return result;
@@ -519,7 +547,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             }
             var isBuiltIn = SchemaDefaults.BuiltInIds.Contains(grain.Id);
             var isDeleteable = !isBuiltIn && grain.Tier is not ITypeDef typeDef && grain.Tier is not IPropDef;
-            if (!isBuiltIn && null != grain.ParentId && !await _accessService.VerfifyAccessAsync(new[] { (Identifiable)grain.ParentId }, GrainAccessFlag.CreateSubelement, cancellationToken))
+            if (!isBuiltIn && null != grain.ParentId && !await _accessService.VerfifyAccessAsync([(Identifiable)grain.ParentId], GrainAccessFlag.CreateSubelement, cancellationToken))
             {
                 return new BrokerOperationFeedback($"Creating new elements under {grain.ParentId} is prohibited by ACL", SourceOperationImport, 404, LogLevel.Error);
             }
@@ -536,7 +564,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
                     if (eraseExistingGrain && isDeleteable)
                     {
-                        _ = await DeleteGrainsInTA(new[] { grain }, 0, ta, cancellationToken: cancellationToken);
+                        _ = await DeleteGrainsInTA([grain], 0, ta, cancellationToken: cancellationToken);
                     }
                     else
                     {
@@ -618,7 +646,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                     }
 
                     _ = await ImportGrainAclInTA(ta, grain, cancellationToken);
-                    _ = await UpdateGrainTimestampsInTA(ta, new[] { grain }, grain.MTime, true, cancellationToken);
+                    _ = await UpdateGrainTimestampsInTA(ta, [grain], grain.MTime, true, cancellationToken);
 
                     _ = await EnableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
                     return result;
@@ -705,7 +733,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 targetGrain.Parent = (Identifiable?)sourceGrain.ParentId;
                 targetGrain.TypeDef = (Identifiable?)sourceGrain.TypeDefId;
 
-                result = await StoreGrainsInTA(new[] { targetGrain }, 0, ta, true, cancellationToken);
+                result = await StoreGrainsInTA([targetGrain], 0, ta, true, cancellationToken);
             }
             return result;
         }
@@ -878,7 +906,7 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET {implCol} = {Eng
                 grainTypeDef.AddMixIn((Identifiable)mixin);
             }
             return 0 < grainTypeDef.GetDirtyFields<IGrainTypeDef>().Count
-                ? await StoreGrainTypeDefTiersInTA(ta, new[] { grainTypeDef }, cancellationToken: cancellationToken)
+                ? await StoreGrainTypeDefTiersInTA(ta, [grainTypeDef], cancellationToken: cancellationToken)
                 : 0;
         }
 
@@ -947,7 +975,7 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
             grainPropDef.ValueType = propDef.ValueType;
 
             return 0 < grainPropDef.GetDirtyFields<IGrainPropDef>().Count
-                ? await StoreGrainPropDefTiersInTA(ta, new[] { grainPropDef }, cancellationToken: cancellationToken)
+                ? await StoreGrainPropDefTiersInTA(ta, [grainPropDef], cancellationToken: cancellationToken)
                 : 0;
         }
 
@@ -970,7 +998,7 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
                 Content = file.Content
             };
 
-            return await StoreGrainFileTiersInTA(ta, new[] { grainFile }, cancellationToken: cancellationToken);
+            return await StoreGrainFileTiersInTA(ta, [grainFile], cancellationToken: cancellationToken);
         }
 
         protected async Task<int> ImportGrainLanguageAndLabelInTA(DbTransaction ta, Guid grainId, string lang, bool langExists = false, string? label = null, CancellationToken cancellationToken = default)
@@ -1119,9 +1147,9 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
             IGrainLocalizedLayer GetLayer(string lang)
             {
                 IGrainLocalizedLayer layer;
-                if (result.ContainsKey(lang))
+                if (result.TryGetValue(lang, out var value))
                 {
-                    layer = result[lang];
+                    layer = value;
                 }
                 else
                 {
@@ -1187,7 +1215,7 @@ ORDER BY {GeneralEntityDefaults.FieldLangCode}, {MapTraitColumn(nameof(ITraitBas
                         }
                         else
                         {
-                            traits = new List<ITraitTransportable>();
+                            traits = [];
                             result[langKey] = traits;
                         }
 

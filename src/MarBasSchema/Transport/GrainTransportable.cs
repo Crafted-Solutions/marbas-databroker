@@ -25,7 +25,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
         }
 
         public IGrainTierTransportable? Tier { get; set; }
-        public IEnumerable<IAclEntryTransportable> Acl { get; set; } = Enumerable.Empty<IAclEntryTransportable>();
+        public IEnumerable<IAclEntryTransportable> Acl { get; set; } = [];
         public IEnumerable<ITraitTransportable>? Traits { get; set; }
         public IDictionary<string, IGrainLocalizedLayer> Localized { get; set; } = ImmutableDictionary<string, IGrainLocalizedLayer>.Empty;
     }

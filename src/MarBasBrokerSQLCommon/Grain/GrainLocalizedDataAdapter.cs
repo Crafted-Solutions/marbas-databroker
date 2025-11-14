@@ -1,18 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasSchema.Grain;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Globalization;
-using CraftedSolutions.MarBasCommon;
-using CraftedSolutions.MarBasSchema.Grain;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
 {
-    public class GrainLocalizedDataAdapter : GrainExtendedDataAdapter, IGrainLocalized
+    public class GrainLocalizedDataAdapter(DbDataReader dataReader) : GrainExtendedDataAdapter(dataReader), IGrainLocalized
     {
-
-        public GrainLocalizedDataAdapter(DbDataReader dataReader) : base(dataReader)
-        {
-        }
-
         [Column(name: GeneralEntityDefaults.FieldLangCode)]
         public CultureInfo CultureInfo
         {

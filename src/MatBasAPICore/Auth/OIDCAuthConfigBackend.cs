@@ -18,11 +18,11 @@ namespace CraftedSolutions.MarBasAPICore.Auth
             var type = typeof(T);
             foreach (var v in vals)
             {
-                if (0 != (Set & v))
+                if (Set.HasFlag(v))
                 {
                     type.GetProperty(Enum.GetName(v)!)?.SetValue(obj, true);
                 }
-                else if (0 != (Unset & v))
+                else if (Unset.HasFlag(v))
                 {
                     type.GetProperty(Enum.GetName(v)!)?.SetValue(obj, false);
                 }

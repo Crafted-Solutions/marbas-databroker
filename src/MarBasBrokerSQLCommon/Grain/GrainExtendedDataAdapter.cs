@@ -1,13 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Common;
-using CraftedSolutions.MarBasCommon;
+﻿using CraftedSolutions.MarBasCommon;
 using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.Access;
 using CraftedSolutions.MarBasSchema.Grain;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Common;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
 {
-    public class GrainExtendedDataAdapter : AbstractDataAdapter, IGrainExtended
+    public class GrainExtendedDataAdapter(DbDataReader dataReader, GrainExtendedDataAdapter.ExtensionColumn extensionColumn = GrainExtendedDataAdapter.ExtensionColumn.All)
+        : AbstractDataAdapter(dataReader), IGrainExtended
     {
         [Flags]
         public enum ExtensionColumn
@@ -15,13 +16,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
             None = 0, Type = 1, Path = 2, Permissions = 4, Container = 8, All = Type | Path | Permissions | Container
         }
 
-        protected readonly ExtensionColumn _extensionColumn;
-
-        public GrainExtendedDataAdapter(DbDataReader dataReader, ExtensionColumn extensionColumn = ExtensionColumn.All)
-            : base(dataReader)
-        {
-            _extensionColumn = extensionColumn;
-        }
+        protected readonly ExtensionColumn _extensionColumn = extensionColumn;
 
         public Guid Id => GetGuid(GetMappedColumnName());
 
@@ -78,7 +73,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         {
             get
             {
-                if (ExtensionColumn.Type == (ExtensionColumn.Type & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.Type))
                 {
                     return GetNullableField<string>(GetMappedColumnName());
                 }
@@ -91,7 +86,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         {
             get
             {
-                if (ExtensionColumn.Type == (ExtensionColumn.Type & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.Type))
                 {
                     return GetNullableField<string>(GetMappedColumnName());
                 }
@@ -103,7 +98,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         {
             get
             {
-                if (ExtensionColumn.Path == (ExtensionColumn.Path & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.Path))
                 {
                     return _dataReader.GetString(_dataReader.GetOrdinal(GetMappedColumnName()));
                 }
@@ -115,7 +110,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         {
             get
             {
-                if (ExtensionColumn.Permissions == (ExtensionColumn.Permissions & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.Permissions))
                 {
                     return (GrainAccessFlag)(uint)_dataReader.GetInt64(_dataReader.GetOrdinal(GetMappedColumnName()));
                 }
@@ -128,7 +123,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         {
             get
             {
-                if (ExtensionColumn.Container == (ExtensionColumn.Container & _extensionColumn))
+                if (_extensionColumn.HasFlag(ExtensionColumn.Container))
                 {
                     return _dataReader.GetInt32(_dataReader.GetOrdinal(GetMappedColumnName()));
                 }

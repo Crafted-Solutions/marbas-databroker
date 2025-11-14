@@ -18,9 +18,9 @@ namespace CraftedSolutions.MarBasCommon.Reflection
         {
             if (null == type)
             {
-                return Enumerable.Empty<PropertyInfo>();
+                return [];
             }
-            if (!type.IsInterface || BindingFlags.FlattenHierarchy != (BindingFlags.FlattenHierarchy & bindingFlags))
+            if (!type.IsInterface || !bindingFlags.HasFlag(BindingFlags.FlattenHierarchy))
             {
                 return type.GetProperties(bindingFlags);
             }

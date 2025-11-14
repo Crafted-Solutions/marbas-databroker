@@ -20,7 +20,12 @@ namespace CraftedSolutions.MarBasAPICore.Http
 
         public static void Throw503IfOffline(IProfileProvider? profileProvider)
         {
-            if (null == profileProvider || !profileProvider.Profile.IsOnline)
+            Throw503IfOffline(profileProvider?.Profile);
+        }
+
+        public static void Throw503IfOffline(IBrokerProfile? profile)
+        {
+            if (true != profile?.IsOnline)
             {
                 throw new HttpResponseException(StatusCodes.Status503ServiceUnavailable);
             }
@@ -28,7 +33,7 @@ namespace CraftedSolutions.MarBasAPICore.Http
 
         public static T DigestExceptions<T>(Func<T> worker, ILogger? logger = null)
         {
-            return DigestExceptionsAsync(() => { return Task.FromResult(worker()); }, logger).Result;
+            return DigestExceptionsAsync(() => Task.FromResult(worker()), logger).Result;
         }
 
         public static async Task<T> DigestExceptionsAsync<T>(Func<Task<T>> worker, ILogger? logger = null)

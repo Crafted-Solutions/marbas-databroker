@@ -47,17 +47,12 @@ namespace CraftedSolutions.MarBasAPICore.Extensions
                     continue;
                 }
 
-                var lt = ServiceLifetime.Transient;
-                switch (section.GetValue<string>("Lifetime"))
+                var lt = section.GetValue<string>("Lifetime") switch
                 {
-                    case "Scoped":
-                        lt = ServiceLifetime.Scoped;
-                        break;
-
-                    case "Singleton":
-                        lt = ServiceLifetime.Singleton;
-                        break;
-                }
+                    "Scoped" => ServiceLifetime.Scoped,
+                    "Singleton" => ServiceLifetime.Singleton,
+                    _ => ServiceLifetime.Transient
+                };
                 services.Add(new ServiceDescriptor(typeIfaces[0], impl, lt));
 
                 var asyncIfaces = impl.FindInterfaces((m, filterCriteria) => ServiceLifetime.Singleton == lt && Equals(m.FullName, filterCriteria), typeof(IAsyncInitService).FullName);

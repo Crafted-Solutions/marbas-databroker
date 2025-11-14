@@ -2,6 +2,6 @@
 {
     public enum ControllerPrority
     {
-        SysInfo = 1, Grain, Tree, Trait, File, TypeDef, PropDef, Role, Acl, Language, Transport, OAuth
+        SysInfo = 1, Grain, Tree, Trait, File, TypeDef, PropDef, Role, Acl, Language, Transport, BackgroundJob, OAuth
     }
 }

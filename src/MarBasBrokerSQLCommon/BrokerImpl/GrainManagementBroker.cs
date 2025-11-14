@@ -11,7 +11,6 @@ using CraftedSolutions.MarBasSchema.GrainTier;
 using Microsoft.Extensions.Logging;
 using System.Data.Common;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
@@ -121,15 +120,15 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IGrainBase?> MoveGrainAsync(IIdentifiable grain, IIdentifiable newParent, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            if (!await _accessService.VerfifyAccessAsync(new[] { grain }, GrainAccessFlag.Read, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([grain], GrainAccessFlag.Read, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Read);
             }
-            if (!await _accessService.VerfifyAccessAsync(new[] { grain }, GrainAccessFlag.Delete, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([grain], GrainAccessFlag.Delete, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Delete);
             }
-            if (!await _accessService.VerfifyAccessAsync(new[] { newParent }, GrainAccessFlag.CreateSubelement, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([newParent], GrainAccessFlag.CreateSubelement, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.CreateSubelement);
             }
@@ -266,7 +265,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IEnumerable<IGrainLocalized>> ListGrainsAsync(IIdentifiable? container, bool recursive = false, CultureInfo? culture = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, IGrainQueryFilter? filter = null, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) =>
+            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>([], async (cmd) =>
             {
                 using (cmd)
                 {
@@ -303,9 +302,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         if (_logger.IsEnabled(LogLevel.Debug))
                         {
                             _logger.LogDebug("ListGrainsAsync containerId={containeId}, recursive={recursive}, HasRows={hasRows}",
-                                cmd.Parameters[0].Value, recursive, rs.HasRows);
+                                parentId, recursive, rs.HasRows);
                         }
-                        return await EnumGrainDataReader<IGrainLocalized, GrainLocalized, GrainLocalizedDataAdapter>(rs, GrainExtendedDataAdapter.ExtensionColumn.All, cancellationToken).ToListAsync(cancellationToken);
+                        return await EnumGrainsFromDataReader<IGrainLocalized, GrainLocalized, GrainLocalizedDataAdapter>(rs, GrainExtendedDataAdapter.ExtensionColumn.All, cancellationToken);
                     }
                 }
             }, cancellationToken);
@@ -322,7 +321,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             if (string.IsNullOrEmpty(path) || string.IsNullOrWhiteSpace(path))
             {
                 var root = await GetGrainAsync(SchemaDefaults.RootID, culture, cancellationToken);
-                return new IGrainLocalized[] { root! };
+                return [root!];
             }
             if ("*".Equals(path, StringComparison.OrdinalIgnoreCase))
             {
@@ -332,7 +331,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return await ListGrainsAsync(null, true, culture, sortOptions, filter, cancellationToken);
             }
-            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) =>
+            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>([], async (cmd) =>
             {
                 using (cmd)
                 {
@@ -366,7 +365,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
                     using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
                     {
-                        return await EnumGrainDataReader<IGrainLocalized, GrainLocalized, GrainLocalizedDataAdapter>(rs, GrainExtendedDataAdapter.ExtensionColumn.All, cancellationToken).ToListAsync(cancellationToken);
+                        return await EnumGrainsFromDataReader<IGrainLocalized, GrainLocalized, GrainLocalizedDataAdapter>(rs, GrainExtendedDataAdapter.ExtensionColumn.All, cancellationToken);
                     }
                 }
             }, cancellationToken);
@@ -380,7 +379,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IEnumerable<IGrainLocalized>> GetGrainAncestorsAsync(IIdentifiable grain, CultureInfo? culture = null, bool includeSelf = false, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) =>
+            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>([], async (cmd) =>
             {
                 using (cmd)
                 {
@@ -397,7 +396,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
                     using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
                     {
-                        return await EnumGrainDataReader<IGrainLocalized, GrainLocalized, GrainLocalizedDataAdapter>(rs, GrainExtendedDataAdapter.ExtensionColumn.All, cancellationToken).ToListAsync(cancellationToken);
+                        return await EnumGrainsFromDataReader<IGrainLocalized, GrainLocalized, GrainLocalizedDataAdapter>(rs, GrainExtendedDataAdapter.ExtensionColumn.All, cancellationToken);
                     }
                 }
             }, cancellationToken);
@@ -451,10 +450,10 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         {
             if (grainIds?.Any() != true)
             {
-                return Enumerable.Empty<IGrainLabel>();
+                return [];
             }
             await CheckProfile(cancellationToken);
-            return await ExecuteOnConnection<IEnumerable<IGrainLabel>>(Enumerable.Empty<IGrainLabel>(), async (cmd) =>
+            return await ExecuteOnConnection<IEnumerable<IGrainLabel>>([], async (cmd) =>
             {
                 var i = 0;
                 var grainIdClause = $"IN ({grainIds.Aggregate(string.Empty, (aggr, id) =>
@@ -551,7 +550,7 @@ WHERE g.{GeneralEntityDefaults.FieldId} {grainIdClause}";
 
         protected async Task<IGrainBase?> CreateGrainInTA(string name, IIdentifiable parent, IIdentifiable? typedef, DbTransaction ta, bool aclWasChecked = false, Guid? newId = null, CancellationToken cancellationToken = default)
         {
-            if (!aclWasChecked && !await _accessService.VerfifyAccessAsync(new[] { parent }, GrainAccessFlag.CreateSubelement, cancellationToken))
+            if (!aclWasChecked && !await _accessService.VerfifyAccessAsync([parent], GrainAccessFlag.CreateSubelement, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.CreateSubelement);
             }
@@ -724,18 +723,20 @@ ON CONFLICT ({GeneralEntityDefaults.FieldGrainId}) DO UPDATE SET {flagCol} = {En
             }
         }
 
-        public static async IAsyncEnumerable<TIGrain> EnumGrainDataReader<TIGrain, TGrain, TGrainAdapter>(DbDataReader reader, GrainExtendedDataAdapter.ExtensionColumn extensionColumn = GrainExtendedDataAdapter.ExtensionColumn.All, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public static async Task<IEnumerable<TIGrain>> EnumGrainsFromDataReader<TIGrain, TGrain, TGrainAdapter>(DbDataReader reader, GrainExtendedDataAdapter.ExtensionColumn extensionColumn = GrainExtendedDataAdapter.ExtensionColumn.All, CancellationToken cancellationToken = default)
             where TIGrain : IGrainBase
             where TGrain : GrainBase
             where TGrainAdapter : GrainExtendedDataAdapter
         {
-            while (!reader.IsClosed && await reader.ReadAsync(cancellationToken))
+            var result = new List<TIGrain>();
+            while (!reader.IsClosed && !cancellationToken.IsCancellationRequested && await reader.ReadAsync(cancellationToken))
             {
                 TGrainAdapter dataGrain = GrainExtendedDataAdapter.ExtensionColumn.All == extensionColumn
                     ? (TGrainAdapter)Activator.CreateInstance(typeof(TGrainAdapter), reader)!
                     : (TGrainAdapter)Activator.CreateInstance(typeof(TGrainAdapter), reader, extensionColumn)!;
-                yield return (TIGrain)Activator.CreateInstance(typeof(TGrain), dataGrain)!;
+                result.Add((TIGrain)Activator.CreateInstance(typeof(TGrain), dataGrain)!);
             }
+            return result;
         }
 
         public string PrepareGrainQueryFilterParameters(DbParameterCollection parameters, IGrainQueryFilter? filter = null, string? fieldPrefix = null)
@@ -820,11 +821,11 @@ ON CONFLICT ({GeneralEntityDefaults.FieldGrainId}) DO UPDATE SET {flagCol} = {En
                 }
                 if (null != filter.MTimeConstraint.Start)
                 {
-                    tsFunc(">", RangeInclusionFlag.Start == (filter.MTimeConstraint.Including & RangeInclusionFlag.Start), (DateTime)filter.MTimeConstraint.Start);
+                    tsFunc(">", filter.MTimeConstraint.Including.HasFlag(RangeInclusionFlag.Start), (DateTime)filter.MTimeConstraint.Start);
                 }
                 if (null != filter.MTimeConstraint.End)
                 {
-                    tsFunc("<", RangeInclusionFlag.End == (filter.MTimeConstraint.Including & RangeInclusionFlag.End), (DateTime)filter.MTimeConstraint.End);
+                    tsFunc("<", filter.MTimeConstraint.Including.HasFlag(RangeInclusionFlag.End), (DateTime)filter.MTimeConstraint.End);
                 }
             }
             return sb.ToString();
