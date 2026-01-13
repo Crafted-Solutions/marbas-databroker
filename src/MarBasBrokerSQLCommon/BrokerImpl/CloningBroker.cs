@@ -19,6 +19,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         : FileManagementBroker<TDialect>, ICloningBroker, IAsyncCloningBroker
         where TDialect : ISQLDialect, new()
     {
+        #region Construction
         protected CloningBroker(IBrokerProfile profile, ILogger logger) : base(profile, logger)
         {
         }
@@ -26,7 +27,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         protected CloningBroker(IBrokerProfile profile, IBrokerContext context, IAsyncAccessService accessService, ILogger logger) : base(profile, context, accessService, logger)
         {
         }
+        #endregion
 
+        #region Public Interface
         public IGrainBase? CloneGrain(IIdentifiable grain, IIdentifiable? newParent = null, GrainCloneDepth depth = GrainCloneDepth.Self, bool copyAcl = false)
         {
             return CloneGrainAsync(grain, newParent, depth, copyAcl).Result;
@@ -37,6 +40,37 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             return await CloneGrainInternal(grain, newParent, depth, copyAcl, 0, cancellationToken);
         }
 
+        public IGrainBase? CreateGrainWithTypeDefaults(string name, IIdentifiable parent, IIdentifiable? typedef)
+        {
+            return CreateGrainWithTypeDefaultsAsync(name, parent, typedef).Result;
+        }
+
+        public async Task<IGrainBase?> CreateGrainWithTypeDefaultsAsync(string name, IIdentifiable parent, IIdentifiable? typedef, CancellationToken cancellationToken = default)
+        {
+            IGrainBase? result = await CreateGrainAsync(name, parent, typedef, cancellationToken);
+            if (null != result && null != typedef)
+            {
+                if (typedef is not IGrainTypeDef typedefType)
+                {
+                    typedefType = (await GetTypeDefAsync(typedef.Id, cancellationToken: cancellationToken))!;
+                }
+                if (null != typedefType.DefaultInstance)
+                {
+                    var children = await ListGrainsAsync(typedefType.DefaultInstance, cancellationToken: cancellationToken);
+                    foreach (var child in children)
+                    {
+                        if (null == await CloneGrainInternal(child, result, GrainCloneDepth.Recursive, cancellationToken: cancellationToken) && _logger.IsEnabled(LogLevel.Warning))
+                        {
+                            _logger.LogWarning("Failed to clone default {childId}", child.Id);
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        #endregion
+
+        #region Helper Methods
         protected async Task<IGrainBase?> CloneGrainInternal(IIdentifiable grain, IIdentifiable? newParent = null, GrainCloneDepth depth = GrainCloneDepth.Self, bool copyAcl = false, int currentDepth = 0, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
@@ -350,5 +384,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         {
             return AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(fieldName);
         }
+        #endregion
     }
 }
