@@ -9,5 +9,6 @@ namespace CraftedSolutions.MarBasAPICore.Models.Grain
         Guid? TypeDefId { get; set; }
         [Required]
         string Name { get; set; }
+        bool CopyTypeDefaults { get; set; }
     }
 }

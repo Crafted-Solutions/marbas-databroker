@@ -69,7 +69,9 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
                 {
                     typeId = (Identifiable)model.TypeDefId;
                 }
-                var result = await broker.CreateGrainAsync(model.Name, (Identifiable)model.ParentId, typeId, cancellationToken);
+                var result = model.CopyTypeDefaults
+                    ? await broker.CreateGrainWithTypeDefaultsAsync(model.Name, (Identifiable) model.ParentId, typeId, cancellationToken)
+                    : await broker.CreateGrainAsync(model.Name, (Identifiable)model.ParentId, typeId, cancellationToken);
                 if (null == result)
                 {
                     throw new HttpResponseException(StatusCodes.Status400BadRequest);
