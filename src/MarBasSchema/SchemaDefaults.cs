@@ -40,6 +40,7 @@ namespace CraftedSolutions.MarBasSchema
         public static readonly Guid SchemaTrashID = Guid.Parse("00000000-0000-1000-a000-000000000011");
         public static readonly Guid PropDefCommentID = Guid.Parse("00000000-0000-1000-a000-00000000000d");
         public static readonly Guid LinkTargetID = Guid.Parse("00000000-0000-1000-a000-000000000012");
+        public static readonly Guid TypeDefSpecID = Guid.Parse("00000000-0000-1000-a000-000000000013");
 
         public static readonly Guid ElementTypeDefID = Guid.Parse("00000000-0000-1000-a000-000000000004");
         public static readonly Guid ContainerTypeDefID = Guid.Parse("00000000-0000-1000-a000-000000000005");
@@ -75,6 +76,7 @@ namespace CraftedSolutions.MarBasSchema
             ContentTrashID,
             SchemaTrashID,
             LinkTargetID,
+            TypeDefSpecID,
             ElementTypeDefID,
             ContainerTypeDefID,
             PropDefTypeDefID,
@@ -107,9 +109,9 @@ namespace CraftedSolutions.MarBasSchema
             (FilesContainerID, ContentConsumerRoleID)
         };
 
-        public static readonly IEnumerable<Type> GrainTierTypes = new[]
-        {
+        public static readonly IEnumerable<Type> GrainTierTypes =
+        [
             typeof(IFile), typeof(ITypeDef), typeof(IPropDef)
-        };
+        ];
     }
 }

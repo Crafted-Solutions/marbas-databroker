@@ -336,7 +336,16 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 await conn.OpenAsync(cancellationToken);
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = $"{GrainPropDefConfig<TDialect>.SQLSelectPropDefByAclLocalizedNC}{GrainPropDefConfig<TDialect>.SQLJoinByTypeDefWithInheritance} ORDER BY g.parent_sort_key, g.parent_name";
+                    cmd.CommandText = SchemaDefaults.TypeDefTypeDefID == typedef.Id
+                        ? $"{GrainPropDefConfig<TDialect>.SQLSelectPropDefByAclLocalized}{GrainBaseConfig.GrainExtFieldIdPath} LIKE @{GrainTypeDefDefaults.ParamTypeDefPath}"
+                        : $"{GrainPropDefConfig<TDialect>.SQLSelectPropDefByAclLocalizedNC}{GrainPropDefConfig<TDialect>.SQLJoinByTypeDefWithInheritance}";
+                    cmd.CommandText += " ORDER BY g.parent_sort_key, g.parent_name";
+
+                    if (SchemaDefaults.TypeDefTypeDefID == typedef.Id)
+                    {
+                        typedef = (Identifiable)SchemaDefaults.TypeDefSpecID;
+                    }
+
                     _profile.ParameterFactory.AddParametersForGrainAclCheck(cmd.Parameters, (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id);
                     _profile.ParameterFactory.AddParametersForCultureLayer(cmd.Parameters, culture);
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GrainTypeDefDefaults.ParamTypeDefId, typedef.Id));
