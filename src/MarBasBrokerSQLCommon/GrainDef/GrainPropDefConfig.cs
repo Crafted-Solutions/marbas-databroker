@@ -1,5 +1,4 @@
-﻿using CraftedSolutions.MarBasBrokerSQLCommon;
-using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.Access;
 using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainDef

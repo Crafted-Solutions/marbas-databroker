@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-using CraftedSolutions.MarBasAPICore;
-using CraftedSolutions.MarBasAPICore.Http;
+﻿using CraftedSolutions.MarBasAPICore.Http;
 using CraftedSolutions.MarBasAPICore.Models;
 using CraftedSolutions.MarBasAPICore.Models.GrainDef;
 using CraftedSolutions.MarBasAPICore.Routing;
@@ -12,33 +10,28 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
+    using IGrainBaseResult = IMarBasResult<IGrainBase>;
     using IGrainPropDefsLocalizedResult = IMarBasResult<IEnumerable<IGrainPropDefLocalized>>;
     using IGrainTypeDefResult = IMarBasResult<IGrainTypeDef>;
     using IGrainTypeLocalizedDefResult = IMarBasResult<IGrainTypeDefLocalized>;
-    using IGrainBaseResult = IMarBasResult<IGrainBase>;
 
     [Authorize]
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.TypeDef)]
     [ApiController]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "We want the token without interference with default parameters")]
-    public sealed class TypeDefController : ControllerBase
+    public sealed class TypeDefController(ILogger<TypeDefController> logger) : ControllerBase
     {
-        private readonly ILogger _logger;
-
-        public TypeDefController(ILogger<TypeDefController> logger)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger _logger = logger;
 
         [HttpGet("{id}", Name = "GetTypeDef")]
         [ProducesResponseType(typeof(IGrainTypeLocalizedDefResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainTypeLocalizedDefResult> Get(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, [FromQuery] string? lang)
+        public async Task<IGrainTypeLocalizedDefResult> Get([FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, [FromQuery] string? lang, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -56,7 +49,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(IGrainTypeDefResult), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainTypeDefResult> Put(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, TypeDefCreateModel model)
+        public async Task<IGrainTypeDefResult> Put([FromServices] IAsyncSchemaBroker schemaBroker, TypeDefCreateModel model, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -75,12 +68,12 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(CountResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<CountResult> Store(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, TypeDefUpdateModel model)
+        public async Task<CountResult> Store([FromServices] IAsyncSchemaBroker schemaBroker, TypeDefUpdateModel model, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await schemaBroker.StoreGrainTypeDefsAsync(new[] { model.Grain }, cancellationToken);
+                var result = await schemaBroker.StoreGrainTypeDefsAsync([model.Grain], cancellationToken);
                 return MarbasResultFactory.Create(0 != result, result);
             }, _logger);
         }
@@ -96,7 +89,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [HttpGet("{id}/Properties", Name = "GetProperties")]
         [ProducesResponseType(typeof(IGrainPropDefsLocalizedResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainPropDefsLocalizedResult> GetProperties(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, [FromQuery] string? lang)
+        public async Task<IGrainPropDefsLocalizedResult> GetProperties([FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, [FromQuery] string? lang, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
@@ -116,7 +109,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [HttpGet("{id}/Defaults", Name = "GetOrCreateDefaults")]
         [ProducesResponseType(typeof(IGrainBaseResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainBaseResult> GetOrCreateDefaults(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id)
+        public async Task<IGrainBaseResult> GetOrCreateDefaults([FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
