@@ -31,17 +31,21 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Lob
             {
                 return _stream;
             }
-            _reader = await ExecuteQuery(cancellationToken);
-            if (await _reader.ReadAsync(cancellationToken))
+            _reader?.Dispose();
+            return await _context.ExecuteOnConnection(async (cmd) =>
             {
-                var ord = _reader.GetOrdinal(_context.DataColumn);
-                if (-1 < ord && !await _reader.IsDBNullAsync(ord, cancellationToken))
+                _reader = await cmd.ExecuteReaderAsync(cancellationToken);
+                if (await _reader.ReadAsync(cancellationToken))
                 {
-                    _stream = _reader.GetStream(ord);
-                    return _stream;
+                    var ord = _reader.GetOrdinal(_context.DataColumn);
+                    if (-1 < ord && !await _reader.IsDBNullAsync(ord, cancellationToken))
+                    {
+                        _stream = _reader.GetStream(ord);
+                        return _stream;
+                    }
                 }
-            }
-            return base.Stream;
+                return base.Stream;
+            }, cancellationToken);
         }
 
         protected override void Dispose(bool disposing)
@@ -55,12 +59,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Lob
                 }
                 _disposed = true;
             }
-        }
-
-        private async Task<DbDataReader> ExecuteQuery(CancellationToken cancellationToken)
-        {
-            _reader?.Dispose();
-            return await _context.Command.ExecuteReaderAsync(cancellationToken);
         }
     }
 }
