@@ -32,14 +32,13 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return null;
             }
-            if (!await _accessService.VerfifyAccessAsync(new[] { grain }, GrainAccessFlag.Read, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([grain], GrainAccessFlag.Read, cancellationToken))
             {
                 return null;
             }
-            using (var conn = _profile.Connection)
+            return await ExecuteOnConnection(null, async (cmd) =>
             {
-                await conn.OpenAsync(cancellationToken);
-                using (var cmd = conn.CreateCommand())
+                using (cmd)
                 {
                     cmd.CommandText = $"{AclConfig<TDialect>.SQLSelectAcl}{MapAclColumn(nameof(ISchemaAclEntry.RoleId))} = @{AclDefaults.ParamRoleId}";
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(AclDefaults.ParamRoleId, role.Id));
@@ -53,9 +52,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                             return new SchemaAclEntry(new AclDataAdapter(rs, AclDataAdapter.ExtensionColumn.None));
                         }
                     }
+                    return null;
                 }
-            }
-            return null;
+            }, cancellationToken);
         }
 
         public ISchemaAclEntry? CreateAclEntry(IIdentifiable role, IIdentifiable grain, GrainAccessFlag permissionMask = GrainAccessFlag.Read, GrainAccessFlag restrictionMask = GrainAccessFlag.None, bool inherit = true)
@@ -70,7 +69,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 throw new UnauthorizedAccessException("Not entitled to create ACL");
             }
-            if (!await _accessService.VerfifyAccessAsync(new[] { grain }, GrainAccessFlag.ModifyAcl, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([grain], GrainAccessFlag.ModifyAcl, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.ModifyAcl);
             }
@@ -230,14 +229,13 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return result;
             }
-            if (!await _accessService.VerfifyAccessAsync(new[] { grain }, GrainAccessFlag.Read, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([grain], GrainAccessFlag.Read, cancellationToken))
             {
                 return result;
             }
-            using (var conn = _profile.Connection)
+            return await ExecuteOnConnection(result, async (cmd) =>
             {
-                await conn.OpenAsync(cancellationToken);
-                using (var cmd = conn.CreateCommand())
+                using (cmd)
                 {
                     var idCol = MapAclColumn(nameof(ISchemaAclEntry.GrainId));
                     var paramAnyGrain = "anyGrainId";
@@ -253,8 +251,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         }
                     }
                 }
-            }
-            return result;
+                return result;
+            }, cancellationToken);
         }
 
         #region Helper Methods

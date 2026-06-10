@@ -34,10 +34,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IGrainTypeDefLocalized?> GetTypeDefAsync(Guid id, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            using (var conn = _profile.Connection)
+            return await ExecuteOnConnection(null, async (cmd) =>
             {
-                await conn.OpenAsync(cancellationToken);
-                using (var cmd = conn.CreateCommand())
+                using (cmd)
                 {
                     cmd.CommandText = $"{GrainTypeDefConfig<TDialect>.SQLSelectTypeDefByAclLocalized}g.{MapGrainBaseColumn(nameof(IGrainBase.Id))} = @{GeneralEntityDefaults.ParamId}";
                     _profile.ParameterFactory.AddParametersForGrainAclCheck(cmd.Parameters, (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id);
@@ -57,8 +56,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         }
                     }
                 }
-            }
-            return null;
+                return null;
+            }, cancellationToken);
         }
 
         public IGrainTypeDef? CreateTypeDef(string name, IIdentifiable? parent, string? implKey = null, IEnumerable<IIdentifiable>? mixins = null)
@@ -210,10 +209,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IGrainPropDefLocalized?> GetPropDefAsync(Guid id, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            using (var conn = _profile.Connection)
+            return await ExecuteOnConnection(null, async (cmd) =>
             {
-                await conn.OpenAsync(cancellationToken);
-                using (var cmd = conn.CreateCommand())
+                using (cmd)
                 {
                     cmd.CommandText = $"{GrainPropDefConfig<TDialect>.SQLSelectPropDefByAclLocalized}g.{MapGrainBaseColumn(nameof(IGrainBase.Id))} = @{GeneralEntityDefaults.ParamId}";
                     _profile.ParameterFactory.AddParametersForGrainAclCheck(cmd.Parameters, (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id);
@@ -231,8 +229,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         }
                     }
                 }
-            }
-            return null;
+                return null;
+            }, cancellationToken);
         }
 
         public IGrainPropDef? CreatePropDef(string name, IIdentifiable typeContainer, TraitValueType valueType = TraitValueType.Text, int cardinalityMin = 1, int cardinalityMax = 1)
@@ -331,10 +329,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IEnumerable<IGrainPropDefLocalized>> GetTypeDefPropertiesAsync(IIdentifiable typedef, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            using (var conn = _profile.Connection)
+            return await ExecuteOnConnection([], async (cmd) =>
             {
-                await conn.OpenAsync(cancellationToken);
-                using (var cmd = conn.CreateCommand())
+                using (cmd)
                 {
                     cmd.CommandText = SchemaDefaults.TypeDefTypeDefID == typedef.Id
                         ? $"{GrainPropDefConfig<TDialect>.SQLSelectPropDefByAclLocalized}{GrainBaseConfig.GrainExtFieldIdPath} LIKE @{GrainTypeDefDefaults.ParamTypeDefPath}"
@@ -364,7 +361,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         return await EnumGrainsFromDataReader<IGrainPropDefLocalized, GrainPropDef, GrainPropDefDataAdapter>(rs, cancellationToken: cancellationToken);
                     }
                 }
-            }
+            }, cancellationToken);
         }
         #endregion
 

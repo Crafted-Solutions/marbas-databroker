@@ -7,15 +7,10 @@ using CraftedSolutions.MarBasSchema.IO;
 
 namespace CraftedSolutions.MarBasBrokerEngineSQLite.GrainTier
 {
-    internal sealed class GrainFileDataAdapter : GrainFileInlineDataAdapter
+    internal sealed class GrainFileDataAdapter(DbDataReader dataReader, IDbConnectionProvider? connectionProvider = null)
+        : GrainFileInlineDataAdapter(dataReader, null == connectionProvider ? GrainFileContentAccess.None : GrainFileContentAccess.OnDemand)
     {
-        private readonly IDbConnectionProvider? _connectionProvider;
-
-        public GrainFileDataAdapter(DbDataReader dataReader, IDbConnectionProvider? connectionProvider = null)
-            : base(dataReader, null == connectionProvider ? GrainFileContentAccess.None : GrainFileContentAccess.OnDemand)
-        {
-            _connectionProvider = connectionProvider;
-        }
+        private readonly IDbConnectionProvider? _connectionProvider = connectionProvider;
 
         public override IStreamableContent? Content
         {
@@ -25,7 +20,7 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite.GrainTier
                 {
                     return base.Content;
                 }
-                return new SimpleStreamableBlob(new GrainFileBlobContext<SQLiteDialect, SQLiteParameterFactory>(_connectionProvider, Id, GetMappedColumnName()));
+                return new SimpleStreamableBlob(new LockingFileBlobContext(_connectionProvider, Id, GetMappedColumnName()));
             }
             set => throw new NotImplementedException();
         }
