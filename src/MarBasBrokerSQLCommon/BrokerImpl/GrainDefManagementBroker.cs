@@ -7,6 +7,7 @@ using CraftedSolutions.MarBasSchema.Broker;
 using CraftedSolutions.MarBasSchema.Grain;
 using CraftedSolutions.MarBasSchema.Grain.Traits;
 using CraftedSolutions.MarBasSchema.GrainDef;
+using CraftedSolutions.MarBasSchema.GrainTier;
 using Microsoft.Extensions.Logging;
 using System.Data.Common;
 using System.Globalization;
@@ -122,12 +123,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             return result;
         }
 
-        public int StoreGrainTypeDefs(IEnumerable<IGrainTypeDef> typedefs)
+        public int StoreTypeDefs(IEnumerable<IGrainTypeDef> typedefs)
         {
-            return StoreGrainTypeDefsAsync(typedefs).Result;
+            return StoreTypeDefsAsync(typedefs).Result;
         }
 
-        public async Task<int> StoreGrainTypeDefsAsync(IEnumerable<IGrainTypeDef> typedefs, CancellationToken cancellationToken = default)
+        public async Task<int> StoreTypeDefsAsync(IEnumerable<IGrainTypeDef> typedefs, CancellationToken cancellationToken = default)
         {
             var grainsMod = typedefs.Where(g => 0 < g.GetDirtyFields<IGrainBase>().Count);
             var grainsModL = typedefs.Where(g => g is IGrainLocalized gl && 0 < gl.GetDirtyFields<IGrainLocalized>().Count).Select(g => (IGrainLocalized)g);
@@ -145,6 +146,40 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 return await StoreGrainTypeDefTiersInTA(ta, typesMod, result, cancellationToken);
 
             }, cancellationToken);
+        }
+
+        public Type? GetTypeDefTier(IIdentifiable? typeDef)
+        {
+            return GetTypeDefTierAsync(typeDef).Result;
+        }
+
+        public async Task<Type?> GetTypeDefTierAsync(IIdentifiable? typeDef, CancellationToken cancellationToken = default)
+        {
+            await CheckProfile(cancellationToken);
+            static Type? MatchTypeDefId(Guid? typeDefId)
+            {
+                return true switch
+                {
+                    true when SchemaDefaults.PropDefTypeDefID == typeDefId => typeof(IPropDef),
+                    true when SchemaDefaults.FileTypeDefID == typeDefId => typeof(IFile),
+                    true when null == typeDefId || SchemaDefaults.TypeDefTypeDefID == typeDefId => typeof(ITypeDef),
+                    _ => null
+                };
+            }
+            var result = MatchTypeDefId(typeDef?.Id);
+            if (null == result && null != typeDef)
+            {
+                var mixins = await GetTypeDefMixedInTypeIds(typeDef.Id, cancellationToken);
+                foreach (var id in mixins)
+                {
+                    result = MatchTypeDefId(id);
+                    if (null != result)
+                    {
+                        break;
+                    }
+                }
+            }
+            return result;
         }
 
         public IGrainBase? GetOrCreateTypeDefDefaults(IIdentifiable typeDef)
@@ -293,12 +328,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             return result;
         }
 
-        public int StoreGrainPropDefs(IEnumerable<IGrainPropDef> propdefs)
+        public int StorePropDefs(IEnumerable<IGrainPropDef> propdefs)
         {
-            return StoreGrainPropDefsAsync(propdefs).Result;
+            return StorePropDefsAsync(propdefs).Result;
         }
 
-        public async Task<int> StoreGrainPropDefsAsync(IEnumerable<IGrainPropDef> propdefs, CancellationToken cancellationToken = default)
+        public async Task<int> StorePropDefsAsync(IEnumerable<IGrainPropDef> propdefs, CancellationToken cancellationToken = default)
         {
             var grainsMod = propdefs.Where(g => 0 < g.GetDirtyFields<IGrainBase>().Count);
             var grainsModL = propdefs.Where(g => g is IGrainLocalized gl && 0 < gl.GetDirtyFields<IGrainLocalized>().Count).Select(g => (IGrainLocalized)g);

@@ -13,7 +13,7 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
     public class SQLiteProfile(IConfiguration configuration, IHostEnvironment environment, ILogger<SQLiteProfile> logger)
         : SQLBrokerProfile<SqliteConnection, SqliteConnectionStringBuilder>(configuration, logger), ISchemaLock, IAsyncSchemaLock
     {
-        public static readonly Version SchemaVersion = new(0, 1, 18);
+        public static readonly Version SchemaVersion = new(0, 1, 19);
 
         protected readonly IHostEnvironment _environment = environment;
         protected readonly AsyncReaderWriterLock _lock = new();
@@ -35,25 +35,13 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
             }
         }
 
-        public IDisposable ReaderLock()
-        {
-            return _lock.ReaderLock();
-        }
+        public IDisposable ReaderLock() => _lock.ReaderLock();
 
-        public AwaitableDisposable<IDisposable> ReaderLockAsync(CancellationToken cancellationToken)
-        {
-            return _lock.ReaderLockAsync(cancellationToken);
-        }
+        public AwaitableDisposable<IDisposable> ReaderLockAsync(CancellationToken cancellationToken) => _lock.ReaderLockAsync(cancellationToken);
 
-        public IDisposable WriterLock()
-        {
-            return _lock.WriterLock();
-        }
+        public IDisposable WriterLock() => _lock.WriterLock();
 
-        public AwaitableDisposable<IDisposable> WriterLockAsync(CancellationToken cancellationToken)
-        {
-            return _lock.WriterLockAsync(cancellationToken);
-        }
+        public AwaitableDisposable<IDisposable> WriterLockAsync(CancellationToken cancellationToken) => _lock.WriterLockAsync(cancellationToken);
 
         protected async override Task<bool> CanConnectAsync(CancellationToken cancellationToken = default)
         {

@@ -150,6 +150,14 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
             }, _logger);
         }
 
+        /// <summary>
+        /// Retrieves extension tier name of the TypeDef of the Grain (like "IFile", "IPropDef", "ITypeDef"),
+        /// null is returned for ordinary TypeDefs without tier extension.
+        /// </summary>
+        /// <param name="broker"></param>
+        /// <param name="id">Grain ID</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("{id}/Tier", Name = "GetGrainTier")]
         [ProducesResponseType(typeof(StringResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
