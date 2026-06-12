@@ -19,6 +19,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
     using IGrainPropDefsLocalizedResult = IMarBasResult<IEnumerable<IGrainPropDefLocalized>>;
     using IGrainTypeDefResult = IMarBasResult<IGrainTypeDef>;
     using IGrainTypeLocalizedDefResult = IMarBasResult<IGrainTypeDefLocalized>;
+    using StringResult = IMarBasResult<string?>;
 
     [Authorize]
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.TypeDef)]
@@ -73,8 +74,48 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await schemaBroker.StoreGrainTypeDefsAsync([model.Grain], cancellationToken);
+                var result = await schemaBroker.StoreTypeDefsAsync([model.Grain], cancellationToken);
                 return MarbasResultFactory.Create(0 != result, result);
+            }, _logger);
+        }
+
+        /// <summary>
+        /// Convenince API, always returns tier name of the TypeDef itself.
+        /// </summary>
+        /// <param name="broker"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [HttpGet("Tier", Name = "GetTypeDefNullTier")]
+        [ProducesResponseType(typeof(StringResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<StringResult> GetNullTier([FromServices] IAsyncSchemaBroker broker, CancellationToken cancellationToken = default)
+        {
+            HttpResponseException.Throw503IfOffline(broker);
+            return await HttpResponseException.DigestExceptionsAsync(async () =>
+            {
+                var result = await broker.GetTypeDefTierAsync(null, cancellationToken);
+                return MarbasResultFactory.Create<string?>(true, result?.Name);
+            }, _logger);
+        }
+
+        /// <summary>
+        /// Retrieves extension tier name of the TypeDef (like "IFile", "IPropDef", "ITypeDef"),
+        /// null is returned for ordinary TypeDefs without tier extension.
+        /// </summary>
+        /// <param name="broker"></param>
+        /// <param name="id">ID of the TypeDef (use "00000000-0000-0000-0000-000000000000" for TypDef itself)</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [HttpGet("{id}/Tier", Name = "GetTypeDefTier")]
+        [ProducesResponseType(typeof(StringResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<StringResult> GetTier([FromServices] IAsyncSchemaBroker broker, Guid id, CancellationToken cancellationToken = default)
+        {
+            HttpResponseException.Throw503IfOffline(broker);
+            return await HttpResponseException.DigestExceptionsAsync(async () =>
+            {
+                var result = await broker.GetTypeDefTierAsync((Identifiable)id, cancellationToken);
+                return MarbasResultFactory.Create<string?>(true, result?.Name);
             }, _logger);
         }
 
@@ -83,8 +124,8 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <param name="schemaBroker"></param>
-        /// <param name="id"></param>
-        /// <param name="lang"></param>
+        /// <param name="id">ID of the TypeDef</param>
+        /// <param name="lang">Language code to use for response localization</param>
         /// <returns></returns>
         [HttpGet("{id}/Properties", Name = "GetProperties")]
         [ProducesResponseType(typeof(IGrainPropDefsLocalizedResult), StatusCodes.Status200OK)]
