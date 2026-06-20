@@ -34,10 +34,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return null;
             }
-            using (var conn = _profile.Connection)
+            return await ExecuteOnConnection(null, async (cmd) =>
             {
-                await conn.OpenAsync(cancellationToken);
-                using (var cmd = conn.CreateCommand())
+                using (cmd)
                 {
                     cmd.CommandText = $"{RoleConfig<TDialect>.SQLSelectRole}{AbstractDataAdapter.GetAdapterColumnName<RoleDataAdapter>(nameof(ISchemaRole.Id))} = @{GeneralEntityDefaults.ParamId}";
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, id));
@@ -50,8 +49,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         }
                     }
                 }
-            }
-            return null;
+                return null;
+            }, cancellationToken);
         }
 
         public ISchemaRole? CreateRole(string name, RoleEntitlement entitlement = RoleEntitlement.None)
@@ -92,7 +91,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         if (await rs.ReadAsync(cancellationToken))
                         {
                             result = new SchemaRole(new RoleDataAdapter(rs));
-                            _profile.DispatchSchemaModified<ISchemaRole>(SchemaModificationType.Create, new[] { result });
+                            _profile.DispatchSchemaModified<ISchemaRole>(SchemaModificationType.Create, [result]);
                         }
                     }
                 }
@@ -212,10 +211,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 return result;
             }
-            using (var conn = _profile.Connection)
+            return await ExecuteOnConnection(result, async (cmd) =>
             {
-                await conn.OpenAsync(cancellationToken);
-                using (var cmd = conn.CreateCommand())
+                using (cmd)
                 {
                     cmd.CommandText = $"{RoleConfig<TDialect>.SQLSelect}";
                     cmd.CommandText += PrepareListOrderByClause<RoleSortField, RoleDataAdapter>(sortOptions);
@@ -228,8 +226,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         }
                     }
                 }
-            }
-            return result;
+                return result;
+            }, cancellationToken);
         }
     }
 }

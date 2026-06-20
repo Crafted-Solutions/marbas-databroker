@@ -31,6 +31,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainTier
             return _command;
         }
 
+        async public virtual Task<T> ExecuteOnConnection<T>(Func<DbCommand, Task<T>> func, CancellationToken cancellationToken = default)
+        {
+            var cmd = await GetCommandAsync(cancellationToken);
+            return await func(cmd);
+        }
+
         public DbConnection Connection
         {
             get

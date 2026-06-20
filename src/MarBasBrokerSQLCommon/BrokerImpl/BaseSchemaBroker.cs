@@ -29,7 +29,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         {
         }
 
+#pragma warning disable IDE0290 // Use primary constructor
         protected BaseSchemaBroker(IBrokerProfile profile, IBrokerContext context, IAsyncAccessService accessService, ILogger logger)
+#pragma warning restore IDE0290 // Use primary constructor
         {
             _profile = (ISQLBrokerProfile)profile;
             _logger = logger;
@@ -42,7 +44,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
         #region Helper Methods
 
-        protected async Task<T?> WrapInTransaction<T>(T? defaultResult, Func<DbTransaction, Task<T>> func, CancellationToken cancellationToken)
+        protected virtual async Task<T?> WrapInTransaction<T>(T? defaultResult, Func<DbTransaction, Task<T>> func, CancellationToken cancellationToken)
         {
             T? result = defaultResult;
             using (var conn = _profile.Connection)
@@ -65,7 +67,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             return result;
         }
 
-        protected async Task<T> ExecuteOnConnection<T>(T defaultResult, Func<DbCommand, Task<T>> func, CancellationToken cancellationToken)
+        protected virtual async Task<T> ExecuteOnConnection<T>(T defaultResult, Func<DbCommand, Task<T>> func, CancellationToken cancellationToken)
         {
             T? result = defaultResult;
             using (var conn = _profile.Connection)

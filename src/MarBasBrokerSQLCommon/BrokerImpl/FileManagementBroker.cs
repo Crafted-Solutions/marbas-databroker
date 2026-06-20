@@ -44,10 +44,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public virtual async Task<IGrainFile?> GetGrainFileAsync(Guid id, GrainFileContentAccess loadContent = GrainFileContentAccess.OnDemand, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            using (var conn = _profile.Connection)
+            return await ExecuteOnConnection(null, async (cmd) =>
             {
-                await conn.OpenAsync(cancellationToken);
-                using (var cmd = conn.CreateCommand())
+                using (cmd)
                 {
                     cmd.CommandText = $"{(GrainFileContentAccess.Immediate == loadContent ? GrainFileConfig<TDialect>.SQLSelectFileByAclWithContent : GrainFileConfig<TDialect>.SQLSelectFileByAcl)}g.{AbstractDataAdapter.GetAdapterColumnName<GrainExtendedDataAdapter>(nameof(IGrainBase.Id))} = @{GeneralEntityDefaults.ParamId}";
                     _profile.ParameterFactory.AddParametersForGrainAclCheck(cmd.Parameters, (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id);
@@ -61,8 +60,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         }
                     }
                 }
-            }
-            return null;
+                return null;
+            }, cancellationToken);
         }
 
         public IGrainFile? CreateGrainFile(string name, string mimeType, Stream content, IIdentifiable? parent = null, long size = -1)

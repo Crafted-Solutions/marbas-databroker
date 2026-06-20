@@ -145,6 +145,15 @@ BEGIN
   UPDATE mb_grain_base SET child_count = (SELECT COUNT(id) FROM mb_grain_base WHERE parent_id = new.parent_id) WHERE id = new.parent_id;
 END;
 
+CREATE TRIGGER mb_tg_grain_base_delete_restrict
+  BEFORE DELETE
+  ON mb_grain_base
+BEGIN
+  SELECT
+    RAISE (ABORT, 'Protected system Grains cannot be deleted')
+    WHERE (0x1000 & old.custom_flag) > 0;
+END;
+
 CREATE TRIGGER mb_tg_grain_typedef_defaults_check
   BEFORE INSERT
   ON mb_grain_base
@@ -546,6 +555,24 @@ CREATE TRIGGER mb_tg_typedef_mixin_insert_mtime
 BEGIN
   UPDATE mb_grain_base SET mtime = DATETIME('now')
   WHERE id = new.derived_typedef_id;
+END;
+
+CREATE TRIGGER mb_tg_typedef_mixin_insert_restrict
+  BEFORE INSERT
+  ON mb_typedef_mixin
+BEGIN
+  SELECT
+    RAISE (ABORT, 'This TypeDef is not allowed as derived_typedef_id')
+    WHERE new.derived_typedef_id IN('00000000-0000-1000-a000-000000000009', '00000000-0000-1000-a000-00000000000a', '00000000-0000-1000-a000-00000000000e', '00000000-0000-1000-a000-000000000004', '00000000-0000-1000-a000-000000000005', '00000000-0000-1000-a000-00000000000f');
+END;
+
+CREATE TRIGGER mb_tg_typedef_mixin_update_restrict
+  BEFORE UPDATE
+  ON mb_typedef_mixin
+BEGIN
+  SELECT
+    RAISE (ABORT, 'This TypeDef is not allowed as derived_typedef_id')
+    WHERE new.derived_typedef_id IN('00000000-0000-1000-a000-000000000009', '00000000-0000-1000-a000-00000000000a', '00000000-0000-1000-a000-00000000000e', '00000000-0000-1000-a000-000000000004', '00000000-0000-1000-a000-000000000005', '00000000-0000-1000-a000-00000000000f');
 END;
 
 CREATE TABLE mb_value_type (

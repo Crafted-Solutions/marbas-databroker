@@ -80,7 +80,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await schemaBroker.StoreGrainPropDefsAsync(new[] { model.Grain }, cancellationToken);
+                var result = await schemaBroker.StorePropDefsAsync(new[] { model.Grain }, cancellationToken);
                 return MarbasResultFactory.Create(0 != result, result);
             }, _logger);
         }

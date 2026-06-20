@@ -12,7 +12,7 @@ namespace CraftedSolutions.MarBasCommon.Reflection
             var methodInfo = typeof(ObjectExtension).GetMethod(nameof(CastTo), BindingFlags.Static | BindingFlags.Public);
             var genericArguments = new[] { type };
             var genericMethodInfo = methodInfo?.MakeGenericMethod(genericArguments);
-            return genericMethodInfo?.Invoke(null, new[] { o });
+            return genericMethodInfo?.Invoke(null, [o]);
         }
 
         public static object? CastUnparsedJson(this object o)
@@ -29,6 +29,15 @@ namespace CraftedSolutions.MarBasCommon.Reflection
                 };
             }
             return o;
+        }
+
+        public static T CastOrThrow<T>(this object o)
+        {
+            if (o is T desired)
+            {
+                return desired;
+            }
+            throw new ArgumentException($"{o.GetType()?.Name} misses required capabilities ({typeof(T).Name})");
         }
     }
 }

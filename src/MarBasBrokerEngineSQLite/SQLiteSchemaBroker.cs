@@ -1,26 +1,34 @@
-﻿using System.Data.Common;
-using CraftedSolutions.MarBasBrokerEngineSQLite.GrainTier;
+﻿using CraftedSolutions.MarBasBrokerEngineSQLite.GrainTier;
 using CraftedSolutions.MarBasBrokerSQLCommon;
 using CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
+using CraftedSolutions.MarBasCommon.Reflection;
 using CraftedSolutions.MarBasSchema.Access;
 using CraftedSolutions.MarBasSchema.Broker;
 using CraftedSolutions.MarBasSchema.GrainTier;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using System.Data.Common;
 
 namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
     public sealed class SQLiteSchemaBroker : GrainTransportBroker<SQLiteDialect>, ISchemaBroker, IAsyncSchemaBroker
     {
+        #region Variables
+        private readonly IAsyncSchemaLock _lock;
+        #endregion
 
         #region Construction
-        public SQLiteSchemaBroker(IBrokerProfile profile, ILogger<SQLiteSchemaBroker> logger) : base(profile, logger)
+        public SQLiteSchemaBroker(IBrokerProfile profile, ILogger<SQLiteSchemaBroker> logger)
+            : base(profile, logger)
         {
+            _lock = profile.CastOrThrow<IAsyncSchemaLock>();
         }
 
-        public SQLiteSchemaBroker(IBrokerProfile profile, IBrokerContext context, IAsyncAccessService accessService, ILogger<SQLiteSchemaBroker> logger) : base(profile, context, accessService, logger)
+        public SQLiteSchemaBroker(IBrokerProfile profile, IBrokerContext context, IAsyncAccessService accessService, ILogger<SQLiteSchemaBroker> logger)
+            : base(profile, context, accessService, logger)
         {
+            _lock = profile.CastOrThrow<IAsyncSchemaLock>();
         }
         #endregion
 
@@ -69,6 +77,22 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
                 await srcBlob.CopyToAsync(tgtBlob, cancellationToken);
             }
 
+        }
+
+        protected override async Task<T?> WrapInTransaction<T>(T? defaultResult, Func<DbTransaction, Task<T>> func, CancellationToken cancellationToken) where T : default
+        {
+            using (await _lock.WriterLockAsync(cancellationToken))
+            {
+                return await base.WrapInTransaction(defaultResult, func, cancellationToken);
+            }
+        }
+
+        protected override async Task<T> ExecuteOnConnection<T>(T defaultResult, Func<DbCommand, Task<T>> func, CancellationToken cancellationToken)
+        {
+            using (await _lock.ReaderLockAsync(cancellationToken))
+            {
+                return await base.ExecuteOnConnection(defaultResult, func, cancellationToken);
+            }
         }
         #endregion
 
