@@ -456,76 +456,72 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             }
             try
             {
+                var langList = grain.Localized.Keys.ToList();
+                var langChecks = (await CheckSystemLanguagesExistAsync(langList, cancellationToken)).ToList();
+
                 IBrokerOperationFeedback? result = null;
 
                 return await WrapInTransaction(result, async (ta) =>
                 {
-                    if (null != grain.ParentId)
+                    await ExecuteWithoutTimestampTriggers(ta, grain.ParentId, async () =>
                     {
-                        _ = await DisableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
-                    }
-                    if (1 > await UpdateOrCreateGrainBaseInTA(ta, grain, cancellationToken))
-                    {
-                        throw new ApplicationException($"Record for grain {grain.Id} could not be updated");
-                    }
-                    if (null != grain.ParentId)
-                    {
-                        _ = await EnableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
-                    }
-
-                    _ = await DisableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
-
-                    if (null != grain.Tier)
-                    {
-                        switch (true)
+                        if (1 > await UpdateOrCreateGrainBaseInTA(ta, grain, cancellationToken))
                         {
-                            case true when grain.Tier is ITypeDef typeDef:
-                                _ = await UpdateTypeDefTierInTA(ta, grain.Id, typeDef, cancellationToken);
-                                break;
-                            case true when grain.Tier is IPropDef propDef:
-                                _ = await UpdatePropDefTierInTA(ta, grain.Id, propDef, cancellationToken);
-                                break;
-                            case true when grain.Tier is IFile file:
-                                _ = await UpdateFileTierInTA(ta, grain.Id, file, cancellationToken);
-                                break;
+                            throw new ApplicationException($"Record for grain {grain.Id} could not be updated");
                         }
-                    }
+                    }, cancellationToken);
 
-                    var traitCount = 0;
-                    if (true == grain.Traits?.Any())
+                    await ExecuteWithoutTimestampTriggers(ta, grain.Id, async () =>
                     {
-                        foreach (var trait in grain.Traits)
+                        if (null != grain.Tier)
                         {
-                            traitCount += await StoreImportedTraitInTA(ta, grain.Id, trait, cancellationToken: cancellationToken);
-                        }
-                    }
-
-                    var langList = grain.Localized.Keys.ToList();
-                    var langChecks = (await CheckSystemLanguagesExistAsync(langList, cancellationToken)).ToList();
-
-                    for (var i = 0; i < langList.Count; i++)
-                    {
-                        var grainLoc = grain.Localized[langList[i]];
-                        _ = ImportGrainLanguageAndLabelInTA(ta, grain.Id, langList[i], langChecks[i], grainLoc.Label, cancellationToken);
-
-                        if (true == grainLoc.Traits?.Any())
-                        {
-                            foreach (var trait in grainLoc.Traits)
+                            switch (true)
                             {
-                                traitCount += await StoreImportedTraitInTA(ta, grain.Id, trait, langList[i], cancellationToken);
+                                case true when grain.Tier is ITypeDef typeDef:
+                                    _ = await UpdateTypeDefTierInTA(ta, grain.Id, typeDef, cancellationToken);
+                                    break;
+                                case true when grain.Tier is IPropDef propDef:
+                                    _ = await UpdatePropDefTierInTA(ta, grain.Id, propDef, cancellationToken);
+                                    break;
+                                case true when grain.Tier is IFile file:
+                                    _ = await UpdateFileTierInTA(ta, grain.Id, file, cancellationToken);
+                                    break;
                             }
                         }
-                    }
 
-                    if (0 < traitCount)
-                    {
-                        _ = await ReindexTraitsInTA(ta, grain, trimOverflow: true, cancellationToken: cancellationToken);
-                    }
+                        var traitCount = 0;
+                        if (true == grain.Traits?.Any())
+                        {
+                            foreach (var trait in grain.Traits)
+                            {
+                                traitCount += await StoreImportedTraitInTA(ta, grain.Id, trait, cancellationToken: cancellationToken);
+                            }
+                        }
 
-                    _ = await ImportGrainAclInTA(ta, grain, cancellationToken);
-                    _ = await UpdateGrainTimestampsInTA(ta, [grain], grain.MTime, true, cancellationToken);
+                        for (var i = 0; i < langList.Count; i++)
+                        {
+                            var grainLoc = grain.Localized[langList[i]];
+                            _ = ImportGrainLanguageAndLabelInTA(ta, grain.Id, langList[i], langChecks[i], grainLoc.Label, cancellationToken);
 
-                    _ = await EnableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
+                            if (true == grainLoc.Traits?.Any())
+                            {
+                                foreach (var trait in grainLoc.Traits)
+                                {
+                                    traitCount += await StoreImportedTraitInTA(ta, grain.Id, trait, langList[i], cancellationToken);
+                                }
+                            }
+                        }
+
+                        if (0 < traitCount)
+                        {
+                            _ = await ReindexTraitsInTA(ta, grain, trimOverflow: true, cancellationToken: cancellationToken);
+                        }
+
+                        _ = await ImportGrainAclInTA(ta, grain, cancellationToken);
+                        _ = await UpdateGrainTimestampsInTA(ta, [grain], grain.MTime, true, cancellationToken);
+
+                    }, cancellationToken);
+
                     return result;
                 }, cancellationToken);
             }
@@ -553,102 +549,97 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             }
             try
             {
+                var langList = grain.Localized.Keys.ToList();
+                var langChecks = (await CheckSystemLanguagesExistAsync(langList, cancellationToken)).ToList();
+
                 IBrokerOperationFeedback? result = null;
                 return await WrapInTransaction(result, async (ta) =>
                 {
                     // whatever fails within this block rolls back entire transaction for the grain
-                    if (null != grain.ParentId)
+                    await ExecuteWithoutTimestampTriggers(ta, grain.ParentId, async () =>
                     {
-                        _ = await DisableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
-                    }
-
-                    if (eraseExistingGrain && isDeleteable)
-                    {
-                        _ = await DeleteGrainsInTA([grain], 0, ta, cancellationToken: cancellationToken);
-                    }
-                    else
-                    {
-                        _ = await DeleteGrainAclInTA(ta, grain.Id, cancellationToken);
-                        _ = await DeleteGrainLabelsInTA(ta, grain.Id, cancellationToken);
-                        _ = await DeleteGrainTraitsInTA(ta, grain.Id, true, cancellationToken);
-                        foreach (var tierType in new[] { typeof(IPropDef), typeof(IFile) })
+                        if (eraseExistingGrain && isDeleteable)
                         {
-                            if (!tierType.IsAssignableFrom(grain.Tier?.GetType()))
-                            {
-                                _ = await DeleteGrainTierInTA(ta, grain.Id, tierType, cancellationToken);
-                            }
+                            _ = await DeleteGrainsInTA([grain], 0, ta, cancellationToken: cancellationToken);
                         }
-                    }
-
-                    if (1 > await UpdateOrCreateGrainBaseInTA(ta, grain, cancellationToken))
-                    {
-                        throw new ApplicationException($"Record for grain {grain.Id} could not be created");
-                    }
-                    if (null != grain.ParentId)
-                    {
-                        _ = await EnableGrainTimestampTriggers(ta, (Guid)grain.ParentId, cancellationToken);
-                    }
-
-                    _ = await DisableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
-
-                    if (null != grain.Tier)
-                    {
-                        switch (true)
+                        else
                         {
-                            case true when grain.Tier is ITypeDef typeDef:
-                                _ = await CreateTypeDefTierInTA(ta, grain.Id, typeDef, cancellationToken);
-                                break;
-                            case true when grain.Tier is IPropDef propDef:
-                                _ = await CreatePropDefTierInTA(ta, grain.Id, propDef, cancellationToken);
-                                break;
-                            case true when grain.Tier is IFile file:
-                                if (0 == await UpdateFileTierInTA(ta, grain.Id, file, cancellationToken))
+                            _ = await DeleteGrainAclInTA(ta, grain.Id, cancellationToken);
+                            _ = await DeleteGrainLabelsInTA(ta, grain.Id, cancellationToken);
+                            _ = await DeleteGrainTraitsInTA(ta, grain.Id, true, cancellationToken);
+                            foreach (var tierType in new[] { typeof(IPropDef), typeof(IFile) })
+                            {
+                                if (!tierType.IsAssignableFrom(grain.Tier?.GetType()))
                                 {
-                                    _ = await CreateFileTierInTA(ta, grain.Id, file, cancellationToken);
+                                    _ = await DeleteGrainTierInTA(ta, grain.Id, tierType, cancellationToken);
                                 }
-                                break;
-                        }
-                    }
-
-                    async Task TraitCreatorFunc(ITraitTransportable trait, string? lang = null)
-                    {
-                        trait.Grain = grain;
-                        trait.Culture = lang;
-                        var traitBase = await CreateTraitInTA(ta, trait, trait.Value, trait.Ord, true, trait.Id, cancellationToken);
-                        if (null == traitBase)
-                        {
-                            throw new ApplicationException($"Trait {trait.Id} for grain {grain.Id} could not be created");
-                        }
-                    }
-                    if (true == grain.Traits?.Any())
-                    {
-                        foreach (var trait in grain.Traits)
-                        {
-                            await TraitCreatorFunc(trait);
-                        }
-                    }
-
-                    var langList = grain.Localized.Keys.ToList();
-                    var langChecks = (await CheckSystemLanguagesExistAsync(langList, cancellationToken)).ToList();
-
-                    for (var i = 0; i < langList.Count; i++)
-                    {
-                        var grainLoc = grain.Localized[langList[i]];
-                        _ = await ImportGrainLanguageAndLabelInTA(ta, grain.Id, langList[i], langChecks[i], grainLoc.Label, cancellationToken);
-
-                        if (true == grainLoc.Traits?.Any())
-                        {
-                            foreach (var trait in grainLoc.Traits)
-                            {
-                                await TraitCreatorFunc(trait, langList[i]);
                             }
                         }
-                    }
 
-                    _ = await ImportGrainAclInTA(ta, grain, cancellationToken);
-                    _ = await UpdateGrainTimestampsInTA(ta, [grain], grain.MTime, true, cancellationToken);
+                        if (1 > await UpdateOrCreateGrainBaseInTA(ta, grain, cancellationToken))
+                        {
+                            throw new ApplicationException($"Record for grain {grain.Id} could not be created");
+                        }
+                    }, cancellationToken);
 
-                    _ = await EnableGrainTimestampTriggers(ta, grain.Id, cancellationToken);
+                    await ExecuteWithoutTimestampTriggers(ta, grain.Id, async () =>
+                    {
+                        if (null != grain.Tier)
+                        {
+                            switch (true)
+                            {
+                                case true when grain.Tier is ITypeDef typeDef:
+                                    _ = await CreateTypeDefTierInTA(ta, grain.Id, typeDef, cancellationToken);
+                                    break;
+                                case true when grain.Tier is IPropDef propDef:
+                                    _ = await CreatePropDefTierInTA(ta, grain.Id, propDef, cancellationToken);
+                                    break;
+                                case true when grain.Tier is IFile file:
+                                    if (0 == await UpdateFileTierInTA(ta, grain.Id, file, cancellationToken))
+                                    {
+                                        _ = await CreateFileTierInTA(ta, grain.Id, file, cancellationToken);
+                                    }
+                                    break;
+                            }
+                        }
+
+                        async Task TraitCreatorFunc(ITraitTransportable trait, string? lang = null)
+                        {
+                            trait.Grain = grain;
+                            trait.Culture = lang;
+                            var traitBase = await CreateTraitInTA(ta, trait, trait.Value, trait.Ord, true, trait.Id, cancellationToken);
+                            if (null == traitBase)
+                            {
+                                throw new ApplicationException($"Trait {trait.Id} for grain {grain.Id} could not be created");
+                            }
+                        }
+                        if (true == grain.Traits?.Any())
+                        {
+                            foreach (var trait in grain.Traits)
+                            {
+                                await TraitCreatorFunc(trait);
+                            }
+                        }
+
+                        for (var i = 0; i < langList.Count; i++)
+                        {
+                            var grainLoc = grain.Localized[langList[i]];
+                            _ = await ImportGrainLanguageAndLabelInTA(ta, grain.Id, langList[i], langChecks[i], grainLoc.Label, cancellationToken);
+
+                            if (true == grainLoc.Traits?.Any())
+                            {
+                                foreach (var trait in grainLoc.Traits)
+                                {
+                                    await TraitCreatorFunc(trait, langList[i]);
+                                }
+                            }
+                        }
+
+                        _ = await ImportGrainAclInTA(ta, grain, cancellationToken);
+                        _ = await UpdateGrainTimestampsInTA(ta, [grain], grain.MTime, true, cancellationToken);
+
+                    }, cancellationToken);
+
                     return result;
                 }, cancellationToken);
 
