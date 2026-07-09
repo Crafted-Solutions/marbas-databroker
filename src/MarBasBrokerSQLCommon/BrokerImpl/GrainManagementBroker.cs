@@ -699,6 +699,25 @@ WHERE g.{GeneralEntityDefaults.FieldId} {grainIdClause}";
             }
         }
 
+        protected async Task ExecuteWithoutTimestampTriggers(DbTransaction ta, Guid? grainId, Func<Task> func, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (null != grainId)
+                {
+                    _ = await DisableGrainTimestampTriggers(ta, (Guid)grainId, cancellationToken);
+                }
+                await func();
+            }
+            finally
+            {
+                if (null != grainId)
+                {
+                    _ = await EnableGrainTimestampTriggers(ta, (Guid)grainId, cancellationToken);
+                }
+            }
+        }
+
         protected async Task<int> DisableGrainTimestampTriggers(DbTransaction ta, Guid grainId, CancellationToken cancellationToken)
         {
             using (var cmd = ta.Connection!.CreateCommand())
