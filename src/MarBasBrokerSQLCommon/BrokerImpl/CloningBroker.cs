@@ -89,11 +89,19 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 throw new InvalidOperationException("Source grain is not copyable");
             }
 
+
             IGrainBase? result = null;
             if (0 < currentDepth || depth.HasFlag(GrainCloneDepth.Self))
             {
                 await WrapInTransaction(result, async (ta) =>
                 {
+                    async Task<bool> IsInstaceOf(IIdentifiable grain, Guid typedefId)
+                    {
+                        using (var cmd = ta.Connection!.CreateCommand())
+                        {
+                            return await IsGrainInstanceOf_Cmd(cmd, grain, (Identifiable)typedefId, cancellationToken);
+                        }
+                    }
 
                     result = await CloneGrainBaseInTA(srcGrain, newParent, ta, cancellationToken);
                     if (null != result)
@@ -134,7 +142,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                                 }
                             }
                         }
-                        else if (await IsGrainInstanceOfAsync(srcGrain, (Identifiable)SchemaDefaults.PropDefTypeDefID))
+                        else if (await IsInstaceOf(srcGrain, SchemaDefaults.PropDefTypeDefID))
                         {
                             if (1 > await CloneGrainTypeDetailsInTA(srcGrain.Id, result.Id,
                                 [
@@ -150,7 +158,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                                 throw new ApplicationException($"Failed to clone PropDef details from {srcGrain.Id} to {result.Id}");
                             }
                         }
-                        else if (await IsGrainInstanceOfAsync(srcGrain, (Identifiable)SchemaDefaults.FileTypeDefID))
+                        else if (await IsInstaceOf(srcGrain, SchemaDefaults.FileTypeDefID))
                         {
                             if (1 > await CloneFileDetailsInTA(srcGrain.Id, result.Id, ta, cancellationToken))
                             {
