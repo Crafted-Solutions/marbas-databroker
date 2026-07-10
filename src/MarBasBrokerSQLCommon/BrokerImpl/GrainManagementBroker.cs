@@ -162,47 +162,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<bool> IsGrainInstanceOfAsync(IIdentifiable grain, IIdentifiable typedef, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            Guid? typeDefId = null;
-            if (grain is IGrainBase grainBase)
-            {
-                typeDefId = grainBase.TypeDefId ?? SchemaDefaults.TypeDefTypeDefID;
-            }
-            if (null != typeDefId && typeDefId.Equals(typedef.Id))
-            {
-                return true;
-            }
-
             return await ExecuteOnConnection(false, async (cmd) =>
             {
                 using (cmd)
                 {
-                    cmd.CommandText = $"{GrainTypeDefConfig<TDialect>.SQLSelectTypeDefMixinAnc}{GrainTypeDefDefaults.MixinExtFieldStart} = ";
-                    if (null == typeDefId)
-                    {
-                        cmd.CommandText = $"{GrainTypeDefConfig<TDialect>.SQLSelectTypeDefMixinDefault}{cmd.CommandText}";
-                        cmd.CommandText += $"({GrainBaseConfig.SQLSelectTypeDef}{MapGrainBaseColumn(nameof(IGrainBase.Id))} = @{GeneralEntityDefaults.ParamId})";
-                        cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, grain.Id));
-                    }
-                    else
-                    {
-                        cmd.CommandText += $"@{GrainTypeDefDefaults.ParamTypeDefId}";
-                        cmd.Parameters.Add(_profile.ParameterFactory.Create(GrainTypeDefDefaults.ParamTypeDefId, typeDefId));
-                    }
-
-                    using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
-                    {
-                        var ordBase = rs.GetOrdinal(GrainTypeDefDefaults.MixinExtFieldBaseType);
-                        var ordStart = rs.GetOrdinal(GrainTypeDefDefaults.MixinExtFieldStart);
-                        while (await rs.ReadAsync(cancellationToken))
-                        {
-                            if (!rs.IsDBNull(ordStart) && rs.GetGuid(ordStart).Equals(typedef.Id) || !rs.IsDBNull(ordBase) && rs.GetGuid(ordBase).Equals(typedef.Id))
-                            {
-                                return true;
-                            }
-                        }
-                    }
+                    return await IsGrainInstanceOf_Cmd(cmd, grain, typedef, cancellationToken);
                 }
-                return false;
             }, cancellationToken);
         }
 
@@ -546,6 +511,45 @@ WHERE g.{GeneralEntityDefaults.FieldId} {grainIdClause}";
                 }, cancellationToken);
             }
             return result;
+        }
+
+        protected async Task<bool> IsGrainInstanceOf_Cmd(DbCommand cmd, IIdentifiable grain, IIdentifiable typedef, CancellationToken cancellationToken)
+        {
+            Guid? typeDefId = null;
+            if (grain is IGrainBase grainBase)
+            {
+                typeDefId = grainBase.TypeDefId ?? SchemaDefaults.TypeDefTypeDefID;
+            }
+            if (null != typeDefId && typeDefId.Equals(typedef.Id))
+            {
+                return true;
+            }
+            cmd.CommandText = $"{GrainTypeDefConfig<TDialect>.SQLSelectTypeDefMixinAnc}{GrainTypeDefDefaults.MixinExtFieldStart} = ";
+            if (null == typeDefId)
+            {
+                cmd.CommandText = $"{GrainTypeDefConfig<TDialect>.SQLSelectTypeDefMixinDefault}{cmd.CommandText}";
+                cmd.CommandText += $"({GrainBaseConfig.SQLSelectTypeDef}{MapGrainBaseColumn(nameof(IGrainBase.Id))} = @{GeneralEntityDefaults.ParamId})";
+                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, grain.Id));
+            }
+            else
+            {
+                cmd.CommandText += $"@{GrainTypeDefDefaults.ParamTypeDefId}";
+                cmd.Parameters.Add(_profile.ParameterFactory.Create(GrainTypeDefDefaults.ParamTypeDefId, typeDefId));
+            }
+
+            using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
+            {
+                var ordBase = rs.GetOrdinal(GrainTypeDefDefaults.MixinExtFieldBaseType);
+                var ordStart = rs.GetOrdinal(GrainTypeDefDefaults.MixinExtFieldStart);
+                while (await rs.ReadAsync(cancellationToken))
+                {
+                    if (!rs.IsDBNull(ordStart) && rs.GetGuid(ordStart).Equals(typedef.Id) || !rs.IsDBNull(ordBase) && rs.GetGuid(ordBase).Equals(typedef.Id))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         protected async Task<IGrainBase?> CreateGrainInTA(string name, IIdentifiable parent, IIdentifiable? typedef, DbTransaction ta, bool aclWasChecked = false, Guid? newId = null, CancellationToken cancellationToken = default)
