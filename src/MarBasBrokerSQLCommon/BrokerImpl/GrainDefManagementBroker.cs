@@ -70,7 +70,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         {
             await CheckProfile(cancellationToken);
             IGrainTypeDef? result = null;
-            result = await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 var grain = await CreateGrainInTA(name, parent ?? (Identifiable)SchemaDefaults.UserSchemaContainerID, null, ta, cancellationToken: cancellationToken);
                 if (null != grain)
@@ -120,7 +120,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 return result;
             }, cancellationToken);
-            return result;
         }
 
         public int StoreTypeDefs(IEnumerable<IGrainTypeDef> typedefs)
@@ -277,7 +276,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         {
             await CheckProfile(cancellationToken);
             IGrainPropDef? result = null;
-            await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 var grain = await CreateGrainInTA(name, typeContainer, (Identifiable)SchemaDefaults.PropDefTypeDefID, ta, cancellationToken: cancellationToken);
                 if (null != grain)
@@ -325,7 +324,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 return result;
             }, cancellationToken);
-            return result;
         }
 
         public int StorePropDefs(IEnumerable<IGrainPropDef> propdefs)

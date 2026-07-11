@@ -66,7 +66,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 throw new UnauthorizedAccessException("Unsufficient entitlement for creating roles");
             }
             ISchemaRole? result = null;
-            result = await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 using (var cmd = ta.Connection!.CreateCommand())
                 {
@@ -97,7 +97,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 return result;
             }, cancellationToken);
-            return result;
         }
 
         public int DeleteRoles(IEnumerable<IIdentifiable> ids)

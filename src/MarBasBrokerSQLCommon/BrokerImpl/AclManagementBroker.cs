@@ -74,7 +74,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 throw new SchemaAccessDeniedException(GrainAccessFlag.ModifyAcl);
             }
             ISchemaAclEntry? result = null;
-            result = await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 using (var cmd = ta.Connection!.CreateCommand())
                 {
@@ -120,7 +120,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 return result;
             }, cancellationToken);
-            return result;
         }
 
         public int DeleteAcl(IEnumerable<IAclEntryRef> acl)
@@ -145,7 +144,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 throw new SchemaAccessDeniedException(GrainAccessFlag.ModifyAcl);
             }
             var result = 0;
-            result = await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 using (var cmd = ta.Connection!.CreateCommand())
                 {
@@ -162,7 +161,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 return result;
             }, cancellationToken);
-            return result;
         }
 
         public int StoreAcl(IEnumerable<ISchemaAclEntry> acl)
@@ -187,7 +185,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 return -1;
             }
             var result = 0;
-            result = await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 using (var cmd = ta.Connection!.CreateCommand())
                 {
@@ -213,7 +211,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 return result;
             }, cancellationToken);
-            return result;
         }
 
         public IEnumerable<ISchemaAclEntry> GetEffectiveAcl(IIdentifiable grain)

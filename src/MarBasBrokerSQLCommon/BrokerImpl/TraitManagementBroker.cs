@@ -104,7 +104,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             await CheckProfile(cancellationToken);
             CheckBuiltIns(ids);
             var result = 0;
-            result = await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 using (var cmd = ta.Connection!.CreateCommand())
                 {
@@ -133,7 +133,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 return result;
             }, cancellationToken);
-            return result;
         }
 
         public int StoreTraits(IEnumerable<ITraitBase> traits)
@@ -159,7 +158,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             }
             var result = 0;
             var colMapper = new TraitBaseDataAdapter.ColumnMapper();
-            result = await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 using (var cmd = ta.Connection!.CreateCommand())
                 {
@@ -181,7 +180,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 return result;
             }, cancellationToken);
-            return result;
         }
 
         public ITraitBase? CreateTrait(ITraitRef traitRef, object? value = null, int ord = 0)
@@ -263,8 +261,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             }
 
             var result = 0;
-
-            result = await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 result = await DeleteTraitsByRefInTA(ta, traitRef, true, cancellationToken);
 
@@ -324,7 +321,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 result -= await ReindexTraitsInTA(ta, traitRef.Grain, traitRef.PropDef, traitRef.CultureInfo ?? CultureInfo.InvariantCulture, traitRef.Revision, true, cancellationToken);
                 return result;
             }, cancellationToken);
-            return result;
         }
 
         public int ResetTraitValues(ITraitRef traitRef)
