@@ -75,7 +75,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             await ValidateStorageQuota(0 > size ? content.Length : size, cancellationToken: cancellationToken);
 
             IGrainFile? result = null;
-            await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 var grain = await CreateGrainInTA(name, parent ?? (Identifiable)SchemaDefaults.FilesContainerID, (Identifiable)SchemaDefaults.FileTypeDefID, ta, cancellationToken: cancellationToken);
 
@@ -91,8 +91,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 return result;
             }, cancellationToken);
-            return result;
-
         }
 
         public int StoreGrainFiles(IEnumerable<IGrainFile> files)
@@ -115,12 +113,11 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Write);
             }
             var result = 0;
-            await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 result = await StoreGrainFileTiersInTA(ta, filesMod, result, cancellationToken);
                 return await StoreGrainsInTA(files.Where(g => 0 < g.GetDirtyFields<IGrainBase>().Count + g.GetDirtyFields<IGrainLocalized>().Count), result, ta, true, cancellationToken);
             }, cancellationToken);
-            return result;
         }
         #endregion
 
