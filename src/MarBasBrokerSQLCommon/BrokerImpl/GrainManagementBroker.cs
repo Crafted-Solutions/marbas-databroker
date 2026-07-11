@@ -83,11 +83,10 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         {
             await CheckProfile(cancellationToken);
             var result = 0;
-            await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 return await DeleteGrainsInTA(ids, result, ta, cancellationToken: cancellationToken);
             }, cancellationToken);
-            return result;
         }
 
         public int StoreGrains(IEnumerable<IGrainBase> grains)
@@ -133,7 +132,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 throw new SchemaAccessDeniedException(GrainAccessFlag.CreateSubelement);
             }
             IGrainBase? result = null;
-            await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(result, async (ta) =>
             {
                 using (var cmd = ta.Connection!.CreateCommand())
                 {
@@ -151,7 +150,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 return result;
             }, cancellationToken);
-            return result;
         }
 
         public bool IsGrainInstanceOf(IIdentifiable grain, IIdentifiable typedef)
