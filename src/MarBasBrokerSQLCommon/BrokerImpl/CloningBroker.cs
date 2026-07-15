@@ -56,6 +56,10 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 }
                 if (null != typedefType.DefaultInstance)
                 {
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug("Cloning default instance of grain {grain} of type {type}", result.Id, typedef.Id);
+                    }
                     var children = await ListGrainsAsync(typedefType.DefaultInstance, cancellationToken: cancellationToken);
                     foreach (var child in children)
                     {

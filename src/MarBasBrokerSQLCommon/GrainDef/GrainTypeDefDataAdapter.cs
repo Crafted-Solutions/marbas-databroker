@@ -6,14 +6,9 @@ using CraftedSolutions.MarBasSchema.GrainDef;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainDef
 {
-    public class GrainTypeDefDataAdapter : GrainLocalizedDataAdapter, IGrainTypeDef
+    public class GrainTypeDefDataAdapter(DbDataReader dataReader) : GrainLocalizedDataAdapter(dataReader), IGrainTypeDefLocalized
     {
-        protected ISet<IIdentifiable> _mixins;
-
-        public GrainTypeDefDataAdapter(DbDataReader dataReader) : base(dataReader)
-        {
-            _mixins = new HashSet<IIdentifiable>();
-        }
+        protected ISet<IIdentifiable> _mixins = new HashSet<IIdentifiable>();
 
         public string? Impl { get => GetNullableField<string>(GetMappedColumnName()); set => throw new NotImplementedException(); }
 
