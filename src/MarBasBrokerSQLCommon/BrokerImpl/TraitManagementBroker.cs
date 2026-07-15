@@ -32,7 +32,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<GrainTraitsMap> GetGrainTraitsAsync(IIdentifiable grain, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            if (!await _accessService.VerfifyAccessAsync(new[] { grain }, GrainAccessFlag.Read, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([grain], GrainAccessFlag.Read, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Read);
             }
@@ -206,7 +206,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IEnumerable<ITraitBase>> GetTraitValuesAsync(ITraitRef traitRef, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            if (!await _accessService.VerfifyAccessAsync(new[] { traitRef.Grain }, GrainAccessFlag.Read, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([traitRef.Grain], GrainAccessFlag.Read, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Read);
             }
@@ -251,11 +251,11 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 return -1;
             }
             await CheckProfile(cancellationToken);
-            if (!await _accessService.VerfifyAccessAsync(new[] { traitRef.Grain }, GrainAccessFlag.Write, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([traitRef.Grain], GrainAccessFlag.Write, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Write);
             }
-            if (!await _accessService.VerfifyAccessAsync(new[] { traitRef.PropDef }, GrainAccessFlag.WriteTraits, cancellationToken))
+            if (!await _accessService.VerfifyAccessAsync([traitRef.PropDef], GrainAccessFlag.WriteTraits, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.WriteTraits);
             }
@@ -355,7 +355,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IEnumerable<IGrainLocalized>> LookupGrainsByTraitAsync(ITraitRef traitRef, object? value = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>(Enumerable.Empty<IGrainLocalized>(), async (cmd) =>
+            return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>([], async (cmd) =>
             {
                 using (cmd)
                 {
@@ -403,11 +403,11 @@ WHERE t.{MapTraitColumn(nameof(ITrait.PropDefId))} = @{TraitBaseDefaults.ParamPr
         {
             if (!aclWasChecked)
             {
-                if (!await _accessService.VerfifyAccessAsync(new[] { traitRef.Grain }, GrainAccessFlag.Write, cancellationToken))
+                if (!await _accessService.VerfifyAccessAsync([traitRef.Grain], GrainAccessFlag.Write, cancellationToken))
                 {
                     throw new SchemaAccessDeniedException(GrainAccessFlag.Write);
                 }
-                if (!await _accessService.VerfifyAccessAsync(new[] { traitRef.PropDef }, GrainAccessFlag.WriteTraits, cancellationToken))
+                if (!await _accessService.VerfifyAccessAsync([traitRef.PropDef], GrainAccessFlag.WriteTraits, cancellationToken))
                 {
                     throw new SchemaAccessDeniedException(GrainAccessFlag.WriteTraits);
                 }
@@ -474,11 +474,11 @@ WHERE t.{MapTraitColumn(nameof(ITrait.PropDefId))} = @{TraitBaseDefaults.ParamPr
         {
             if (!aclWasChecked)
             {
-                if (!await _accessService.VerfifyAccessAsync(new[] { traitRef.Grain }, GrainAccessFlag.Write, cancellationToken))
+                if (!await _accessService.VerfifyAccessAsync([traitRef.Grain], GrainAccessFlag.Write, cancellationToken))
                 {
                     throw new SchemaAccessDeniedException(GrainAccessFlag.Write);
                 }
-                if (!await _accessService.VerfifyAccessAsync(new[] { traitRef.PropDef }, GrainAccessFlag.WriteTraits, cancellationToken))
+                if (!await _accessService.VerfifyAccessAsync([traitRef.PropDef], GrainAccessFlag.WriteTraits, cancellationToken))
                 {
                     throw new SchemaAccessDeniedException(GrainAccessFlag.WriteTraits);
                 }
@@ -505,7 +505,7 @@ WHERE t.{MapTraitColumn(nameof(ITrait.PropDefId))} = @{TraitBaseDefaults.ParamPr
 
         protected async Task<int> DeleteGrainTraitsInTA(DbTransaction ta, Guid grainId, bool aclWasChecked = false, CancellationToken cancellationToken = default)
         {
-            if (!aclWasChecked && !await _accessService.VerfifyAccessAsync(new[] { (Identifiable)grainId }, GrainAccessFlag.Write, cancellationToken))
+            if (!aclWasChecked && !await _accessService.VerfifyAccessAsync([(Identifiable)grainId], GrainAccessFlag.Write, cancellationToken))
             {
                 throw new SchemaAccessDeniedException(GrainAccessFlag.Write);
             }

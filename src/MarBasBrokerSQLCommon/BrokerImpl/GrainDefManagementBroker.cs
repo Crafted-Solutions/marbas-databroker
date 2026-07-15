@@ -35,7 +35,8 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IGrainTypeDefLocalized?> GetTypeDefAsync(Guid id, CultureInfo? culture = null, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            return await ExecuteOnConnection(null, async (cmd) =>
+            IGrainTypeDefLocalized? result = null;
+            result = await ExecuteOnConnection<IGrainTypeDefLocalized?>(result, async (cmd) =>
             {
                 using (cmd)
                 {
@@ -51,14 +52,18 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         }
                         if (await rs.ReadAsync(cancellationToken))
                         {
-                            var typedef = new GrainTypeDefDataAdapter(rs);
-                            await GetTypeDefMixins(typedef, cancellationToken);
-                            return new GrainTypeDef(typedef);
+                            return new GrainTypeDef(new GrainTypeDefDataAdapter(rs));
                         }
                     }
                 }
                 return null;
             }, cancellationToken);
+            if (null != result)
+            {
+                await GetTypeDefMixins(result, cancellationToken);
+                result.GetDirtyFields<IGrainTypeDef>().Clear();
+            }
+            return result;
         }
 
         public IGrainTypeDef? CreateTypeDef(string name, IIdentifiable? parent, string? implKey = null, IEnumerable<IIdentifiable>? mixins = null)
@@ -69,7 +74,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IGrainTypeDef?> CreateTypeDefAsync(string name, IIdentifiable? parent, string? implKey = null, IEnumerable<IIdentifiable>? mixins = null, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            IGrainTypeDef? result = null;
+            GrainTypeDef? result = null;
             return await WrapInTransaction(result, async (ta) =>
             {
                 var grain = await CreateGrainInTA(name, parent ?? (Identifiable)SchemaDefaults.UserSchemaContainerID, null, ta, cancellationToken: cancellationToken);
