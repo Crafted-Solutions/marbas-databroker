@@ -2,6 +2,7 @@
 using System.Globalization;
 using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
 using static CraftedSolutions.MarBasBrokerSQLCommon.AbstractDataAdapter;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon
@@ -19,6 +20,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
         string PrepareDirtyFieldsUpdate<TFieldMapper, TScope>(DbParameterCollection parameters, IUpdateable updateable, IColumnMapper? mapper = null, IFieldValueMapper? valueMapper = null)
             where TFieldMapper : AbstractDataAdapter;
         DbParameter PrepareTraitValueParameter(string paramName, TraitValueType valueType, object? value);
+        string PrepareTraitComparison(DbParameterCollection parameters, TraitValueType valueType, object? value = null, FieldCompareOperator compareOperator = FieldCompareOperator.Eq, string paramName = "value");
     }
 
     public interface IDbParameterFactoryProvider

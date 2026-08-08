@@ -1,8 +1,9 @@
-﻿using System.Data.Common;
-using System.Globalization;
-using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.Access;
 using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.Access;
+using CraftedSolutions.MarBasSchema.Broker;
+using System.Data.Common;
+using System.Globalization;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon
 {
@@ -69,6 +70,56 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
         }
 
         public abstract DbParameter PrepareTraitValueParameter(string paramName, TraitValueType valueType, object? value);
+
+        public virtual string PrepareTraitComparison(DbParameterCollection parameters, TraitValueType valueType, object? value = null, FieldCompareOperator compareOperator = FieldCompareOperator.Eq, string paramName = "value")
+        {
+            string result;
+            if (null == value)
+            {
+                result = $" {(compareOperator.IsNegated() ? "IS NOT" : "IS")} NULL";
+            }
+            else
+            {
+                if (compareOperator.HasFlag(FieldCompareOperator.Contains)
+                    || compareOperator.HasFlag(FieldCompareOperator.StartsWith) || compareOperator.HasFlag(FieldCompareOperator.EndsWith))
+                {
+                    result = " LIKE";
+                    if (compareOperator.IsNegated())
+                    {
+                        result = $" NOT{result}";
+                    }
+                    var strVal = value.ToString();
+                    if (compareOperator.HasFlag(FieldCompareOperator.Contains))
+                    {
+                        strVal = $"%{strVal}%";
+                    }
+                    else if (compareOperator.HasFlag(FieldCompareOperator.StartsWith))
+                    {
+                        strVal = $"{strVal}%";
+                    }
+                    else if (compareOperator.HasFlag(FieldCompareOperator.EndsWith))
+                    {
+                        strVal = $"%{strVal}";
+                    }
+                    value = strVal;
+                }
+                else if (compareOperator.HasFlag(FieldCompareOperator.Gt) || compareOperator.HasFlag(FieldCompareOperator.Lt))
+                {
+                    result = $" {(compareOperator.HasFlag(FieldCompareOperator.Gt) ? ">" : "<")}";
+                    if (compareOperator.HasFlag(FieldCompareOperator.Eq))
+                    {
+                        result += "=";
+                    }
+                }
+                else
+                {
+                    result = $" {(compareOperator.IsNegated() ? "<>" : "=")}";
+                }
+                result += $" @{paramName}";
+                parameters.Add(PrepareTraitValueParameter(paramName, valueType, value));
+            }
+            return result;
+        }
 
         public static readonly TFactory Instance = new();
     }
