@@ -22,14 +22,9 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
     [Authorize]
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.Trait)]
     [ApiController]
-    public sealed class TraitController : ControllerBase
+    public sealed class TraitController(ILogger<TraitController> logger) : ControllerBase
     {
-        private readonly ILogger _logger;
-
-        public TraitController(ILogger<TraitController> logger)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger _logger = logger;
 
         [HttpGet("{id}", Name = "GetTrait")]
         [ProducesResponseType(typeof(ITraitResult), StatusCodes.Status200OK)]
@@ -58,7 +53,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await schemaBroker.DeleteTraitsAsync(new[] { (Identifiable)id }, cancellationToken);
+                var result = await schemaBroker.DeleteTraitsAsync([(Identifiable)id], cancellationToken);
                 return MarbasResultFactory.Create(0 < result, result);
             }, _logger);
         }
@@ -72,7 +67,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await schemaBroker.StoreTraitsAsync(new[] { model.Trait }, cancellationToken);
+                var result = await schemaBroker.StoreTraitsAsync([model.Trait], cancellationToken);
                 return MarbasResultFactory.Create(0 != result, result);
             }, _logger);
         }
@@ -152,7 +147,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await schemaBroker.LookupGrainsByTraitAsync(model.Ref, model.Value, model.SortOptions, cancellationToken);
+                var result = await schemaBroker.LookupGrainsByTraitAsync(model.Ref, model.Value, model.CompareOperator ?? FieldCompareOperator.Eq, model.SortOptions, cancellationToken);
                 return MarbasResultFactory.Create(true, result);
             }, _logger);
         }

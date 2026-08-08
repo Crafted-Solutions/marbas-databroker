@@ -36,6 +36,8 @@ namespace CraftedSolutions.MarBasSchema
         public const string SystemSchemaContainerPath = $"{SchemaContainerPath}/System";
         public static readonly Guid UserSchemaContainerID = Guid.Parse("00000000-0000-1000-a000-000000000007");
         public const string UserSchemaContainerPath = $"{SchemaContainerPath}/UserDefined";
+        public static readonly Guid ConfigContainerID = Guid.Parse("00000000-0000-1000-a000-000000000014");
+        public const string ConfigContainerPath = $"{SchemaContainerPath}/$Config$";
         public static readonly Guid ContentTrashID = Guid.Parse("00000000-0000-1000-a000-000000000010");
         public static readonly Guid SchemaTrashID = Guid.Parse("00000000-0000-1000-a000-000000000011");
         public static readonly Guid PropDefCommentID = Guid.Parse("00000000-0000-1000-a000-00000000000d");
@@ -71,6 +73,7 @@ namespace CraftedSolutions.MarBasSchema
             SchemaContainerID,
             SystemSchemaContainerID,
             UserSchemaContainerID,
+            ConfigContainerID,
             ContentContainerID,
             FilesContainerID,
             ContentTrashID,

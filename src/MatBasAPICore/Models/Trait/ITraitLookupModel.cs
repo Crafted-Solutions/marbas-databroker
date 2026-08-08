@@ -12,6 +12,7 @@ namespace CraftedSolutions.MarBasAPICore.Models.Trait
         int? Revision { get; }
         TraitValueType? ValueType { get; }
         object? Value { get; }
+        FieldCompareOperator? CompareOperator { get; }
         public IEnumerable<ListSortOption<GrainSortField>>? SortOptions { get; set; }
     }
 }
