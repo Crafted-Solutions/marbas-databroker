@@ -6,7 +6,7 @@ namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface ITraitManagementBroker
     {
-        GrainTraitsMap GetGrainTraits(IIdentifiable grain, CultureInfo? culture = null);
+        GrainTraitsMap GetGrainTraits(IIdentifiable grain, CultureInfo? culture = null, bool scopedKeys = false);
         ITraitBase? GetTrait(Guid id);
         int DeleteTraits(IEnumerable<IIdentifiable> ids);
         int StoreTraits(IEnumerable<ITraitBase> traits);

@@ -1187,7 +1187,7 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
             var result = new Dictionary<string, IEnumerable<ITraitTransportable>>();
             return await ExecuteOnConnection(result, async (cmd) =>
             {
-                cmd.CommandText = @$"{TraitBaseConfig<TDialect>.SQLSelect}{GeneralEntityDefaults.FieldGrainId} = @{GeneralEntityDefaults.ParamGrainId}
+                cmd.CommandText = @$"{TraitBaseConfig<TDialect>.SQLSelectExt}{GeneralEntityDefaults.FieldGrainId} = @{GeneralEntityDefaults.ParamGrainId}
 ORDER BY {GeneralEntityDefaults.FieldLangCode}, {MapTraitColumn(nameof(ITraitBase.Revision))}, {MapTraitColumn(nameof(ITraitBase.PropDefId))}, {MapTraitColumn(nameof(ITraitBase.Ord))}";
 
                 cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamGrainId, grain.Id));

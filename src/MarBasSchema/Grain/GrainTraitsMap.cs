@@ -17,15 +17,15 @@ namespace CraftedSolutions.MarBasSchema.Grain
             }
             propName = propName.Trim().Replace(' ', '_');
             List<ITraitBase>? vals = null;
-            if (_map.ContainsKey(propName))
+            if (_map.TryGetValue(propName, out var value))
             {
-                vals = (List<ITraitBase>?)_map[propName];
+                vals = (List<ITraitBase>?)value;
             }
             if (null == vals)
             {
                 if (!trait.IsNull)
                 {
-                    _map[propName] = new List<ITraitBase>() { trait };
+                    _map[propName] = [trait];
                 }
                 return;
             }

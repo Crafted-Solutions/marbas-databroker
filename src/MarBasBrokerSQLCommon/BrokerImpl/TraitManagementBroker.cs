@@ -24,12 +24,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         {
         }
 
-        public GrainTraitsMap GetGrainTraits(IIdentifiable grain, CultureInfo? culture = null)
+        public GrainTraitsMap GetGrainTraits(IIdentifiable grain, CultureInfo? culture = null, bool scopedKeys = false)
         {
-            return GetGrainTraitsAsync(grain, culture).Result;
+            return GetGrainTraitsAsync(grain, culture, scopedKeys).Result;
         }
 
-        public async Task<GrainTraitsMap> GetGrainTraitsAsync(IIdentifiable grain, CultureInfo? culture = null, CancellationToken cancellationToken = default)
+        public async Task<GrainTraitsMap> GetGrainTraitsAsync(IIdentifiable grain, CultureInfo? culture = null, bool scopedKeys = false, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync([grain], GrainAccessFlag.Read, cancellationToken))
@@ -48,7 +48,14 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                     {
                         while (await rs.ReadAsync(cancellationToken))
                         {
-                            result.Set(ReadTrait(rs), rs.GetString(rs.GetOrdinal(MapGrainBaseColumn(nameof(IGrainBase.Name)))));
+                            var key = rs.GetString(rs.GetOrdinal(MapGrainBaseColumn(nameof(IGrainBase.Name))));
+                            if (scopedKeys && null != key)
+                            {
+                                var path = rs.GetString(rs.GetOrdinal("propdef_path"));
+                                path = path[..path.LastIndexOf('/')];
+                                key = $"{path[(path.LastIndexOf('/') + 1)..]}/{key}";
+                            }
+                            result.Set(ReadTrait(rs), key);
                         }
                     }
                 }
@@ -70,7 +77,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 using (cmd)
                 {
 
-                    cmd.CommandText = $"{TraitBaseConfig<TDialect>.SQLSelect}{GeneralEntityDefaults.FieldId}";
+                    cmd.CommandText = $"{TraitBaseConfig<TDialect>.SQLSelectExt}{GeneralEntityDefaults.FieldId}";
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, id));
                     if (await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.SkipPermissionCheck, cancellationToken: cancellationToken))
                     {
