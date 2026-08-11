@@ -239,12 +239,12 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(GrainTraitsMapResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<GrainTraitsMapResult> GetTraits([FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, [FromQuery] string? lang = null, CancellationToken cancellationToken = default)
+        public async Task<GrainTraitsMapResult> GetTraits([FromServices] IAsyncSchemaBroker broker, [FromRoute] Guid id, [FromQuery] string? lang = null, [FromQuery] bool? scopedKeys = false, CancellationToken cancellationToken = default)
         {
             HttpResponseException.Throw503IfOffline(broker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await broker.GetGrainTraitsAsync((Identifiable)id, string.IsNullOrEmpty(lang) ? null : CultureInfo.GetCultureInfo(lang), cancellationToken);
+                var result = await broker.GetGrainTraitsAsync((Identifiable)id, string.IsNullOrEmpty(lang) ? null : CultureInfo.GetCultureInfo(lang), scopedKeys ?? false, cancellationToken);
                 return MarbasResultFactory.Create(true, result);
             }, _logger);
         }

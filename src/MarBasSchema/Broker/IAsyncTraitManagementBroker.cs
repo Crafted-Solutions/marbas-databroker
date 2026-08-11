@@ -6,7 +6,7 @@ namespace CraftedSolutions.MarBasSchema.Broker
 {
     public interface IAsyncTraitManagementBroker
     {
-        Task<GrainTraitsMap> GetGrainTraitsAsync(IIdentifiable grain, CultureInfo? culture = null, CancellationToken cancellationToken = default);
+        Task<GrainTraitsMap> GetGrainTraitsAsync(IIdentifiable grain, CultureInfo? culture = null, bool scopedKeys = false, CancellationToken cancellationToken = default);
         Task<ITraitBase?> GetTraitAsync(Guid id, CancellationToken cancellationToken = default);
         Task<int> DeleteTraitsAsync(IEnumerable<IIdentifiable> ids, CancellationToken cancellationToken = default);
         Task<int> StoreTraitsAsync(IEnumerable<ITraitBase> traits, CancellationToken cancellationToken = default);
