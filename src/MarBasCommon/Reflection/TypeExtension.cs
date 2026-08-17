@@ -5,16 +5,16 @@ namespace CraftedSolutions.MarBasCommon.Reflection
 {
     public static class TypeExtension
     {
-        public static Type GetEnumerableType(this Type? type)
+        public static Type GetEnumerableType(this Type? type, uint index = 0)
         {
-            if (typeof(IEnumerable).IsAssignableFrom(type) && 0 < type.GenericTypeArguments.Length)
+            if (typeof(IEnumerable).IsAssignableFrom(type) && index < type.GenericTypeArguments.Length)
             {
-                return type.GenericTypeArguments[0];
+                return type.GenericTypeArguments[index];
             }
             return typeof(object);
         }
 
-        public static IEnumerable<PropertyInfo> GetAllProperties(this Type? type, BindingFlags bindingFlags = BindingFlags.Public)
+        public static IEnumerable<PropertyInfo> GetAllProperties(this Type? type, BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Instance)
         {
             if (null == type)
             {

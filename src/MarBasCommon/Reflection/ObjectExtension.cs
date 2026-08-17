@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Text.Json;
 
 namespace CraftedSolutions.MarBasCommon.Reflection
@@ -15,17 +16,18 @@ namespace CraftedSolutions.MarBasCommon.Reflection
             return genericMethodInfo?.Invoke(null, [o]);
         }
 
-        public static object? CastUnparsedJson(this object o)
+        public static object? CastUnparsedJson([AllowNull] this object? o)
         {
-            if (typeof(JsonElement).IsAssignableFrom(o.GetType()))
+            if (null != o && typeof(JsonElement).IsAssignableFrom(o.GetType()))
             {
                 var elm = (dynamic)o;
                 return elm.ValueKind switch
                 {
                     JsonValueKind.Number => elm.GetDecimal(),
+                    JsonValueKind.String => elm.GetString(),
                     JsonValueKind.False or JsonValueKind.True => elm.GetBoolean(),
                     JsonValueKind.Null or JsonValueKind.Undefined => null,
-                    _ => elm.GetString()
+                    _ => throw new NotSupportedException("Only primitive JSON types are supported")
                 };
             }
             return o;

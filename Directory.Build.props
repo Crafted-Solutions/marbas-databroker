@@ -12,4 +12,10 @@
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         -->
     </PropertyGroup>
+
+	<PropertyGroup>
+		<CollectCoverage>true</CollectCoverage>
+		<CoverletOutput>$(MSBuildThisFileDirectory)TestResults/$(MSBuildProjectName)/</CoverletOutput>
+		<CoverletOutputFormat>cobertura</CoverletOutputFormat>
+	</PropertyGroup>
 </Project>

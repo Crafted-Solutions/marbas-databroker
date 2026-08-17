@@ -130,7 +130,7 @@ namespace CraftedSolutions.MarBasCommon.Job
 
             public Context(IBackgroundJob backgroundJob, CancellationToken cancellationToken = default)
             {
-                if (BackgroundJobStatus.Cancelled == backgroundJob.Status)
+                if (cancellationToken.IsCancellationRequested || BackgroundJobStatus.Cancelled == backgroundJob.Status)
                 {
                     throw new OperationCanceledException($"Job {backgroundJob.Id} has been cancelled prior to starting work");
                 }
