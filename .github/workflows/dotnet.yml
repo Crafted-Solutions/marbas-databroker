@@ -6,10 +6,10 @@ name: .NET Build And Test
 on:
   push:
     branches: [ "main", "develop" ]
-    paths: [ "*.sln", "*.props", "src/**", ".github/workflows/**" ]
+    paths: [ "*.sln", "*.props", "src/**", "test/**", ".github/workflows/**" ]
   pull_request:
     branches: [ "main", "develop" ]
-    paths: [ "*.sln", "*.props", "src/**", ".github/workflows/**" ]
+    paths: [ "*.sln", "*.props", "src/**", "test/**", ".github/workflows/**" ]
   workflow_dispatch:
     inputs:
       logLevel:
@@ -33,8 +33,9 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 8.0.x
+        cache: true
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore --locked-mode
     - name: Build
       run: dotnet build --no-restore
     - name: Test

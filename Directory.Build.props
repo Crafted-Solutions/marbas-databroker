@@ -11,7 +11,8 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         -->
-    </PropertyGroup>
+		<RunSettingsFilePath>$(MSBuildThisFileDirectory)Common.runsettings</RunSettingsFilePath>
+	</PropertyGroup>
 
 	<PropertyGroup>
 		<CollectCoverage>true</CollectCoverage>
