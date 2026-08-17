@@ -13,3 +13,5 @@
 MarBasBrokerEnginesDebug.sln
 /srcdbg
 /distr
+/coverage
+/TestResults
