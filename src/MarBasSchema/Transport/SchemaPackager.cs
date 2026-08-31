@@ -95,6 +95,22 @@ namespace CraftedSolutions.MarBasSchema.Transport
         public IEnumerable<Guid> AnchorGrainIds { get; set; } = [];
     }
 
+    internal class ChildWriteComparer : IComparer<IGrain>
+    {
+        public int Compare(IGrain? x, IGrain? y)
+        {
+            if (x!.ParentId == x.TypeDefId && y!.ParentId != y.TypeDefId)
+            {
+                return 1;
+            }
+            if (y!.ParentId == y.TypeDefId && x.ParentId != x.TypeDefId)
+            {
+                return -1;
+            }
+            return x.Id.CompareTo(y.Id);
+        }
+    }
+
     public class SchemaPackager(IAsyncSchemaBroker broker, IBackgroundWorkQueue taskQueue, IBackgroundJobManager jobManager, JsonSerializerOptions serializerOptions, ILogger<SchemaPackager> logger)
         : ISchemaPackager, IAsyncSchemaPackager
     {
@@ -303,6 +319,10 @@ namespace CraftedSolutions.MarBasSchema.Transport
         #endregion
 
         #region Helpers
+        private enum GrainImportProcessStatus: byte
+        {
+            Skipped, Processed, Intermediate
+        }
 
         private class ImportCacheProcessor(IAsyncSchemaBroker broker, TempDirectory cacheDir
             , DuplicatesHandlingStrategy duplicatesHandling, MissingDependencyHandlingStrategy missingDependencyHandling)
@@ -311,7 +331,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
             private readonly TempDirectory _cacheDir = cacheDir;
             private readonly DuplicatesHandlingStrategy _duplicatesHandling = duplicatesHandling;
             private readonly MissingDependencyHandlingStrategy _missingDependencyHandling = missingDependencyHandling;
-            private readonly ConcurrentDictionary<Guid, byte> _processedGrains = [];
+            private readonly ConcurrentDictionary<Guid, GrainImportProcessStatus> _processedGrains = [];
             private readonly DateTime _startTime = DateTime.UtcNow;
 
             private readonly IGrain?[] _placeholderRoots = new IGrain?[3];
@@ -327,38 +347,38 @@ namespace CraftedSolutions.MarBasSchema.Transport
             {
                 var result = new GrainImportResults();
                 var cancellationToken = jobContext.CancellationToken;
-                foreach (var id in ids)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (_processedGrains.ContainsKey(id) || !_cacheDir.ContainsFile(id.MakeSerializedFileName(GrainTransportableExtension.GrainQualifier)))
-                    {
-                        continue;
-                    }
-                    var grain = await _cacheDir.ReadGrain(id, cancellationToken);
-                    var stage = $"Import-{grain.Id}-{grain.Name}";
-                    jobContext.Stage = stage;
 
-                    var dependencies = grain.GetDependencies(GrainDependencyFlags.IncludeLinks | GrainDependencyFlags.IncludeTypeDefs | GrainDependencyFlags.IncludeParent, true).ToList();
+                async Task<bool> HandleMissing(IGrainTransportable grain, IEnumerable<IIdentifiable> dependencies)
+                {
+                    if (!dependencies.Any())
+                    {
+                        return true;
+                    }
                     var missing = (await _broker.VerifyGrainsExistAsync(dependencies.Where(x => !_processedGrains.ContainsKey(x.Id) && !_cacheDir.ContainsFile(x.MakeSerializedFileName())).Select(x => x.Id), cancellationToken))
-                        .Where(x => !x.Value).Select(x => x.Key).Concat(dependencies.Where(x => _processedGrains.ContainsKey(x.Id) && 0 == _processedGrains[x.Id]).Select(x => x.Id));
+                        .Where(x => !x.Value).Select(x => x.Key).Concat(dependencies.Where(x => _processedGrains.ContainsKey(x.Id) && GrainImportProcessStatus.Skipped == _processedGrains[x.Id]).Select(x => x.Id));
+
                     if (missing.Any())
                     {
                         if (MissingDependencyHandlingStrategy.Abort == _missingDependencyHandling)
                         {
-                            throw new ApplicationException($"Import aborted due to grain {id} missing dependencies {string.Join(", ", missing)}");
+                            throw new ApplicationException($"Import aborted due to grain {grain.Id} missing dependencies {string.Join(", ", missing)}");
                         }
                         if (MissingDependencyHandlingStrategy.WarnAndContinue == _missingDependencyHandling)
                         {
                             result.IgnoredCount = 1;
-                            result.AddFeedback(new BrokerOperationFeedback($"Grain {id} skipped due to missing dependencies {string.Join(", ", missing)}", "PackageImport", 404, LogLevel.Warning, id));
-                            _processedGrains[id] = 0;
-                            continue;
+                            result.AddFeedback(new BrokerOperationFeedback($"Grain {grain.Id} skipped due to missing dependencies {string.Join(", ", missing)}", "PackageImport", 404, LogLevel.Warning, grain.Id));
+                            _processedGrains[grain.Id] = GrainImportProcessStatus.Skipped;
+                            return false;
                         }
                         else
                         {
                             var placeholders = new List<IGrainTransportable>();
                             foreach (var missingId in missing)
                             {
+                                if (cancellationToken.IsCancellationRequested)
+                                {
+                                    break;
+                                }
                                 var missingGrain = (IGrain?)dependencies.FirstOrDefault(x => x.Id == missingId);
                                 if (null == missingGrain)
                                 {
@@ -374,20 +394,65 @@ namespace CraftedSolutions.MarBasSchema.Transport
                                     placeholder.Localized = new Dictionary<string, IGrainLocalizedLayer>() { { SchemaDefaults.Culture.IetfLanguageTag, new GrainLocalizedLayer() { Label = placeholder.Path } } };
                                 }
                                 placeholders.Add(placeholder);
-                                _processedGrains[missingId] = 1;
+                                _processedGrains[missingId] = GrainImportProcessStatus.Processed;
                             }
                             result = GrainImportResults.Merge(result, await _broker.ImportGrainsAsync(placeholders, duplicatesHandling: _duplicatesHandling, cancellationToken: cancellationToken));
                         }
                     }
+                    return true;
+                }
+
+                foreach (var id in ids)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (_processedGrains.ContainsKey(id) || !_cacheDir.ContainsFile(id.MakeSerializedFileName(GrainTransportableExtension.GrainQualifier)))
+                    {
+                        continue;
+                    }
+                    var grain = await _cacheDir.ReadGrain(id, cancellationToken);
+                    var stage = $"Import-{grain.Id}-{grain.Name}";
+                    jobContext.Stage = stage;
+
+                    var prerequisites = grain.GetDependencies(GrainDependencyFlags.IncludeTypeDefs | GrainDependencyFlags.IncludeParent, true).ToList();
+                    if (!(await HandleMissing(grain, prerequisites)))
+                    {
+                        continue;
+                    }
+
 
                     if (!cancellationToken.IsCancellationRequested)
                     {
-                        result = GrainImportResults.Merge(result, await ProcessGrains(dependencies.Select(x => x.Id), jobContext));
+                        result = GrainImportResults.Merge(result, await ProcessGrains(prerequisites.Select(x => x.Id), jobContext));
+
+                        var dependencies = grain.GetDependencies(GrainDependencyFlags.IncludeLinks, true).ToList();
+                        if (0 < dependencies.Count)
+                        {
+                            // create stub Grain without traits as it may be needed by dependencies,
+                            // it will be either overwritten or deleted later
+                            var stubGrain = new GrainTransportable(grain)
+                            {
+                                Traits = [],
+                                Localized = new Dictionary<string, IGrainLocalizedLayer>(),
+                                MTime = DateTime.MinValue
+                            };
+                            var stubResult = await _broker.ImportGrainsAsync([stubGrain], duplicatesHandling: DuplicatesHandlingStrategy.Ignore, cancellationToken: cancellationToken);
+                            _processedGrains[id] = GrainImportProcessStatus.Intermediate;
+
+                            if (!(await HandleMissing(grain, dependencies)))
+                            {
+                                if (1 == stubResult.ImportedCount && 0 == stubResult.IgnoredCount)
+                                {
+                                    await _broker.DeleteGrainsAsync([stubGrain], cancellationToken);
+                                }
+                                continue;
+                            }
+                            result = GrainImportResults.Merge(result, await ProcessGrains(dependencies.Select(x => x.Id), jobContext));
+                        }
 
                         jobContext.Stage = stage;
                         var currentResult = await _broker.ImportGrainsAsync([grain], duplicatesHandling: _duplicatesHandling, cancellationToken: cancellationToken);
+                        _processedGrains[id] = GrainImportProcessStatus.Processed;
                         result = GrainImportResults.Merge(result, currentResult);
-                        _processedGrains[id] = 1;
                     }
 
                     var childrenEntry = grain.MakeSerializedFileName(extension: GrainChildrenNameSuffix);
@@ -507,7 +572,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
 
                 await Parallel.ForEachAsync(childGrains.GroupBy(x => (Guid)x.ParentId!), new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cancellationToken }, async (parentGroup, token) =>
                 {
-                    await cacheDir.WriteEntry(parentGroup.Select(x => x.Id).OrderBy(x => x)
+                    await cacheDir.WriteEntry(parentGroup.OrderBy(x => x, new ChildWriteComparer()).Select(x => x.Id)
                         , parentGroup.Key.MakeSerializedFileName(GrainTransportableExtension.GrainQualifier, extension: GrainChildrenNameSuffix), token);
 
                 });
