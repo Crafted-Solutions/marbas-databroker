@@ -1,15 +1,11 @@
-﻿using System.ComponentModel;
-using System.Data.Common;
-using System.Reflection;
-using System.Security.Claims;
-using System.Security.Principal;
-using System.Text;
-using CraftedSolutions.MarBasCommon;
-using CraftedSolutions.MarBasCommon.Reflection;
+﻿using CraftedSolutions.MarBasCommon;
 using CraftedSolutions.MarBasSchema;
 using CraftedSolutions.MarBasSchema.Access;
 using CraftedSolutions.MarBasSchema.Broker;
 using Microsoft.Extensions.Logging;
+using System.Data.Common;
+using System.Security.Claims;
+using System.Security.Principal;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {
@@ -92,71 +88,6 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 throw new UnauthorizedAccessException("At least one of elements belongs to built-in system schema and cannot be deleted");
             }
-        }
-
-        protected string PrepareObjectInserParameters<TFieldIFace, TAdapter>(DbParameterCollection parameters, TFieldIFace valueProvider, IDictionary<string, (Type, object?)>? additionalValues = null)
-            where TAdapter : AbstractDataAdapter
-        {
-            var providerProps = typeof(TFieldIFace).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x =>
-                true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
-
-            var cols = providerProps.Select(x => AbstractDataAdapter.GetAdapterColumnName<TAdapter>(x.Name));
-            var vals = providerProps.Select(x =>
-            {
-                var paramName = $"param{x.Name}";
-                parameters.Add(_profile.ParameterFactory.Create(paramName, x.PropertyType, x.GetValue(valueProvider)));
-                return paramName;
-            });
-            if (null != additionalValues)
-            {
-                cols = cols.Concat(additionalValues.Select(x => x.Key));
-                vals = vals.Concat(additionalValues.Select(x =>
-                {
-                    var paramName = $"param{x.Key}";
-                    parameters.Add(_profile.ParameterFactory.Create(paramName, x.Value.Item1, x.Value.Item2));
-                    return paramName;
-                }));
-            }
-            return $"({string.Join(",", cols)}) VALUES (@{string.Join(",@", vals)})";
-        }
-
-        protected string PrepareObjectUpdateParameters<TFieldIFace, TAdapter>(DbParameterCollection parameters, TFieldIFace valueProvider, IDictionary<string, (Type, object?)>? additionalValues = null)
-            where TAdapter : AbstractDataAdapter
-        {
-            var providerProps = typeof(TFieldIFace).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x =>
-                true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
-
-            var result = new StringBuilder();
-            foreach (var prop in providerProps)
-            {
-                var paramName = $"param{prop.Name}";
-                parameters.Add(_profile.ParameterFactory.Create(paramName, prop.PropertyType, prop.GetValue(valueProvider)));
-
-                if (0 < result.Length)
-                {
-                    result.Append(',');
-                }
-                result.Append(AbstractDataAdapter.GetAdapterColumnName<TAdapter>(prop.Name));
-                result.Append("=@");
-                result.Append(paramName);
-            }
-            if (null != additionalValues)
-            {
-                foreach (var addVal in additionalValues)
-                {
-                    var paramName = $"param{addVal.Key}";
-                    parameters.Add(_profile.ParameterFactory.Create(paramName, addVal.Value.Item1, addVal.Value.Item2));
-
-                    if (0 < result.Length)
-                    {
-                        result.Append(',');
-                    }
-                    result.Append(addVal.Key);
-                    result.Append("=@");
-                    result.Append(paramName);
-                }
-            }
-            return result.ToString();
         }
 
         protected static string PrepareListOrderByClause<TFieldEnum, TAdapter>(IEnumerable<IListSortOption<TFieldEnum>>? sortOptions, string? fieldPrefix = null)
