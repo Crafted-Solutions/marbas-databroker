@@ -7,7 +7,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
     [Flags]
     public enum GrainDependencyFlags
     {
-        IncludeNone = 0x0, IncludeLinks = 1 << 0, IncludeTypeDefs = 1 << 1, IncludeParent = 1 << 2, IncludeBuiltIns = 1 << 12
+        IncludeNone = 0x0, IncludeLinks = 1 << 0, IncludeRequiredLinks = 1 << 1, IncludeTypeDefs = 1 << 2, IncludeParent = 1 << 3, IncludeBuiltIns = 1 << 12
     }
 
     public static class GrainTransportableExtension
@@ -20,7 +20,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
         public static string MakeSerializedFileName(this IIdentifiable grain, string fieldSeparator = FileNameFieldSeparator, string extension = ".json") => grain.Id.MakeSerializedFileName(GrainQualifier, fieldSeparator, extension);
 
 
-        public static IEnumerable<IIdentifiable> GetDependencies(this IGrainTransportable grain, GrainDependencyFlags flags = GrainDependencyFlags.IncludeLinks, bool guessDetails = false)
+        public static IEnumerable<IIdentifiable> GetDependencies(this IGrainTransportable grain, GrainDependencyFlags flags = GrainDependencyFlags.IncludeLinks | GrainDependencyFlags.IncludeRequiredLinks, bool guessDetails = false)
         {
             var result = new List<IIdentifiable>();
             if (SchemaDefaults.BuiltInIds.Contains(grain.Id))
@@ -64,11 +64,10 @@ namespace CraftedSolutions.MarBasSchema.Transport
                     .Where(x => TraitValueType.Grain == x.ValueType || TraitValueType.File == x.ValueType)
                     .Select(x => TraitValue(x));
                 result.AddRange(traits);
-
-                if (grain.Tier is IGrainTierPropDef propDef && null != propDef.ValueConstraintId)
-                {
-                    result.Add(guessDetails ? new GrainPlain() { Id = (Guid)propDef.ValueConstraintId, TypeDefId = SchemaDefaults.ElementTypeDefID } : (Identifiable)propDef.ValueConstraintId);
-                }
+            }
+            if (flags.HasFlag(GrainDependencyFlags.IncludeRequiredLinks) && grain.Tier is IGrainTierPropDef propDef && null != propDef.ValueConstraintId)
+            {
+                result.Add(guessDetails ? new GrainPlain() { Id = (Guid)propDef.ValueConstraintId, TypeDefId = SchemaDefaults.ElementTypeDefID } : (Identifiable)propDef.ValueConstraintId);
             }
             if (flags.HasFlag(GrainDependencyFlags.IncludeTypeDefs))
             {

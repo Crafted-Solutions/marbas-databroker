@@ -129,6 +129,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
 #endif
         private readonly ILogger<SchemaPackager> _logger = logger;
 #endregion
+        private readonly ChildWriteComparer _childWriteComparer = new();
 
         #region Public Interface
 /*
@@ -336,6 +337,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
 
             private readonly IGrain?[] _placeholderRoots = new IGrain?[3];
 
+
             public async Task<IGrainImportResults> Invoke(IBackgroudJobContext jobContext)
             {
                 jobContext.Stage = "Import";
@@ -413,7 +415,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
                     var stage = $"Import-{grain.Id}-{grain.Name}";
                     jobContext.Stage = stage;
 
-                    var prerequisites = grain.GetDependencies(GrainDependencyFlags.IncludeTypeDefs | GrainDependencyFlags.IncludeParent, true).ToList();
+                    var prerequisites = grain.GetDependencies(GrainDependencyFlags.IncludeRequiredLinks | GrainDependencyFlags.IncludeTypeDefs | GrainDependencyFlags.IncludeParent, true).ToList();
                     if (!(await HandleMissing(grain, prerequisites)))
                     {
                         continue;
@@ -433,7 +435,8 @@ namespace CraftedSolutions.MarBasSchema.Transport
                             {
                                 Traits = [],
                                 Localized = new Dictionary<string, IGrainLocalizedLayer>(),
-                                MTime = DateTime.MinValue
+                                MTime = DateTime.MinValue,
+                                CTime = DateTime.MinValue
                             };
                             var stubResult = await _broker.ImportGrainsAsync([stubGrain], duplicatesHandling: DuplicatesHandlingStrategy.Ignore, cancellationToken: cancellationToken);
                             _processedGrains[id] = GrainImportProcessStatus.Intermediate;
@@ -572,7 +575,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
 
                 await Parallel.ForEachAsync(childGrains.GroupBy(x => (Guid)x.ParentId!), new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = cancellationToken }, async (parentGroup, token) =>
                 {
-                    await cacheDir.WriteEntry(parentGroup.OrderBy(x => x, new ChildWriteComparer()).Select(x => x.Id)
+                    await cacheDir.WriteEntry(parentGroup.OrderBy(x => x, _childWriteComparer).Select(x => x.Id)
                         , parentGroup.Key.MakeSerializedFileName(GrainTransportableExtension.GrainQualifier, extension: GrainChildrenNameSuffix), token);
 
                 });

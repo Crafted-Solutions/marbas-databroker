@@ -1,12 +1,19 @@
-﻿using System.Data.Common;
-using System.Globalization;
+﻿//#if DEBUG
+//#define DEBUG_UPSERT
+//#endif
+
 using CraftedSolutions.MarBasBrokerSQLCommon;
 using CraftedSolutions.MarBasCommon;
 using CraftedSolutions.MarBasSchema;
 using Microsoft.Data.Sqlite;
+using System.Data.Common;
+using System.Globalization;
+using System.Text;
 
 namespace CraftedSolutions.MarBasBrokerEngineSQLite
 {
+    using IConflictCollection = IEnumerable<(IEnumerable<string> Confilcts, IEnumerable<string>? Resolutions)>;
+
     public sealed class SQLiteParameterFactory : AbstractDbParameterFactory<SQLiteParameterFactory>
     {
         public override DbParameter Create(string name, Type type, object? value)
@@ -134,6 +141,73 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
                 result.Value = DBNull.Value;
             }
             return result;
+        }
+
+        public override string PrepareUpsertStatement<TFieldIFace, TAdapter>(string dataSource, IConflictCollection conflictUpdates,
+            DbParameterCollection parameters, TFieldIFace? valueProvider = null, IDictionary<string, (Type, object?)>? additionalValues = null)
+            where TFieldIFace : class
+        {
+            var (Colums, Parameters) = ExtractParametersFrom<TFieldIFace, TAdapter>(parameters, valueProvider, additionalValues);
+
+            var result = new StringBuilder($"INSERT INTO {dataSource} (");
+            result
+                .Append(string.Join(",", Colums))
+                .Append(") VALUES (@")
+                .Append(string.Join(",@", Parameters))
+                .Append(')');
+
+            StringBuilder AppendResolution(string name, bool needsComma = false)
+            {
+                if (needsComma)
+                {
+                    result.Append(", ");
+                }
+                return result
+                    .Append(name)
+                    .Append(" = excluded.")
+                    .Append(name);
+            }
+
+            var hasNullRes = false;
+            foreach (var (Confilcts, Resolutions) in conflictUpdates)
+            {
+                result
+                    .Append(" ON CONFLICT (")
+                    .Append(string.Join(",", Confilcts))
+                    .Append(") DO UPDATE SET ");
+                if (null == Resolutions)
+                {
+                    if (hasNullRes)
+                    {
+                        throw new ArgumentException($"{nameof(conflictUpdates)} can only have one item where {nameof(Resolutions)} is null");
+                    }
+                    var first = true;
+                    foreach (var col in Colums)
+                    {
+                        AppendResolution(col, !first);
+                        first = false;
+                    }
+                    hasNullRes = true;
+                }
+                else
+                {
+                    var first = true;
+                    foreach (var resolution in Resolutions)
+                    {
+                        if (string.IsNullOrEmpty(resolution))
+                        {
+                            throw new ArgumentException($"One of {nameof(conflictUpdates)}.{nameof(Resolutions)} is empty");
+                        }
+                        AppendResolution(resolution, !first);
+                        first = false;
+                    }
+                }
+            }
+#if DEBUG_UPSERT
+            Console.WriteLine(result.ToString());
+            Console.WriteLine($"[{string.Join(",", parameters.Cast<DbParameter>().Select(x => $"'{x.ParameterName}'={x.Value}"))}]");
+#endif
+            return result.ToString();
         }
     }
 }

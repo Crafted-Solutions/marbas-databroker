@@ -185,7 +185,7 @@ CREATE TRIGGER mb_tg_grain_typedef_delete
   BEFORE DELETE
   ON mb_grain_base
 BEGIN
-  DELETE FROM mb_grain_base WHERE (0x1000 & old.custom_flag) = 0 AND parent_id = old.id AND typedef_id = old.id;
+  DELETE FROM mb_grain_base WHERE (0x1000 & custom_flag) = 0 AND parent_id = old.id AND typedef_id = old.id;
 END;
 
 CREATE TABLE mb_grain_control (
