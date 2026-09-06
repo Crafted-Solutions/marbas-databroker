@@ -24,12 +24,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         {
         }
 
-        public GrainTraitsMap GetGrainTraits(IIdentifiable grain, CultureInfo? culture = null)
+        public GrainTraitsMap GetGrainTraits(IIdentifiable grain, CultureInfo? culture = null, bool scopedKeys = false)
         {
-            return GetGrainTraitsAsync(grain, culture).Result;
+            return GetGrainTraitsAsync(grain, culture, scopedKeys).Result;
         }
 
-        public async Task<GrainTraitsMap> GetGrainTraitsAsync(IIdentifiable grain, CultureInfo? culture = null, CancellationToken cancellationToken = default)
+        public async Task<GrainTraitsMap> GetGrainTraitsAsync(IIdentifiable grain, CultureInfo? culture = null, bool scopedKeys = false, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync([grain], GrainAccessFlag.Read, cancellationToken))
@@ -48,7 +48,14 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                     {
                         while (await rs.ReadAsync(cancellationToken))
                         {
-                            result.Set(ReadTrait(rs), rs.GetString(rs.GetOrdinal(MapGrainBaseColumn(nameof(IGrainBase.Name)))));
+                            var key = rs.GetString(rs.GetOrdinal(MapGrainBaseColumn(nameof(IGrainBase.Name))));
+                            if (scopedKeys && null != key)
+                            {
+                                var path = rs.GetString(rs.GetOrdinal("propdef_path"));
+                                path = path[..path.LastIndexOf('/')];
+                                key = $"{path[(path.LastIndexOf('/') + 1)..]}/{key}";
+                            }
+                            result.Set(ReadTrait(rs), key);
                         }
                     }
                 }
@@ -70,7 +77,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 using (cmd)
                 {
 
-                    cmd.CommandText = $"{TraitBaseConfig<TDialect>.SQLSelect}{GeneralEntityDefaults.FieldId}";
+                    cmd.CommandText = $"{TraitBaseConfig<TDialect>.SQLSelectExt}{GeneralEntityDefaults.FieldId}";
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, id));
                     if (await _accessService.VerifyRoleEntitlementAsync(RoleEntitlement.SkipPermissionCheck, cancellationToken: cancellationToken))
                     {
@@ -347,25 +354,35 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             }, cancellationToken);
         }
 
-        public IEnumerable<IGrainLocalized> LookupGrainsByTrait(ITraitRef traitRef, object? value = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null)
+        public IEnumerable<IGrainLocalized> LookupGrainsByTrait(ITraitRef traitRef, object? value = null, FieldCompareOperator compareOperator = FieldCompareOperator.Eq, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null)
         {
-            return LookupGrainsByTraitAsync(traitRef, value, sortOptions).Result;
+            return LookupGrainsByTraitAsync(traitRef, value, compareOperator, sortOptions).Result;
         }
 
-        public async Task<IEnumerable<IGrainLocalized>> LookupGrainsByTraitAsync(ITraitRef traitRef, object? value = null, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<IGrainLocalized>> LookupGrainsByTraitAsync(ITraitRef traitRef, object? value = null, FieldCompareOperator compareOperator = FieldCompareOperator.Eq, IEnumerable<IListSortOption<GrainSortField>>? sortOptions = null, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
+            var valType = (traitRef.PropDef as IValueTypeConstraint)?.ValueType ?? (traitRef as IValueTypeConstraint)?.ValueType ?? TraitValueType.Text;
+            if ((null == value || TraitValueType.Grain == valType || TraitValueType.File == valType)
+                && (FieldCompareOperator.Eq != compareOperator && FieldCompareOperator.NotEq != compareOperator))
+            {
+                throw new ArgumentException($"Comparison other than {Enum.GetName(FieldCompareOperator.Eq)} or {Enum.GetName(FieldCompareOperator.NotEq)} is illegal for null and guid values");
+            }
+            if ((TraitValueType.Text != valType && TraitValueType.Memo != valType)
+                && (compareOperator.HasFlag(FieldCompareOperator.Contains) || compareOperator.HasFlag(FieldCompareOperator.StartsWith) || compareOperator.HasFlag(FieldCompareOperator.EndsWith)))
+            {
+                throw new ArgumentException($"Illegal comparison {Enum.GetName(compareOperator)} for value of type {Enum.GetName(valType)}");
+            }
+
             return await ExecuteOnConnection<IEnumerable<IGrainLocalized>>([], async (cmd) =>
             {
                 using (cmd)
                 {
-                    var valType = (traitRef.PropDef as IValueTypeConstraint)?.ValueType ?? (traitRef as IValueTypeConstraint)?.ValueType ?? TraitValueType.Text;
-
                     cmd.CommandText = @$"{GrainLocalizedConfig<TDialect>.SQLSelectByAclLocalizedTrunk}
 JOIN ({TraitBaseConfig<TDialect>.SQLSelectMeta}) AS t
 ON t.{GeneralEntityDefaults.FieldGrainId} = g.{GeneralEntityDefaults.FieldId} AND t.{GeneralEntityDefaults.FieldRevision} = g.{GeneralEntityDefaults.FieldRevision}
 WHERE t.{MapTraitColumn(nameof(ITrait.PropDefId))} = @{TraitBaseDefaults.ParamPropDefId} AND t.{GeneralEntityDefaults.FieldRevision} = @{GeneralEntityDefaults.ParamRevision} AND t.{TraitBaseDataAdapter.GetValueColumn(valType)}";
-                    cmd.CommandText += null == value ? " IS NULL" : $" = @{TraitBaseDefaults.ParamValue}";
+                    cmd.CommandText += _profile.ParameterFactory.PrepareTraitComparison(cmd.Parameters, valType, value, compareOperator, TraitBaseDefaults.ParamValue);
 
                     var orderBy = PrepareListOrderByClause<GrainSortField, GrainLocalizedDataAdapter>(sortOptions, "g");
                     if (string.IsNullOrEmpty(orderBy))
@@ -379,10 +396,6 @@ WHERE t.{MapTraitColumn(nameof(ITrait.PropDefId))} = @{TraitBaseDefaults.ParamPr
 
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(TraitBaseDefaults.ParamPropDefId, traitRef.PropDefId));
                     cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamRevision, traitRef.Revision));
-                    if (null != value)
-                    {
-                        cmd.Parameters.Add(_profile.ParameterFactory.PrepareTraitValueParameter(TraitBaseDefaults.ParamValue, valType, value));
-                    }
 
                     if (_logger.IsEnabled(LogLevel.Trace))
                     {

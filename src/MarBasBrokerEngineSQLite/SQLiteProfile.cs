@@ -13,7 +13,7 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
     public class SQLiteProfile(IConfiguration configuration, IHostEnvironment environment, ILogger<SQLiteProfile> logger)
         : SQLBrokerProfile<SqliteConnection, SqliteConnectionStringBuilder>(configuration, logger), ISchemaLock, IAsyncSchemaLock
     {
-        public static readonly Version SchemaVersion = new(0, 1, 19);
+        public static readonly Version SchemaVersion = new(0, 1, 20);
 
         protected readonly IHostEnvironment _environment = environment;
         protected readonly AsyncReaderWriterLock _lock = new();

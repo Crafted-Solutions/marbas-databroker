@@ -1,9 +1,13 @@
-﻿namespace CraftedSolutions.MarBasCommon.DependencyInjection
+﻿using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("MarBasCommon.Tests")]
+namespace CraftedSolutions.MarBasCommon.DependencyInjection
 {
-    public class InitializerService : IInitializerService
+    public class InitializerService : IInitializerService, IDisposable
     {
         protected readonly ISet<Type> _initServices;
         protected readonly SemaphoreSlim _semaphore = new(1, 1);
+        private bool _disposed;
 
         public InitializerService()
         {
@@ -38,7 +42,7 @@
                 foreach (var type in _initServices)
                 {
                     var service = serviceProvider.GetService(type);
-                    if (service is IAsyncInitService asyncInit)
+                    if (!cancellationToken.IsCancellationRequested && service is IAsyncInitService asyncInit)
                     {
                         await asyncInit.InitServiceAsync(cancellationToken);
                     }
@@ -51,5 +55,17 @@
                 _semaphore.Release();
             }
         }
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _semaphore.Dispose();
+                _disposed = true;
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        internal ISet<Type> InitServices => _initServices;
     }
 }

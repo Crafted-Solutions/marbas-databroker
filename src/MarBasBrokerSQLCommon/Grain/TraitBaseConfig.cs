@@ -1,5 +1,4 @@
-﻿using CraftedSolutions.MarBasBrokerSQLCommon;
-using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.Access;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
@@ -8,7 +7,10 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
     {
         protected TraitBaseConfig() { }
 
-        public const string SQLSelect = $"SELECT * FROM {TraitBaseDefaults.DataSourceExt} WHERE ";
+        protected static string MakeSQLSelect(bool extended = false) => $"SELECT * FROM {(extended ? TraitBaseDefaults.DataSourceExt : TraitBaseDefaults.DataSource)} WHERE ";
+
+        public static readonly string SQLSelect = MakeSQLSelect();
+        public static readonly string SQLSelectExt = MakeSQLSelect(true);
         public static readonly string SQLSelectMeta =
 $@"SELECT * FROM (
     SELECT *,

@@ -11,5 +11,13 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         -->
-    </PropertyGroup>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<RunSettingsFilePath>$(MSBuildThisFileDirectory)Common.runsettings</RunSettingsFilePath>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<CollectCoverage>true</CollectCoverage>
+		<CoverletOutput>$(MSBuildThisFileDirectory)TestResults/$(MSBuildProjectName)/</CoverletOutput>
+		<CoverletOutputFormat>cobertura</CoverletOutputFormat>
+	</PropertyGroup>
 </Project>

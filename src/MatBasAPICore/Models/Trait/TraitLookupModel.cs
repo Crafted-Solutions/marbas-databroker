@@ -45,6 +45,8 @@ namespace CraftedSolutions.MarBasAPICore.Models.Trait
         [IgnoreDataMember]
         public TraitRef Ref => _ref;
 
+        public FieldCompareOperator? CompareOperator { get; set; } = FieldCompareOperator.Eq;
+
         public class TraitRef : ITraitRef
         {
             private IIdentifiable _grain = new Identifiable();

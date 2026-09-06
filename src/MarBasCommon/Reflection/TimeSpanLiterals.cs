@@ -1,39 +1,25 @@
-﻿namespace CraftedSolutions.MarBasCommon.Reflection
+﻿using System.Numerics;
+
+namespace CraftedSolutions.MarBasCommon.Reflection
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Extension methods should resemble unit literals")]
     public static class TimeSpanLiterals
     {
-        public static TimeSpan h(this double val)
+        public static TimeSpan h<T>(this T val) where T: INumber<T>
         {
-            return TimeSpan.FromHours(val);
+            return val is int intVal ? TimeSpan.FromHours(intVal) : TimeSpan.FromHours((double)(object)val);
         }
-        public static TimeSpan h(this int val)
+        public static TimeSpan min<T>(this T val) where T: INumber<T>
         {
-            return TimeSpan.FromHours(val);
+            return val is int intVal ? TimeSpan.FromMinutes(intVal) : TimeSpan.FromMinutes((double)(object)val);
         }
-        public static TimeSpan min(this double val)
+        public static TimeSpan sec<T>(this T val) where T: INumber<T>
         {
-            return TimeSpan.FromMinutes(val);
+            return val is int intVal ? TimeSpan.FromSeconds(intVal) : TimeSpan.FromSeconds((double)(object)val);
         }
-        public static TimeSpan min(this int val)
+        public static TimeSpan ms<T>(this T val) where T : INumber<T>
         {
-            return TimeSpan.FromMinutes(val);
-        }
-        public static TimeSpan sec(this double val)
-        {
-            return TimeSpan.FromSeconds(val);
-        }
-        public static TimeSpan sec(this int val)
-        {
-            return TimeSpan.FromSeconds(val);
-        }
-        public static TimeSpan ms(this double val)
-        {
-            return TimeSpan.FromMilliseconds(val);
-        }
-        public static TimeSpan ms(this int val)
-        {
-            return TimeSpan.FromMilliseconds(val);
+            return val is int intVal ? TimeSpan.FromMilliseconds(intVal) : TimeSpan.FromMilliseconds((double)(object)val);
         }
     }
 }

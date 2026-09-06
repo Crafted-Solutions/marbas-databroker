@@ -34,6 +34,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHub", "GitHub", "{8D85AE
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MarBasDoc", "doc\MarBasDoc.shproj", "{D6A3D5B4-17A9-46FC-BD3E-76EC036248E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarBasCommon.Tests", "test\MarBasCommon.Tests\MarBasCommon.Tests.csproj", "{1E4D7D8B-09D1-4478-8BCB-0F918C579CA7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,6 +66,10 @@ Global
 		{3921840C-BCBD-44E3-8DE8-C606FB1C8A9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3921840C-BCBD-44E3-8DE8-C606FB1C8A9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3921840C-BCBD-44E3-8DE8-C606FB1C8A9E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E4D7D8B-09D1-4478-8BCB-0F918C579CA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E4D7D8B-09D1-4478-8BCB-0F918C579CA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E4D7D8B-09D1-4478-8BCB-0F918C579CA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E4D7D8B-09D1-4478-8BCB-0F918C579CA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

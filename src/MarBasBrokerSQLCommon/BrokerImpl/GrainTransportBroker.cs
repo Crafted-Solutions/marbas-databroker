@@ -501,7 +501,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         for (var i = 0; i < langList.Count; i++)
                         {
                             var grainLoc = grain.Localized[langList[i]];
-                            _ = ImportGrainLanguageAndLabelInTA(ta, grain.Id, langList[i], langChecks[i], grainLoc.Label, cancellationToken);
+                            _ = await ImportGrainLanguageAndLabelInTA(ta, grain.Id, langList[i], langChecks[i], grainLoc.Label, cancellationToken);
 
                             if (true == grainLoc.Traits?.Any())
                             {
@@ -704,7 +704,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             {
                 using (var cmd = ta.Connection!.CreateCommand())
                 {
-                    cmd.CommandText = $"{GrainBaseConfig.SQLInsert}{PrepareObjectInserParameters<IGrain, GrainExtendedDataAdapter>(cmd.Parameters, sourceGrain)}";
+                    cmd.CommandText = $"{GrainBaseConfig.SQLInsert}{_profile.ParameterFactory.PrepareObjectInserParameters<IGrain, GrainExtendedDataAdapter>(cmd.Parameters, sourceGrain)}";
                     result = await cmd.ExecuteNonQueryAsync(cancellationToken);
                 }
             }
@@ -738,19 +738,14 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 
                 trait.Grain = (Identifiable)grainId;
                 trait.Culture = lang;
-                var insertValsClause = PrepareObjectInserParameters<ITrait, TraitBaseDataAdapter>(cmd.Parameters, trait,
-                    new Dictionary<string, (Type, object?)>() { { valCol, (TraitValueFactory.GetValueNativeType(trait.ValueType), trait.Value) } });
 
-                cmd.CommandText = @$"{TraitBaseConfig<TDialect>.SQLInsert} {insertValsClause}
-ON CONFLICT({GeneralEntityDefaults.FieldId})
-DO UPDATE SET {GeneralEntityDefaults.FieldLangCode} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(GeneralEntityDefaults.FieldLangCode)},
-{GeneralEntityDefaults.FieldRevision} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(GeneralEntityDefaults.FieldRevision)},
-{TraitBaseDefaults.FieldOrd} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(TraitBaseDefaults.FieldOrd)}, {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
-ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {TraitBaseDefaults.FieldPropDefId}, {GeneralEntityDefaults.FieldLangCode}, {GeneralEntityDefaults.FieldRevision}, {TraitBaseDefaults.FieldOrd})
-DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}";
-
+                cmd.CommandText = _profile.ParameterFactory.PrepareUpsertStatement<ITrait, TraitBaseDataAdapter>(TraitBaseDefaults.DataSource,
+                    [
+                    ([GeneralEntityDefaults.FieldId], [GeneralEntityDefaults.FieldLangCode, GeneralEntityDefaults.FieldRevision, TraitBaseDefaults.FieldOrd, valCol]),
+                    ([GeneralEntityDefaults.FieldGrainId, TraitBaseDefaults.FieldPropDefId, GeneralEntityDefaults.FieldLangCode, GeneralEntityDefaults.FieldRevision, TraitBaseDefaults.FieldOrd], [valCol])
+                    ],
+                    cmd.Parameters, trait, new Dictionary<string, (Type, object?)>() { { valCol, (TraitValueFactory.GetValueNativeType(trait.ValueType), trait.Value) } });
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
-
             }
             return result;
         }
@@ -761,31 +756,22 @@ DO UPDATE SET {valCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valCol)}
             {
                 return 0;
             }
-            static string UpdateField(string propName)
-            {
-                var col = AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(propName);
-                return $"{col} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(col)}";
-            }
 
             var result = 0;
             using (var cmd = ta.Connection!.CreateCommand())
             {
-                cmd.CommandText = $"{AclConfig<TDialect>.SQLInsertAcl}";
+                var colRole = AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(nameof(IAclEntry.RoleId));
+                var colPermMask = AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(nameof(IAclEntry.PermissionMask));
+                var colRestrMask = AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(nameof(IAclEntry.RestrictionMask));
+                var colInherit = AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(nameof(IAclEntry.Inherit));
 
-                var first = true;
                 foreach (var aclentry in grain.Acl)
                 {
                     cmd.Parameters.Clear();
                     aclentry.Grain = grain;
-                    var insertValsClause = PrepareObjectInserParameters<IAclEntry, AclDataAdapter>(cmd.Parameters, aclentry);
-                    if (first)
-                    {
-                        cmd.CommandText += @$"{insertValsClause}
-ON CONFLICT({GeneralEntityDefaults.FieldGrainId}, {AbstractDataAdapter.GetAdapterColumnName<AclDataAdapter>(nameof(IAclEntry.RoleId))})
-DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(nameof(IAclEntry.RestrictionMask))}, {UpdateField(nameof(IAclEntry.Inherit))}";
 
-                        first = false;
-                    }
+                    cmd.CommandText = _profile.ParameterFactory.PrepareUpsertStatement<IAclEntry, AclDataAdapter>(AclDefaults.DataSourceAcl,
+                        [([GeneralEntityDefaults.FieldGrainId, colRole], [colPermMask, colRestrMask, colInherit])], cmd.Parameters, aclentry);
                     result += await cmd.ExecuteNonQueryAsync(cancellationToken);
                 }
             }
@@ -854,8 +840,9 @@ DO UPDATE SET {UpdateField(nameof(IAclEntry.PermissionMask))}, {UpdateField(name
             {
                 var baseFields = new Dictionary<string, (Type, object?)> { { GeneralEntityDefaults.FieldBaseId, (typeof(Guid), grainId) } };
                 var implCol = MapTypeDefColumn(nameof(ITypeDef.Impl));
-                cmd.CommandText = @$"{GrainTypeDefConfig<TDialect>.SQLInsertTypeDef}{PrepareObjectInserParameters<ITypeDef, GrainTypeDefDataAdapter>(cmd.Parameters, typeDef, baseFields)}
-ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET {implCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(implCol)}";
+                cmd.CommandText = _profile.ParameterFactory.PrepareUpsertStatement<ITypeDef, GrainTypeDefDataAdapter>(GrainTypeDefDefaults.DataSourceTypeDef,
+                    [([GeneralEntityDefaults.FieldBaseId], [implCol])], cmd.Parameters, typeDef, baseFields);
+
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
                 if (1 > result)
                 {
@@ -912,37 +899,24 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET {implCol} = {Eng
                     { GeneralEntityDefaults.FieldBaseId, (typeof(Guid), grainId) },
                     { valueTypeCol, (typeof(string), TraitValueFactory.GetValueTypeAsString(propDef.ValueType)) }
                 };
-                cmd.CommandText = @$"{GrainPropDefConfig<TDialect>.SQLInsertPropDef}{PrepareObjectInserParameters<IPropDef, GrainPropDefDataAdapter>(cmd.Parameters, propDef, baseFields)}
-ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
+                cmd.CommandText = _profile.ParameterFactory.PrepareUpsertStatement<IPropDef, GrainPropDefDataAdapter>(GrainPropDefDefaults.DataSourcePropDef,
+                    [([GeneralEntityDefaults.FieldBaseId], null)], cmd.Parameters, propDef, baseFields);
 
-                var props = typeof(IPropDef).GetAllProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
-                    .Where(x => true != ((ReadOnlyAttribute?)Attribute.GetCustomAttribute(x, typeof(ReadOnlyAttribute)))?.IsReadOnly);
-                var first = true;
-                foreach (var prop in props)
-                {
-                    if (!first)
-                    {
-                        cmd.CommandText += ", ";
-                    }
-                    var col = MapPropDefColumn(prop.Name);
-                    cmd.CommandText += $"{col} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(col)}";
-                    first = false;
-                }
-
-                var valTypeParam = _profile.ParameterFactory.Create($"param{nameof(IValueTypeConstraint.ValueType)}", TraitValueFactory.GetValueTypeAsString(propDef.ValueType));
-                if (cmd.Parameters.Contains(valTypeParam.ParameterName))
-                {
-                    cmd.Parameters.RemoveAt(valTypeParam.ParameterName);
-                }
-                else
-                {
-                    if (!first)
-                    {
-                        cmd.CommandText += ", ";
-                    }
-                    cmd.CommandText += $"{valueTypeCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valueTypeCol)}";
-                }
-                cmd.Parameters.Add(valTypeParam);
+                // TODO why this valueType juggling?
+                //var valTypeParam = _profile.ParameterFactory.Create($"param{nameof(IValueTypeConstraint.ValueType)}", TraitValueFactory.GetValueTypeAsString(propDef.ValueType));
+                //if (cmd.Parameters.Contains(valTypeParam.ParameterName))
+                //{
+                //    cmd.Parameters.RemoveAt(valTypeParam.ParameterName);
+                //}
+                //else
+                //{
+                //    if (!first)
+                //    {
+                //        cmd.CommandText += ", ";
+                //    }
+                //    cmd.CommandText += $"{valueTypeCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(valueTypeCol)}";
+                //}
+                //cmd.Parameters.Add(valTypeParam);
 
                 result = await cmd.ExecuteNonQueryAsync(cancellationToken);
                 if (1 > result)
@@ -1187,7 +1161,7 @@ ON CONFLICT ({GeneralEntityDefaults.FieldBaseId}) DO UPDATE SET ";
             var result = new Dictionary<string, IEnumerable<ITraitTransportable>>();
             return await ExecuteOnConnection(result, async (cmd) =>
             {
-                cmd.CommandText = @$"{TraitBaseConfig<TDialect>.SQLSelect}{GeneralEntityDefaults.FieldGrainId} = @{GeneralEntityDefaults.ParamGrainId}
+                cmd.CommandText = @$"{TraitBaseConfig<TDialect>.SQLSelectExt}{GeneralEntityDefaults.FieldGrainId} = @{GeneralEntityDefaults.ParamGrainId}
 ORDER BY {GeneralEntityDefaults.FieldLangCode}, {MapTraitColumn(nameof(ITraitBase.Revision))}, {MapTraitColumn(nameof(ITraitBase.PropDefId))}, {MapTraitColumn(nameof(ITraitBase.Ord))}";
 
                 cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamGrainId, grain.Id));

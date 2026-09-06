@@ -181,6 +181,13 @@ BEGIN
   WHERE rowid = new.rowid AND name <> '__defaults__';
 END;
 
+CREATE TRIGGER mb_tg_grain_typedef_delete
+  BEFORE DELETE
+  ON mb_grain_base
+BEGIN
+  DELETE FROM mb_grain_base WHERE (0x1000 & custom_flag) = 0 AND parent_id = old.id AND typedef_id = old.id;
+END;
+
 CREATE TABLE mb_grain_control (
   grain_id  guid NOT NULL PRIMARY KEY,
   flag      integer,
@@ -701,18 +708,6 @@ LEFT JOIN mb_grain_base b
 LEFT JOIN mb_typedef AS t
     ON t.base_id = a.typedef_id;
 
-CREATE VIEW mb_grain_trait_with_meta
-AS
-SELECT p.*, a.path, b.name,
-    d.value_type, d.cardinality_min, d.cardinality_max, d.value_constraint, d.localizable, d.versionable
-    FROM mb_grain_trait AS p
-LEFT JOIN mb_grain_with_path AS a
-    ON a.id = p.grain_id
-LEFT JOIN mb_grain_base AS b
-    ON b.id = p.propdef_id
-LEFT JOIN mb_propdef AS d
-    ON d.base_id = p.propdef_id;
-
 CREATE VIEW mb_uuid
 AS
 SELECT lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))) AS result;
@@ -784,3 +779,11 @@ LEFT JOIN mb_grain_with_path AS g
 ON g.id = p.base_id
 LEFT JOIN mb_grain_base AS b
 ON b.id = g.parent_id;
+
+CREATE VIEW mb_grain_trait_with_meta
+AS
+SELECT p.*, d.name, d.path AS propdef_path,
+    d.value_type, d.cardinality_min, d.cardinality_max, d.value_constraint, d.localizable, d.versionable
+    FROM mb_grain_trait AS p
+LEFT JOIN mb_propdef_as_grain_with_path AS d
+    ON d.base_id = p.propdef_id;

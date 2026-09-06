@@ -677,15 +677,22 @@ WHERE g.{GeneralEntityDefaults.FieldId} {grainIdClause}";
             {
                 if (string.IsNullOrEmpty(label))
                 {
+                    cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, grainId));
+                    cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamLangCode, lang));
                     cmd.CommandText = $"{GrainLocalizedConfig<TDialect>.SQLDeleteLabel}{GeneralEntityDefaults.FieldGrainId} = @{GeneralEntityDefaults.ParamId} AND {AbstractDataAdapter.GetAdapterColumnName<GrainLocalizedDataAdapter>(nameof(IGrainLocalized.CultureInfo))} = @{GeneralEntityDefaults.ParamLangCode}";
                 }
                 else
                 {
-                    cmd.CommandText = GrainLocalizedConfig<TDialect>.SQLUpdateLabel;
-                    cmd.Parameters.Add(_profile.ParameterFactory.Create(GrainLocalizedDefaults.ParamLabel, label));
+                    var values = new Dictionary<string, (Type, object?)>()
+                    {
+                        { GrainLocalizedDefaults.FieldLabel, (typeof(string), label) },
+                        { GeneralEntityDefaults.FieldGrainId, (typeof(Guid), grainId) },
+                        { GeneralEntityDefaults.FieldLangCode, (typeof(string), lang) }
+                    };
+                    cmd.CommandText = _profile.ParameterFactory.PrepareUpsertStatement<ILabeled, GrainLocalizedDataAdapter>(GrainLocalizedDefaults.DataSourceLabel,
+                        [([GeneralEntityDefaults.FieldGrainId, GeneralEntityDefaults.FieldLangCode], [GrainLocalizedDefaults.FieldLabel])],
+                        cmd.Parameters, additionalValues: values);
                 }
-                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamId, grainId));
-                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamLangCode, lang));
 
                 return await cmd.ExecuteNonQueryAsync(cancellationToken);
             }
@@ -703,21 +710,11 @@ WHERE g.{GeneralEntityDefaults.FieldId} {grainIdClause}";
 
         protected async Task ExecuteWithoutTimestampTriggers(DbTransaction ta, Guid? grainId, Func<Task> func, CancellationToken cancellationToken)
         {
-            try
+            if (null != grainId)
             {
-                if (null != grainId)
-                {
-                    _ = await DisableGrainTimestampTriggers(ta, (Guid)grainId, cancellationToken);
-                }
-                await func();
+                _ = await DisableGrainTimestampTriggers(ta, (Guid)grainId, cancellationToken);
             }
-            finally
-            {
-                if (null != grainId)
-                {
-                    _ = await EnableGrainTimestampTriggers(ta, (Guid)grainId, cancellationToken);
-                }
-            }
+            await func();
         }
 
         protected async Task<int> DisableGrainTimestampTriggers(DbTransaction ta, Guid grainId, CancellationToken cancellationToken)
@@ -725,11 +722,8 @@ WHERE g.{GeneralEntityDefaults.FieldId} {grainIdClause}";
             using (var cmd = ta.Connection!.CreateCommand())
             {
                 const string flagCol = "flag";
-
-                cmd.CommandText = @$"INSERT INTO mb_grain_control ({GeneralEntityDefaults.FieldGrainId}, {flagCol}) VALUES (@{GeneralEntityDefaults.ParamGrainId}, @{flagCol})
-ON CONFLICT ({GeneralEntityDefaults.FieldGrainId}) DO UPDATE SET {flagCol} = {EngineSpec<TDialect>.Dialect.ConflictExcluded(flagCol)}";
-                cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamGrainId, grainId));
-                cmd.Parameters.Add(_profile.ParameterFactory.Create(flagCol, 0x1));
+                cmd.CommandText = _profile.ParameterFactory.PrepareUpsertStatement<IGrainBinding, AbstractDataAdapter>("mb_grain_control", [([GeneralEntityDefaults.FieldGrainId], [flagCol])],
+                    cmd.Parameters, additionalValues: new Dictionary<string, (Type, object?)>(){ { GeneralEntityDefaults.FieldGrainId, (grainId.GetType(), grainId) }, { flagCol, (typeof(Int32), 0x1) } });
                 return await cmd.ExecuteNonQueryAsync(cancellationToken);
             }
         }
