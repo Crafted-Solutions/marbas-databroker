@@ -128,6 +128,10 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
             public IPrincipal User => SchemaDefaults.AnonymousUser;
 
             public IEnumerable<string> UserRoles => ((ClaimsPrincipal)User).FindAll(ClaimTypes.Role).Select(x => x.Value);
+
+            public void CopyFrom(IBrokerContext other)
+            {
+            }
         }
     }
 }
