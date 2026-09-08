@@ -8,7 +8,7 @@ namespace CraftedSolutions.MarBasAPICore.Http
 {
     public sealed class HttpBrokerContext(IHttpContextAccessor httpContextAccessor) : IBrokerContext
     {
-        private readonly IPrincipal _user = httpContextAccessor?.HttpContext?.User ?? SchemaDefaults.AnonymousUser;
+        private IPrincipal _user = httpContextAccessor?.HttpContext?.User ?? SchemaDefaults.AnonymousUser;
 
         public IPrincipal User => _user;
 
@@ -20,8 +20,13 @@ namespace CraftedSolutions.MarBasAPICore.Http
                 {
                     return claims.FindAll(ClaimTypes.Role).Select(x => x.Value);
                 }
-                return System.Collections.Immutable.ImmutableList<string>.Empty;
+                return [];
             }
+        }
+
+        public void CopyFrom(IBrokerContext other)
+        {
+            _user = other.User;
         }
     }
 }

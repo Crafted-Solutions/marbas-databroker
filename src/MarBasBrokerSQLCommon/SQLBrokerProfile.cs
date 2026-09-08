@@ -43,7 +43,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
             {
                 _logger.LogWarning("Missing configuration, using defaults");
             }
-            _rolesCache = new List<ISchemaRole>();
+            _rolesCache = [];
             SchemaModified += OnSchemaModfied;
         }
 

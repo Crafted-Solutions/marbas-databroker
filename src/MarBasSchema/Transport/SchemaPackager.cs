@@ -6,6 +6,7 @@ using CraftedSolutions.MarBasCommon;
 using CraftedSolutions.MarBasCommon.Job;
 using CraftedSolutions.MarBasSchema.Broker;
 using CraftedSolutions.MarBasSchema.Grain;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.IO.Compression;
@@ -111,7 +112,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
         }
     }
 
-    public class SchemaPackager(IAsyncSchemaBroker broker, IBackgroundWorkQueue taskQueue, IBackgroundJobManager jobManager, JsonSerializerOptions serializerOptions, ILogger<SchemaPackager> logger)
+    public class SchemaPackager(IServiceProvider services, JsonSerializerOptions serializerOptions, ILogger<SchemaPackager> logger)
         : ISchemaPackager, IAsyncSchemaPackager
     {
         public const string ManifestName = "manifest.json";
@@ -119,9 +120,8 @@ namespace CraftedSolutions.MarBasSchema.Transport
         public const string GrainChildrenNameSuffix = $"{GrainTransportableExtension.FileNameFieldSeparator}c.json";
 
         #region Variables
-        private readonly IAsyncSchemaBroker _broker = broker;
-        private readonly IBackgroundWorkQueue _taskQueue = taskQueue;
-        private readonly IBackgroundJobManager _jobManager = jobManager;
+        private readonly IServiceProvider _services = services;
+        private readonly IAsyncSchemaBroker _broker = services.GetRequiredService<IAsyncSchemaBroker>();
 #if DEBUG
         private readonly JsonSerializerOptions _serializerOptions = new (serializerOptions) { WriteIndented = true };
 #else
@@ -254,10 +254,11 @@ namespace CraftedSolutions.MarBasSchema.Transport
 
         public async Task<IBackgroundJob> SchedulePackageImportAsync(Stream packageStream, DuplicatesHandlingStrategy duplicatesHandling = DuplicatesHandlingStrategy.MergeSkipNewer, MissingDependencyHandlingStrategy missingDependencyHandling = MissingDependencyHandlingStrategy.CreatePlaceholder, CancellationToken cancellationToken = default)
         {
-            var job = _jobManager.EmplaceJob("PackageImport");
-            var tempDir = new TempDirectory($"marbas-import-{job.Id}-", _serializerOptions);
-            job.RegisterForDispose(tempDir);
-            job.Stage = "Caching";
+            var jobManager = _services.GetRequiredService<IBackgroundJobManager>();
+            var result = jobManager.EmplaceJob("PackageImport");
+            var tempDir = new TempDirectory($"marbas-import-{result.Id}-", _serializerOptions);
+            result.RegisterForDispose(tempDir);
+            result.Stage = "Caching";
             try
             {
                 using (var zip = new ZipArchive(packageStream))
@@ -271,31 +272,36 @@ namespace CraftedSolutions.MarBasSchema.Transport
             }
             catch
             {
-                _jobManager.RemoveJob(job.Id, true);
+                jobManager.RemoveJob(result.Id, true);
                 throw;
             }
-            await _taskQueue.QueueWorkItemAsync(async (token) =>
+
+            var taskQueue = _services.GetRequiredService<IBackgroundWorkQueue>();
+            await taskQueue.QueueWorkItemAsync(async (token) =>
             {
                 using (tempDir)
                 {
-                    var jobCtx = new BackgroundJob.Context(job, token);
+                    var jobCtx = new BackgroundJob.Context(result, token);
 
                     try
                     {
                         jobCtx.Status = BackgroundJobStatus.Running;
                         if (_logger.IsEnabled(LogLevel.Debug))
                         {
-                            _logger.LogDebug("Starting {name} job ({id})", job.Name, job.Id);
+                            _logger.LogDebug("Starting {name} job ({id})", result.Name, result.Id);
                         }
 
-                        var processor = new ImportCacheProcessor(_broker, tempDir, duplicatesHandling, missingDependencyHandling);
+                        using var scope = _services.CreateScope();
+                        scope.ServiceProvider.GetRequiredService<IBrokerContext>().CopyFrom(_services.GetRequiredService<IBrokerContext>());
+
+                        var processor = new ImportCacheProcessor(scope.ServiceProvider.GetRequiredService<IAsyncSchemaBroker>(), tempDir, duplicatesHandling, missingDependencyHandling);
                         jobCtx.Result = await processor.Invoke(jobCtx);
                         jobCtx.Status = BackgroundJobStatus.Complete;
                         jobCtx.Stage = "Ready";
 
                         if (_logger.IsEnabled(LogLevel.Debug))
                         {
-                            _logger.LogDebug("{name} job ({id}) is complete", job.Name, job.Id);
+                            _logger.LogDebug("{name} job ({id}) is complete", result.Name, result.Id);
                         }
                     }
                     catch (OperationCanceledException)
@@ -306,7 +312,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
                     {
                         if (_logger.IsEnabled(LogLevel.Error))
                         {
-                            _logger.LogError(e, "Error processing {name} job ({id})", job.Name, job.Id);
+                            _logger.LogError(e, "Error processing {name} job ({id})", result.Name, result.Id);
                         }
                         jobCtx.Status = BackgroundJobStatus.Error;
                         jobCtx.Result = e.Message;
@@ -315,7 +321,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
 
             });
 
-            return job;
+            return result;
         }
         #endregion
 
