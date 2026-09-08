@@ -6,5 +6,6 @@ namespace CraftedSolutions.MarBasSchema.Broker
     {
         IPrincipal User { get; }
         IEnumerable<string> UserRoles { get; }
+        public void CopyFrom(IBrokerContext other);
     }
 }
