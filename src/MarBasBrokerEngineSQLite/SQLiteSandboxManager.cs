@@ -26,6 +26,7 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
         private readonly SemaphoreSlim _semaphore = new(1, 1);
 
         private DateTime _lastTrimTS;
+        private bool _templateAcquired = false;
 
         private bool _disposed;
 
@@ -102,6 +103,10 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
             {
                 return await Task.Run(() =>
                 {
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation("Starting sandbox maintenance (last run at {_lastTrimTS})", _lastTrimTS);
+                    }
                     SqliteConnection.ClearAllPools();
                     var remaining = new Dictionary<string, DateTime>();
                     foreach (var path in Directory.EnumerateFiles(_sandboxDirectory, "*.sqlite", new EnumerationOptions() { IgnoreInaccessible = true }))
@@ -174,6 +179,10 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
 
         public bool IsAvailable(string sandboxName)
         {
+            if (sandboxName == _templateProfile)
+            {
+                return _templateAcquired && !string.IsNullOrEmpty(_sandboxTemplate) && File.Exists(_sandboxTemplate);
+            }
             return _sandboxes.TryGetValue(string.Format(_sanboxFilenamePattern, sandboxName), out var ct) && DateTime.Now - ct < _sandboxMaxAge;
         }
 
@@ -194,6 +203,7 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
                 var templateExists = !string.IsNullOrEmpty(_sandboxTemplate) && File.Exists(_sandboxTemplate);
                 if (templateExists && sandboxName == _templateProfile)
                 {
+                    _templateAcquired = true;
                     return Task.FromResult(_sandboxTemplate!);
                 }
 

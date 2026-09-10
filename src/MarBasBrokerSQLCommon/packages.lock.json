@@ -122,7 +122,7 @@
       "CraftedSolutions.MarBasSchema": {
         "type": "Project",
         "dependencies": {
-          "CraftedSolutions.MarBasCommon": "[0.1.24, )",
+          "CraftedSolutions.MarBasCommon": "[0.1.24.2, )",
           "Microsoft.Extensions.Configuration.Abstractions": "[10.0.10, )",
           "Microsoft.Extensions.Configuration.Binder": "[10.0.10, )",
           "Microsoft.Extensions.DependencyModel": "[10.0.10, )",
