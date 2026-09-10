@@ -255,9 +255,15 @@ namespace CraftedSolutions.MarBasSchema.Transport
         public async Task<IBackgroundJob> SchedulePackageImportAsync(Stream packageStream, DuplicatesHandlingStrategy duplicatesHandling = DuplicatesHandlingStrategy.MergeSkipNewer, MissingDependencyHandlingStrategy missingDependencyHandling = MissingDependencyHandlingStrategy.CreatePlaceholder, CancellationToken cancellationToken = default)
         {
             var jobManager = _services.GetRequiredService<IBackgroundJobManager>();
+
             var result = jobManager.EmplaceJob("PackageImport");
+
             var tempDir = new TempDirectory($"marbas-import-{result.Id}-", _serializerOptions);
+            var scope = _services.CreateScope();
+            scope.ServiceProvider.GetRequiredService<IBrokerContext>().CopyFrom(_services.GetRequiredService<IBrokerContext>());
+
             result.RegisterForDispose(tempDir);
+            result.RegisterForDispose(scope);
             result.Stage = "Caching";
             try
             {
@@ -280,6 +286,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
             await taskQueue.QueueWorkItemAsync(async (token) =>
             {
                 using (tempDir)
+                using (scope)
                 {
                     var jobCtx = new BackgroundJob.Context(result, token);
 
@@ -290,9 +297,6 @@ namespace CraftedSolutions.MarBasSchema.Transport
                         {
                             _logger.LogDebug("Starting {name} job ({id})", result.Name, result.Id);
                         }
-
-                        using var scope = _services.CreateScope();
-                        scope.ServiceProvider.GetRequiredService<IBrokerContext>().CopyFrom(_services.GetRequiredService<IBrokerContext>());
 
                         var processor = new ImportCacheProcessor(scope.ServiceProvider.GetRequiredService<IAsyncSchemaBroker>(), tempDir, duplicatesHandling, missingDependencyHandling);
                         jobCtx.Result = await processor.Invoke(jobCtx);
