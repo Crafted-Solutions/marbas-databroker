@@ -710,11 +710,24 @@ WHERE g.{GeneralEntityDefaults.FieldId} {grainIdClause}";
 
         protected async Task ExecuteWithoutTimestampTriggers(DbTransaction ta, Guid? grainId, Func<Task> func, CancellationToken cancellationToken)
         {
-            if (null != grainId)
+            var completed = false;
+            try
             {
-                _ = await DisableGrainTimestampTriggers(ta, (Guid)grainId, cancellationToken);
+                if (null != grainId)
+                {
+                    _ = await DisableGrainTimestampTriggers(ta, (Guid)grainId, cancellationToken);
+                }
+                await func();
+                // if an exception is thrown above the transaction is rolled back
+                completed = true;
             }
-            await func();
+            finally
+            {
+                if (completed && null != grainId)
+                {
+                    _ = await EnableGrainTimestampTriggers(ta, (Guid)grainId, cancellationToken);
+                }
+            }
         }
 
         protected async Task<int> DisableGrainTimestampTriggers(DbTransaction ta, Guid grainId, CancellationToken cancellationToken)
