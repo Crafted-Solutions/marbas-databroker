@@ -35,7 +35,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 using (cmd)
                 {
                     cmd.CommandText = $"{SystemLanguageConfig<TDialect>.SQLSelectLang}{AbstractDataAdapter.GetAdapterColumnName<SystemLanguageDataAdapter>(nameof(ISystemLanguage.IsoCode))} = @{SystemLanguageDefaults.ParamIsoCode}";
-                    cmd.Parameters.Add(_profile.ParameterFactory.Create(SystemLanguageDefaults.ParamIsoCode, culture.IetfLanguageTag));
+                    cmd.Parameters.Add(_profile.ParameterFactory.Create(SystemLanguageDefaults.ParamIsoCode, culture.Name));
                     using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
                     {
                         if (await rs.ReadAsync(cancellationToken))
@@ -68,7 +68,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                     var clause = cultures.Aggregate(string.Empty, (aggr, elm) =>
                     {
                         var paramName = $"{SystemLanguageDefaults.ParamIsoCode}{i++}";
-                        cmd.Parameters.Add(_profile.ParameterFactory.Create(paramName, elm.IetfLanguageTag));
+                        cmd.Parameters.Add(_profile.ParameterFactory.Create(paramName, elm.Name));
                         return 0 == aggr.Length ? $"@{paramName}" : $"{aggr}, @{paramName}";
                     });
                     if (0 < clause.Length)
@@ -252,7 +252,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                         SystemLanguageDefaults.ParamLabel,
                         SystemLanguageDefaults.ParamLabelNative
                 };
-                cmd.Parameters.Add(_profile.ParameterFactory.Create(vals[0], culture.IetfLanguageTag));
+                cmd.Parameters.Add(_profile.ParameterFactory.Create(vals[0], culture.Name));
                 cmd.Parameters.Add(_profile.ParameterFactory.Create(vals[1], culture.EnglishName));
                 cmd.Parameters.Add(_profile.ParameterFactory.Create(vals[2], culture.NativeName));
 

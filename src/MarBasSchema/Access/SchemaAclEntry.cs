@@ -1,6 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasCommon.Reflection;
 
 namespace CraftedSolutions.MarBasSchema.Access
 {
@@ -24,15 +25,18 @@ namespace CraftedSolutions.MarBasSchema.Access
             _inherit = inherit;
         }
 
-        public SchemaAclEntry(ISchemaAclEntry other)
+        public SchemaAclEntry(IAclEntry other)
         {
-            _fieldTracker = other.FieldTracker ?? new UpdateableTracker();
+            _fieldTracker = other is IUpdateable updateable ? updateable.FieldTracker.MakeClone()! : new UpdateableTracker();
             _role = other.Role;
             _grain = other.Grain;
             _permissions = other.PermissionMask;
             _restrictions = other.RestrictionMask;
             _inherit = other.Inherit;
-            _sourceGrain = other.SourceGrain;
+            if (other is ISchemaAclEntry aclEntry)
+            {
+                _sourceGrain = aclEntry.SourceGrain;
+            }
         }
 
         public Guid RoleId => _role.Id;

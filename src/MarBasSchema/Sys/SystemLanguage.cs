@@ -1,5 +1,5 @@
-﻿using System.Globalization;
-using CraftedSolutions.MarBasSchema;
+﻿using CraftedSolutions.MarBasCommon.Reflection;
+using System.Globalization;
 
 namespace CraftedSolutions.MarBasSchema.Sys
 {
@@ -20,13 +20,13 @@ namespace CraftedSolutions.MarBasSchema.Sys
         }
 
         public SystemLanguage(CultureInfo cultureInfo) :
-            this(cultureInfo.IetfLanguageTag, cultureInfo.EnglishName, cultureInfo.NativeName)
+            this(cultureInfo.Name, cultureInfo.EnglishName, cultureInfo.NativeName)
         {
         }
 
         public SystemLanguage(ISystemLanguage other)
         {
-            _fieldTracker = other.FieldTracker;
+            _fieldTracker = other.FieldTracker.MakeClone()!;
             _isoCode = other.IsoCode;
             _label = other.Label;
             _labelNative = other.LabelNative;
@@ -41,6 +41,14 @@ namespace CraftedSolutions.MarBasSchema.Sys
                 {
                     _isoCode = value;
                     _fieldTracker.TrackPropertyChange<ISystemLanguage>();
+
+                    try
+                    {
+                        var culture = CultureInfo.GetCultureInfo(value, true);
+                        Label = culture.EnglishName;
+                        LabelNative = culture.NativeName;
+                    }
+                    catch { }
                 }
             }
         }
@@ -75,7 +83,7 @@ namespace CraftedSolutions.MarBasSchema.Sys
 
         public ISet<string> GetDirtyFields<TScope>() => _fieldTracker.GetScope<TScope>();
 
-        public CultureInfo ToCultureInfo() => string.IsNullOrEmpty(IsoCode) ? CultureInfo.InvariantCulture : CultureInfo.GetCultureInfo(IsoCode);
+        public CultureInfo ToCultureInfo() => string.IsNullOrEmpty(IsoCode) ? CultureInfo.InvariantCulture : CultureInfo.GetCultureInfo(IsoCode, true);
 
         public static implicit operator SystemLanguage(CultureInfo cultureInfo) => new(cultureInfo);
         public static implicit operator CultureInfo(SystemLanguage lang) => lang.ToCultureInfo();

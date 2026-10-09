@@ -1,5 +1,6 @@
 ﻿namespace CraftedSolutions.MarBasSchema.Sys
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class ServerInfo : IServerInfo
     {
         public string Name => "MarBas";

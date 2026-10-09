@@ -7,6 +7,7 @@ namespace CraftedSolutions.MarBasSchema.Broker
     public class BrokerOperationFeedback : IBrokerOperationFeedback
     {
         [JsonConstructor]
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         public BrokerOperationFeedback() { }
 
         public BrokerOperationFeedback(string message, string? source = null, int code = 0, LogLevel type = LogLevel.Information, Guid? objectId = null)

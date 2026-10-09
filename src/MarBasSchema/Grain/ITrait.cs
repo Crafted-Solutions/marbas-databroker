@@ -1,8 +1,7 @@
-﻿using System.ComponentModel;
+﻿using CraftedSolutions.MarBasCommon;
+using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using CraftedSolutions.MarBasCommon;
-using CraftedSolutions.MarBasSchema;
 
 namespace CraftedSolutions.MarBasSchema.Grain
 {

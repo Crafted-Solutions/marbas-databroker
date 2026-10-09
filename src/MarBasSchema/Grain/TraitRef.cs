@@ -30,6 +30,6 @@ namespace CraftedSolutions.MarBasSchema.Grain
         [IgnoreDataMember]
         public CultureInfo? CultureInfo { get => _culture; set => _culture = value; }
 
-        public string? Culture => CultureInfo?.IetfLanguageTag;
+        public string? Culture => CultureInfo?.Name;
     }
 }

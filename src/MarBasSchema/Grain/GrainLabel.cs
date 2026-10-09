@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasCommon.Reflection;
 
 namespace CraftedSolutions.MarBasSchema.Grain
 {
@@ -23,7 +24,7 @@ namespace CraftedSolutions.MarBasSchema.Grain
 
         public GrainLabel(IGrainLabel other)
         {
-            _fieldTracker = other is IUpdateable updateable ? updateable.FieldTracker : new UpdateableTracker();
+            _fieldTracker = other is IUpdateable updateable ? updateable.FieldTracker.MakeClone()! : new UpdateableTracker();
 
             _label = other.Label;
             _grain = other.Grain;
@@ -74,7 +75,7 @@ namespace CraftedSolutions.MarBasSchema.Grain
                 }
             }
         }
-        public string Culture => _culture.IetfLanguageTag;
+        public string Culture => _culture.Name;
 
         public UpdateableTracker FieldTracker => _fieldTracker;
 

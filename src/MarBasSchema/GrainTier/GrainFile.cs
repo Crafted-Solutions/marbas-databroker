@@ -9,29 +9,42 @@ namespace CraftedSolutions.MarBasSchema.GrainTier
 {
     public class GrainFile : GrainLocalized, IGrainFile
     {
+        protected static readonly IGrain DefaultType = new GrainPlain()
+        {
+            Id = SchemaDefaults.FileTypeDefID,
+            Name = SchemaDefaults.FileTypeName,
+        };
+
         protected string _mimeType;
         protected long _size;
         protected IStreamableContent? _content;
 
+        // TODO remove this constructor, GrainTransportBroker should use its own subclass
+        [Obsolete("Do not use, declare own subclass to initalize Id")]
         public GrainFile(Guid id, string? name, IIdentifiable? parent, IPrincipal? creator = null, CultureInfo? culture = null)
             : this(name, parent, creator, culture)
         {
             _props.Id = id;
         }
 
-        public GrainFile(string? name, IIdentifiable? parent, IPrincipal? creator = null, CultureInfo? culture = null)
+        public GrainFile(string? name = null, IIdentifiable? parent = null, IPrincipal? creator = null, CultureInfo? culture = null)
             : base(name, parent, creator, culture)
         {
+            _typeConstraint = new SimpleTypeConstraint(DefaultType);
             _mimeType = MediaTypeNames.Application.Octet;
             _content = null;
             _size = -1;
             _fieldTracker.AddScope<IGrainFile>();
         }
 
-        public GrainFile(IGrainBase other)
+        public GrainFile(IGrain other)
             : base(other)
         {
-            if (other is IGrainFile file)
+            if (null == _typeConstraint)
+            {
+                _typeConstraint = new SimpleTypeConstraint(DefaultType);
+            }
+            if (other is IFile file)
             {
                 _mimeType = file.MimeType;
                 _content = file.Content;
@@ -51,9 +64,10 @@ namespace CraftedSolutions.MarBasSchema.GrainTier
             get => _mimeType;
             set
             {
-                if (value != _mimeType)
+                var newValue = string.IsNullOrEmpty(value) ? MediaTypeNames.Application.Octet : value;
+                if (_fieldTracker.IsChangeAccepted(_mimeType, newValue))
                 {
-                    _mimeType = value;
+                    _mimeType = newValue;
                     _fieldTracker.TrackPropertyChange<IGrainFile>();
                 }
             }
@@ -64,7 +78,7 @@ namespace CraftedSolutions.MarBasSchema.GrainTier
             get => -1 < _size ? _size : (_size = _content?.Length ?? 0);
             set
             {
-                if (null == _content && value != _size)
+                if (null == _content && _fieldTracker.IsChangeAccepted(_size, value))
                 {
                     _size = value;
                     _fieldTracker.TrackPropertyChange<IGrainFile>();
@@ -77,17 +91,18 @@ namespace CraftedSolutions.MarBasSchema.GrainTier
             get => _content;
             set
             {
+                if (!_fieldTracker.AcceptAllChanges && ((null == _content && null == value) || ReferenceEquals(_content, value)))
+                {
+                    return;
+                }
                 var oldSize = Size;
                 _content = value;
                 _fieldTracker.TrackPropertyChange<IGrainFile>();
                 var newSize = _content?.Length ?? 0;
-                if (newSize != oldSize)
+                if (_fieldTracker.IsChangeAccepted(oldSize, newSize))
                 {
                     _size = newSize;
-                    if (-1 < oldSize)
-                    {
-                        _fieldTracker.TrackPropertyChange<IGrainFile>(nameof(Size));
-                    }
+                    _fieldTracker.TrackPropertyChange<IGrainFile>(nameof(Size));
                 }
             }
         }

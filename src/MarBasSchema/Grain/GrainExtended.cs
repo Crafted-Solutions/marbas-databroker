@@ -12,7 +12,7 @@ namespace CraftedSolutions.MarBasSchema.Grain
         protected string? _typeXAttrs;
         protected int _childCount;
 
-        public GrainExtended(IGrainBase other)
+        public GrainExtended(IGrain other)
             : base(other)
         {
             if (other is IGrainExtended grainExtended)
@@ -21,16 +21,16 @@ namespace CraftedSolutions.MarBasSchema.Grain
                 _childCount = grainExtended.ChildCount;
                 _typeXAttrs = grainExtended.TypeXAttrs;
             }
+            else
+            {
+                _permissions = GrainAccessFlag.Read;
+            }
         }
 
         public GrainExtended(string? name = null, IIdentifiable? parent = null, IPrincipal? creator = null)
             : base(name, parent, creator)
         {
-        }
-
-        internal GrainExtended(Guid id, string? name = null, IIdentifiable? parent = null, IPrincipal? creator = null)
-            : base(id, name, parent, creator)
-        {
+            _permissions = GrainAccessFlag.Read;
         }
 
         public string? TypeXAttrs => _typeXAttrs;

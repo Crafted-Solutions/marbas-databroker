@@ -1,9 +1,4 @@
-﻿using System.ComponentModel;
-using System.Data.Common;
-using System.Globalization;
-using System.Reflection;
-using System.Reflection.PortableExecutable;
-using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.Access;
 using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainDef;
 using CraftedSolutions.MarBasBrokerSQLCommon.GrainTier;
@@ -18,6 +13,10 @@ using CraftedSolutions.MarBasSchema.GrainDef;
 using CraftedSolutions.MarBasSchema.GrainTier;
 using CraftedSolutions.MarBasSchema.Transport;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel;
+using System.Data.Common;
+using System.Globalization;
+using System.Reflection;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
 {

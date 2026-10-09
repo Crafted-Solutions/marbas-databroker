@@ -8,10 +8,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
 {
     public abstract class AbstractDataAdapter : IUpdateable
     {
-        public static string GetAdapterColumnName<TAdapter>(string fieldName) where TAdapter : AbstractDataAdapter
-        {
-            return GetMappedColumnNameByPropInfo(typeof(TAdapter).GetProperty(fieldName));
-        }
+        protected static readonly UpdateableTracker DummyFieldTracker = new();
 
         protected readonly DbDataReader _dataReader;
 
@@ -65,8 +62,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
 
         public ISet<string> GetDirtyFields<TScope>() => System.Collections.Immutable.ImmutableHashSet<string>.Empty;
 
-        public UpdateableTracker FieldTracker => null!;
+        public UpdateableTracker FieldTracker => DummyFieldTracker;
 
+        public static string GetAdapterColumnName<TAdapter>(string fieldName) where TAdapter : AbstractDataAdapter
+        {
+            return GetMappedColumnNameByPropInfo(typeof(TAdapter).GetProperty(fieldName));
+        }
 
         public interface IColumnMapper
         {

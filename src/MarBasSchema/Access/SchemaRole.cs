@@ -1,13 +1,14 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasCommon.Reflection;
 
 namespace CraftedSolutions.MarBasSchema.Access
 {
     public class SchemaRole : Identifiable, ISchemaRole
     {
-        public static readonly ISchemaRole Everyone = new SchemaRole(SchemaDefaults.EveryoneRoleID, "Everyone");
-        public static readonly ISchemaRole Superuser = new SchemaRole(SchemaDefaults.SuperuserRoleID, "Superuser", RoleEntitlement.Full);
+        public static readonly ISchemaRole Everyone = new SchemaRole(SchemaDefaults.EveryoneRoleID, SchemaDefaults.EveryoneRoleName);
+        public static readonly ISchemaRole Superuser = new SchemaRole(SchemaDefaults.SuperuserRoleID, SchemaDefaults.SuperuserRoleName, RoleEntitlement.Full);
 
         protected readonly UpdateableTracker _fieldTracker;
         protected string _name;
@@ -30,7 +31,7 @@ namespace CraftedSolutions.MarBasSchema.Access
         public SchemaRole(ISchemaRole other)
             : base(other)
         {
-            _fieldTracker = other.FieldTracker ?? new UpdateableTracker();
+            _fieldTracker = other.FieldTracker.MakeClone()!;
             _name = other.Name;
             _entitlement = other.Entitlement;
         }

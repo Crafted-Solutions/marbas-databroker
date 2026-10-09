@@ -97,7 +97,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
         }
 
         [Column(GeneralEntityDefaults.FieldLangCode)]
-        public string? Culture => CultureInfo?.IetfLanguageTag;
+        public string? Culture => CultureInfo?.Name;
 
 
         [Column(GrainPropDefDefaults.FieldValueType)]

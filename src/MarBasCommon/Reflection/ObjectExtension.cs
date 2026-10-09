@@ -41,5 +41,11 @@ namespace CraftedSolutions.MarBasCommon.Reflection
             }
             throw new ArgumentException($"{o.GetType()?.Name} misses required capabilities ({typeof(T).Name})");
         }
+
+        public static T? MakeClone<T>(this T? o)
+            where T: ICloneable
+        {
+            return (T?)o?.Clone();
+        }
     }
 }
