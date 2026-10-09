@@ -19,9 +19,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.Grain
             }
         }
         [Column(name: GeneralEntityDefaults.FieldLangCode)]
-        string ILocalized.Culture => CultureInfo.IetfLanguageTag;
+        string ILocalized.Culture => CultureInfo.Name;
         [Column(name: GeneralEntityDefaults.FieldLangCode)]
-        string? ILocalizable.Culture => CultureInfo.IetfLanguageTag;
+        string? ILocalizable.Culture => CultureInfo.Name;
 
         public string? Label
         {

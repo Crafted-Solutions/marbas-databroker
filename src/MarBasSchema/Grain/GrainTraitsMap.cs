@@ -4,22 +4,22 @@ using CraftedSolutions.MarBasCommon;
 
 namespace CraftedSolutions.MarBasSchema.Grain
 {
-    public class GrainTraitsMap : IDictionary<string, IList<ITraitBase>?>
+    public class GrainTraitsMap : IDictionary<string, IList<ITrait>?>
     {
-        private readonly IDictionary<string, IList<ITraitBase>?> _map = new Dictionary<string, IList<ITraitBase>?>();
+        private readonly IDictionary<string, IList<ITrait>?> _map = new Dictionary<string, IList<ITrait>?>();
 
-        public void Set(ITraitBase trait, string? key = null)
+        public void Emplace(ITrait trait, string? key = null)
         {
             var propName = key ?? (trait.PropDef as INamed)?.Name;
             if (string.IsNullOrEmpty(propName))
             {
-                throw new ArgumentException($"Either {nameof(trait)} is named or {nameof(key)} is required to be non-empty string");
+                throw new ArgumentException($"Either {nameof(trait)}.{nameof(ITraitRef.PropDef)} is named or {nameof(key)} is required to be non-empty string");
             }
             propName = propName.Trim().Replace(' ', '_');
-            List<ITraitBase>? vals = null;
+            List<ITrait>? vals = null;
             if (_map.TryGetValue(propName, out var value))
             {
-                vals = (List<ITraitBase>?)value;
+                vals = (List<ITrait>?)value;
             }
             if (null == vals)
             {
@@ -28,6 +28,11 @@ namespace CraftedSolutions.MarBasSchema.Grain
                     _map[propName] = [trait];
                 }
                 return;
+            }
+
+            if (0 < vals.Count && vals[0].ValueType != trait.ValueType)
+            {
+                throw new ArgumentException($"{nameof(trait)}[{propName}].{nameof(ITrait.ValueType)} of {trait.ValueType} is incompatible with exiting {vals[0].ValueType}");
             }
 
             var ind = vals.FindIndex((t) => t.Id == trait.Id);
@@ -50,64 +55,63 @@ namespace CraftedSolutions.MarBasSchema.Grain
 
         public object?[]? GetValues(string key)
         {
-            if (ContainsKey(key))
+            if (_map.TryGetValue(key, out var vals) && null != vals)
             {
-                return null;
+                return vals.Select((t) => t.Value).ToArray();
             }
-
-            var vals = _map[key];
-            if (null == vals)
-            {
-                return null;
-            }
-            return vals.Select((t) => t.Value).ToArray();
+            return null;
         }
 
         public T?[]? GetValues<T>(string key)
         {
-            if (ContainsKey(key))
+            if (_map.TryGetValue(key, out var vals) && null != vals)
             {
-                return null;
+                return vals.Where(t => t is ITraitValue<T>).Select((t) => ((ITraitValue<T>)t).Value).ToArray();
             }
-
-            var vals = _map[key];
-            if (null == vals)
-            {
-                return null;
-            }
-            return vals.Where(t => t is ITraitValue<T>).Select((t) => ((ITraitValue<T>)t).Value).ToArray();
+            return null;
         }
 
-        public IList<ITraitBase>? this[string key] { get => _map[key]; set => _map[key] = value; }
+        public IList<ITrait>? this[string key] { get => _map[key]; set => _map[key] = value; }
 
         public ICollection<string> Keys => _map.Keys;
 
-        public ICollection<IList<ITraitBase>?> Values => _map.Values;
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public ICollection<IList<ITrait>?> Values => _map.Values;
 
         public int Count => _map.Count;
 
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         public bool IsReadOnly => false;
 
-        public void Add(string key, IList<ITraitBase>? value) => _map.Add(key, value);
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public void Add(string key, IList<ITrait>? value) => _map.Add(key, value);
 
-        public void Add(KeyValuePair<string, IList<ITraitBase>?> item) => _map.Add(item);
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public void Add(KeyValuePair<string, IList<ITrait>?> item) => _map.Add(item);
 
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         public void Clear() => _map.Clear();
 
-        public bool Contains(KeyValuePair<string, IList<ITraitBase>?> item) => _map.Contains(item);
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public bool Contains(KeyValuePair<string, IList<ITrait>?> item) => _map.Contains(item);
 
         public bool ContainsKey(string key) => _map.ContainsKey(key);
 
-        public void CopyTo(KeyValuePair<string, IList<ITraitBase>?>[] array, int arrayIndex) => _map.CopyTo(array, arrayIndex);
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public void CopyTo(KeyValuePair<string, IList<ITrait>?>[] array, int arrayIndex) => _map.CopyTo(array, arrayIndex);
 
-        public IEnumerator<KeyValuePair<string, IList<ITraitBase>?>> GetEnumerator() => _map.GetEnumerator();
+        public IEnumerator<KeyValuePair<string, IList<ITrait>?>> GetEnumerator() => _map.GetEnumerator();
 
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         public bool Remove(string key) => _map.Remove(key);
 
-        public bool Remove(KeyValuePair<string, IList<ITraitBase>?> item) => _map.Remove(item);
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public bool Remove(KeyValuePair<string, IList<ITrait>?> item) => _map.Remove(item);
 
-        public bool TryGetValue(string key, [MaybeNullWhen(false)] out IList<ITraitBase>? value) => _map.TryGetValue(key, out value);
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+        public bool TryGetValue(string key, [MaybeNullWhen(false)] out IList<ITrait>? value) => _map.TryGetValue(key, out value);
 
+        [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_map).GetEnumerator();
     }
 }

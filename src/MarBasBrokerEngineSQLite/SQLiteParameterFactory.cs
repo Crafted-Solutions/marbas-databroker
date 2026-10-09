@@ -42,7 +42,7 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
             {
                 result = new SqliteParameter(name, SqliteType.Text)
                 {
-                    Value = null == value ? null : ((dynamic)value).IetfLanguageTag
+                    Value = null == value ? null : ((dynamic)value).Name
                 };
             }
             else if (typeof(byte[]).IsAssignableFrom(effectiveType))
@@ -97,7 +97,7 @@ namespace CraftedSolutions.MarBasBrokerEngineSQLite
             }
             else if (typeof(CultureInfo).IsAssignableFrom(effectiveType))
             {
-                result.Value = null == value ? null : ((dynamic)value).IetfLanguageTag;
+                result.Value = null == value ? null : ((dynamic)value).Name;
             }
             else
             {

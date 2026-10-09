@@ -10,15 +10,15 @@
                     <Verbosity>minimal</Verbosity>
                 </Configuration>
             </Logger>
-            <Logger friendlyName="trx" enabled="True">
+            <Logger friendlyName="trx" enabled="False">
                 <Configuration>
                     <LogFileName>test-results.trx</LogFileName>
                 </Configuration>
             </Logger>
             <!-- <Logger friendlyName="html" enabled="True"> -->
-                <!-- <Configuration> -->
-                    <!-- <LogFileName>foo.html</LogFileName> -->
-                <!-- </Configuration> -->
+            <!-- <Configuration> -->
+            <!-- <LogFileName>foo.html</LogFileName> -->
+            <!-- </Configuration> -->
             <!-- </Logger> -->
             <!-- <Logger friendlyName="blame" enabled="True"/> -->
         </Loggers>

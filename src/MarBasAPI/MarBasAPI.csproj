@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Version>0.1.24.3</Version>
+        <Version>0.1.25</Version>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <Description>Sample Web API application for MarBas databroker</Description>
         <UserSecretsId>d16b24b3-4570-4fb8-8c57-153e4044d8ee</UserSecretsId>
@@ -20,7 +20,7 @@
         <NoWarn>1591;1701;1702</NoWarn>
     </PropertyGroup>
     <ItemGroup>
-      <Content Remove="libman.json" />
+        <Content Remove="libman.json" />
     </ItemGroup>
 
     <ItemGroup>
@@ -33,19 +33,19 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Include="libman.json">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </None>
+        <None Include="libman.json">
+            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="[8.0.29]" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="[8.0.29]" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="Data\.gitkeep">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+        <None Update="Data\.gitkeep">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>

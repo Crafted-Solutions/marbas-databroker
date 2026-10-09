@@ -3,14 +3,18 @@ using System.Runtime.CompilerServices;
 
 namespace CraftedSolutions.MarBasSchema
 {
-    public class UpdateableTracker : INotifyPropertyChanged
+    public sealed class UpdateableTracker: INotifyPropertyChanged, ICloneable
     {
-        private readonly ISet<string> _dirtyFields = new HashSet<string>();
-
-        private Func<Type, ISet<string>>? _scopeGetter;
-        private bool _acceptAlways = false;
+        private readonly Dictionary<Type, HashSet<string>> _dirtyFields = new () { { typeof(object), [] } };
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        public UpdateableTracker() { }
+
+        private UpdateableTracker(UpdateableTracker other)
+        {
+            _dirtyFields = new (other._dirtyFields);
+        }
 
         public void TrackPropertyChange<TScope>([CallerMemberName] string propertyName = "")
         {
@@ -22,33 +26,37 @@ namespace CraftedSolutions.MarBasSchema
         public bool IsChangeAccepted<T>(T? oldValue, T? newValue, [CallerMemberName] string propertyName = "")
 #pragma warning restore IDE0060 // Remove unused parameter
         {
-            return _acceptAlways || !EqualityComparer<T>.Default.Equals(oldValue, newValue);
+            return AcceptAllChanges || !EqualityComparer<T>.Default.Equals(oldValue, newValue);
         }
 
-        public bool AcceptAllChanges { get => _acceptAlways; set => _acceptAlways = value; }
+        public bool AcceptAllChanges { get; set; }
 
         public void AddScope<TScope>()
         {
-            var df = new HashSet<string>();
-            var prevGetter = _scopeGetter;
-            _scopeGetter = (t) =>
+            var type = typeof(TScope);
+            if (_dirtyFields.ContainsKey(type))
             {
-                if (typeof(TScope).IsAssignableFrom(t))
-                {
-                    //Console.WriteLine($"UpdateableTracker.GetScope<{typeof(TScope)}>");
-                    return df;
-                }
-                //if (null == prevGetter)
-                //    Console.WriteLine($"UpdateableTracker.GetScope<default>");
-                return null == prevGetter ? _dirtyFields : prevGetter(t);
-            };
+                return;
+            }
+            _dirtyFields[type] = [];
         }
 
         public ISet<string> GetScope<TScope>()
         {
-            //if (null == _scopeGetter)
-            //    Console.WriteLine($"UpdateableTracker.GetScope<default>");
-            return null == _scopeGetter ? _dirtyFields : _scopeGetter(typeof(TScope));
+            if (_dirtyFields.TryGetValue(typeof(TScope), out var value))
+            {
+                return value;
+            }
+            return DefaultScope;
+        }
+
+        public ISet<string> DefaultScope => _dirtyFields[typeof(object)];
+
+        public IEnumerable<string> AllChanges => _dirtyFields.SelectMany(x => x.Value);
+
+        public object Clone()
+        {
+            return new UpdateableTracker(this);
         }
     }
 }

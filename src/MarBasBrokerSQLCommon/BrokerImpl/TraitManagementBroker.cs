@@ -55,7 +55,7 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                                 path = path[..path.LastIndexOf('/')];
                                 key = $"{path[(path.LastIndexOf('/') + 1)..]}/{key}";
                             }
-                            result.Set(ReadTrait(rs), key);
+                            result.Emplace(ReadTrait(rs), key);
                         }
                     }
                 }
@@ -555,7 +555,7 @@ WHERE t.{MapTraitColumn(nameof(ITrait.PropDefId))} = @{TraitBaseDefaults.ParamPr
                     else
                     {
                         whereAdditions += $" = @{GeneralEntityDefaults.ParamLangCode}";
-                        cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamLangCode, culture.IetfLanguageTag));
+                        cmd.Parameters.Add(_profile.ParameterFactory.Create(GeneralEntityDefaults.ParamLangCode, culture.Name));
                     }
                 }
                 if (-1 < revision)

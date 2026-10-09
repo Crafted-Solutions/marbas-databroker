@@ -36,6 +36,14 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MarBasDoc", "doc\MarBasDoc.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarBasCommon.Tests", "test\MarBasCommon.Tests\MarBasCommon.Tests.csproj", "{1E4D7D8B-09D1-4478-8BCB-0F918C579CA7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarBasSchema.Tests", "test\MarBasSchema.Tests\MarBasSchema.Tests.csproj", "{1C06A346-548B-4B19-A043-9453FA1545A2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{41943DCC-32D8-4306-860B-38AC28E364FB}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\TestReport.cmd = scripts\TestReport.cmd
+		scripts\TestReport.sh = scripts\TestReport.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -70,9 +78,16 @@ Global
 		{1E4D7D8B-09D1-4478-8BCB-0F918C579CA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E4D7D8B-09D1-4478-8BCB-0F918C579CA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E4D7D8B-09D1-4478-8BCB-0F918C579CA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C06A346-548B-4B19-A043-9453FA1545A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C06A346-548B-4B19-A043-9453FA1545A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C06A346-548B-4B19-A043-9453FA1545A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C06A346-548B-4B19-A043-9453FA1545A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{41943DCC-32D8-4306-860B-38AC28E364FB} = {2C06B45A-3CFF-46D7-BCBD-707A3BFAD492}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E4F474E-AE01-409A-BDFB-69B865E344C2}

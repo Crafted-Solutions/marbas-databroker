@@ -1,12 +1,11 @@
-﻿using System.Globalization;
-using CraftedSolutions.MarBasCommon;
-using CraftedSolutions.MarBasSchema.Grain;
+﻿using CraftedSolutions.MarBasCommon;
+using System.Globalization;
 
 namespace CraftedSolutions.MarBasSchema.Grain.Traits
 {
     public class TraitText : TraitValue<string>
     {
-        public TraitText(ITraitBase other)
+        public TraitText(ITrait other)
             : base(other)
         {
         }

@@ -9,38 +9,46 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
 {
     public class GrainTypeDef : GrainLocalized, IGrainTypeDefLocalized
     {
-        protected static readonly IGrainBase DefaultType = new GrainBase(SchemaDefaults.TypeDefTypeDefID, SchemaDefaults.TypeDefTypeName);
-
         protected string? _impl;
         protected ISet<IIdentifiable> _mixins;
         protected IIdentifiable? _defaultInst;
 
+        // TODO remove this constructor, GrainTransportBroker should use its own subclass
+        [Obsolete("Do not use, declare own subclass to initalize Id")]
         public GrainTypeDef(Guid id, string? name, IIdentifiable? parent, IEnumerable<IIdentifiable>? mixins = null, IPrincipal? creator = null, CultureInfo? culture = null)
             : this(name, parent, mixins, creator, culture)
         {
             _props.Id = id;
         }
 
-        public GrainTypeDef(string? name, IIdentifiable? parent, IEnumerable<IIdentifiable>? mixins = null, IPrincipal? creator = null, CultureInfo? culture = null)
+        public GrainTypeDef(string? name = null, IIdentifiable? parent = null, IEnumerable<IIdentifiable>? mixins = null, IPrincipal? creator = null, CultureInfo? culture = null)
             : base(name, parent, creator, culture)
         {
-            _mixins = null == mixins ? new HashSet<IIdentifiable>() : new HashSet<IIdentifiable>(mixins);
+            _mixins = null == mixins ? [] : new HashSet<IIdentifiable>(mixins);
             _fieldTracker.AddScope<IGrainTypeDef>();
         }
 
-        public GrainTypeDef(IGrainBase other)
+        public GrainTypeDef(IGrain other)
             : base(other)
         {
-            if (other is IGrainTypeDef typeDef)
+            if (other is ITypeDef typeDef)
             {
                 _impl = typeDef.Impl;
-                _mixins = typeDef.MixIns.ToHashSet();
-                _defaultInst = typeDef.DefaultInstance;
+                if (other is IGrainTypeDef grainTypeDef)
+                {
+                    _mixins = grainTypeDef.MixIns.ToHashSet();
+                    _defaultInst = grainTypeDef.DefaultInstance;
+                }
+                else
+                {
+                    _mixins = typeDef.MixInIds.Select(x => (IIdentifiable)(Identifiable)x).ToHashSet();
+                }
             }
             else
             {
                 _mixins = new HashSet<IIdentifiable>();
             }
+            _typeConstraint = null;
             _fieldTracker.AddScope<IGrainTypeDef>();
         }
 
@@ -49,7 +57,7 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
             get => _impl;
             set
             {
-                if (_impl != value)
+                if (_fieldTracker.IsChangeAccepted(_impl, value))
                 {
                     _impl = value;
                     _fieldTracker.TrackPropertyChange<IGrainTypeDef>();
@@ -66,10 +74,10 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
             get => _defaultInst;
             set
             {
-                if (_defaultInst != value)
+                if (_fieldTracker.IsChangeAccepted(_defaultInst, value))
                 {
-                    _fieldTracker.TrackPropertyChange<IGrainTypeDef>();
                     _defaultInst = value;
+                    _fieldTracker.TrackPropertyChange<IGrainTypeDef>();
                 }
             }
         }
@@ -103,13 +111,13 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
         {
             if (null == mixins)
             {
-                _mixins.Clear();
+                ClearMixIns();
             }
             else
             {
                 _mixins = new HashSet<IIdentifiable>(mixins);
+                _fieldTracker.TrackPropertyChange<IGrainTypeDef>(nameof(MixIns));
             }
-            _fieldTracker.TrackPropertyChange<IGrainTypeDef>(nameof(MixIns));
         }
 
         [JsonIgnore]
@@ -121,8 +129,14 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
         [IgnoreDataMember]
         public override IIdentifiable? TypeDef
         {
-            get => base.TypeDef as IGrainBase;
-            set => base.TypeDef = value as IGrainBase;
+            get => base.TypeDef;
+            set
+            {
+                if (null != value)
+                {
+                    throw new NotSupportedException($"{nameof(TypeDef)} should always be null");
+                }
+            }
         }
     }
 }

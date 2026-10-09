@@ -2,6 +2,7 @@
 using System.Security.Principal;
 using System.Text.Json.Serialization;
 using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasCommon.Reflection;
 
 namespace CraftedSolutions.MarBasSchema.Grain
 {
@@ -24,18 +25,29 @@ namespace CraftedSolutions.MarBasSchema.Grain
             _fieldTracker = new UpdateableTracker();
             _parent = parent;
 
-            _props.Name = string.IsNullOrEmpty(name) ? $"Unnamed_{_props.Id:D}" : name;
-            _props.MTime = DateTime.Now;
-            _props.CTime = DateTime.Now;
+            _props.Name = string.IsNullOrEmpty(name) ? MakeEmptyName(_props.Id) : name;
+            _props.MTime = _props.CTime = DateTime.Now;
             _props.Owner = creator?.Identity?.Name ?? SchemaDefaults.SystemUserName;
             _props.ParentId = _parent?.Id;
         }
 
-        public GrainBase(IGrainBase other, IGrainBase? extension = null)
+        public GrainBase(IGrain other, ITypeConstraint? typeExtension = null)
         {
-            _fieldTracker = other.FieldTracker ?? new UpdateableTracker();
-            _parent = other.Parent;
-            _typeConstraint = new SimpleTypeConstraint(null == other.TypeName && null != extension ? extension : other);
+            _fieldTracker = other is IUpdateable updateable ? updateable.FieldTracker.MakeClone()! : new UpdateableTracker();
+            _parent = other is IGrainBase otherBase ? otherBase.Parent : (Identifiable?) other.ParentId;
+
+            if (other is ITypeConstraint otherTyped && null != otherTyped.TypeDefId)
+            {
+                _typeConstraint = new SimpleTypeConstraint(otherTyped);
+            }
+            if ((null == _typeConstraint || null == _typeConstraint.TypeName) && null != typeExtension)
+            {
+                _typeConstraint = new SimpleTypeConstraint(typeExtension);
+            }
+            if (null == _typeConstraint && null != other.TypeDefId)
+            {
+                _typeConstraint = new SimpleTypeConstraint((Guid)other.TypeDefId);
+            }
 
             _props = new(other);
             SyncPath();
@@ -43,7 +55,7 @@ namespace CraftedSolutions.MarBasSchema.Grain
 
         public Guid Id => _props.Id;
 
-        public Guid? ParentId { get => _parent?.Id; }
+        public Guid? ParentId => _parent?.Id;
         [JsonIgnore]
         [IgnoreDataMember]
         public IIdentifiable? Parent
@@ -59,7 +71,8 @@ namespace CraftedSolutions.MarBasSchema.Grain
             }
         }
 
-        public Guid? TypeDefId { get => TypeDef?.Id; }
+        public Guid? TypeDefId => _typeConstraint?.TypeDefId;
+        public virtual string? TypeName => _typeConstraint?.TypeName;
         [JsonIgnore]
         [IgnoreDataMember]
         public virtual IIdentifiable? TypeDef
@@ -67,38 +80,52 @@ namespace CraftedSolutions.MarBasSchema.Grain
             get => _typeConstraint?.TypeDef;
             set
             {
+                var changed = false;
                 if (null == value)
                 {
-                    _typeConstraint = null;
-                }
-                else if (null == _typeConstraint && null != value)
-                {
-                    if (value is ITypeConstraint typeConstraint)
+                    if (_fieldTracker.AcceptAllChanges || null != _typeConstraint)
                     {
-                        _typeConstraint = typeConstraint;
+                        _typeConstraint = null;
+                        changed = true;
                     }
-                    else if (value is INamed named)
+                }
+                // TODO since IGrainBase itself is ITypeConstraint AND IIdentifiable using this clause would only produce confusion
+                //else if (value is ITypeConstraint typeConstraint)
+                //{
+                //    if (_fieldTracker.AcceptAllChanges || _typeConstraint != typeConstraint)
+                //    {
+                //        _typeConstraint = typeConstraint;
+                //        changed = true;
+                //    }
+                //}
+                else if (_fieldTracker.AcceptAllChanges || value.Id != _typeConstraint?.TypeDefId)
+                {
+                    if (value is not IGrain && value is INamed named)
                     {
-                        _typeConstraint = SimpleTypeConstraint.CreateFrom((INamedIdentifiable)named);
+                        _typeConstraint = new SimpleTypeConstraint(value.Id, named.Name);
                     }
                     else
                     {
-                        _typeConstraint = new SimpleTypeConstraint(value.Id);
+                        _typeConstraint = new SimpleTypeConstraint(value);
                     }
+                    changed = true;
                 }
-                _fieldTracker.TrackPropertyChange<IGrainBase>();
+                if (changed)
+                {
+                    _fieldTracker.TrackPropertyChange<IGrainBase>();
+                }
             }
         }
 
         public string Name
         {
-            get => _props.Name ?? $"Unnamed_{Id:D}";
+            get => string.IsNullOrEmpty(_props.Name) ? MakeEmptyName(Id) : _props.Name;
             set
             {
-                var newName = null == value ? null : SanitizeName(value);
+                var newName = string.IsNullOrEmpty(value) ? MakeEmptyName(Id) : SanitizeName(value);
                 if (_fieldTracker.IsChangeAccepted(_props.Name, newName))
                 {
-                    _props.Name = newName!;
+                    _props.Name = newName;
                     _fieldTracker.TrackPropertyChange<IGrainBase>();
                     SyncPath();
                 }
@@ -130,8 +157,6 @@ namespace CraftedSolutions.MarBasSchema.Grain
                 }
             }
         }
-
-        public virtual string? TypeName => _typeConstraint?.TypeName;
 
         public string Owner
         {
@@ -211,6 +236,16 @@ namespace CraftedSolutions.MarBasSchema.Grain
             return MemberwiseClone();
         }
 
+        protected void SyncPath()
+        {
+            var name = Name;
+            if (!string.IsNullOrEmpty(_props.Path) && !_props.Path.EndsWith(name, StringComparison.InvariantCulture))
+            {
+                _props.Path = _props.Path.Remove(_props.Path.LastIndexOf('/') + 1);
+                _props.Path += name;
+            }
+        }
+
         public static string SanitizeName(string name)
         {
             var result = name.Normalize();
@@ -224,16 +259,6 @@ namespace CraftedSolutions.MarBasSchema.Grain
             });
         }
 
-        protected void SyncPath()
-        {
-            var name = Name;
-            if (!string.IsNullOrEmpty(_props.Path) && !_props.Path.EndsWith(name, StringComparison.InvariantCulture))
-            {
-                _props.Path = _props.Path.Remove(_props.Path.LastIndexOf("/") + 1);
-                _props.Path += name;
-            }
-        }
-
-        protected interface INamedIdentifiable : IIdentifiable, INamed { }
+        public static string MakeEmptyName(Guid id) => $"Unnamed_{id:D}";
     }
 }
