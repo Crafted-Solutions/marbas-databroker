@@ -25,7 +25,7 @@
 
     <ItemGroup>
         <ProjectReference Include="../MarBasBrokerEngineSQLite/MarBasBrokerEngineSQLite.csproj" />
-        <ProjectReference Include="../MatBasAPICore/MarBasAPICore.csproj" />
+        <ProjectReference Include="../MarBasAPICore/MarBasAPICore.csproj" />
     </ItemGroup>
 
     <ItemGroup>
