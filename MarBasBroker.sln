@@ -20,7 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasBrokerEngineSQLite", "src\MarBasBrokerEngineSQLite\MarBasBrokerEngineSQLite.csproj", "{F5DDE518-F6C1-418F-8D57-4351B821477C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasAPICore", "src\MatBasAPICore\MarBasAPICore.csproj", "{16E64D94-3ED8-408F-9014-F20822EDB82F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasAPICore", "src\MarBasAPICore\MarBasAPICore.csproj", "{16E64D94-3ED8-408F-9014-F20822EDB82F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarBasBrokerSQLCommon", "src\MarBasBrokerSQLCommon\MarBasBrokerSQLCommon.csproj", "{8A088793-F54F-45B1-84B4-9F70837D33DF}"
 EndProject

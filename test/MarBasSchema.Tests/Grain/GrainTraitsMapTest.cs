@@ -16,23 +16,6 @@ namespace CraftedSolutions.MarBasSchema.Tests.Grain
         }
 
         [TestMethod]
-        public void Emplace_throwing_ArgumentException_given_property_name_is_missing()
-        {
-            var trait = new TraitText(new Identifiable(), new Identifiable());
-            var map = new GrainTraitsMap();
-           
-            map.Invoking(map => map.Emplace(trait)).Should().Throw<ArgumentException>();
-        }
-        [TestMethod]
-        public void Emplace_throwing_ArgumentException_given_property_name_is_empty()
-        {
-            var map = new GrainTraitsMap();
-            var trait = new TraitText(new Identifiable(), new Identifiable());
-
-            map.Invoking(map => map.Emplace(trait, string.Empty)).Should().Throw<ArgumentException>();
-        }
-
-        [TestMethod]
         [DataRow(false)]
         [DataRow(true)]
         public void Emplace_ignoring_ITraitBase_given_Value_is_null(bool useSeparateKey)
@@ -46,6 +29,21 @@ namespace CraftedSolutions.MarBasSchema.Tests.Grain
             map.Emplace(trait, useSeparateKey ? key : null);
             map.Should().BeEmpty();
             map.GetValues(key).Should().BeNull();
+        }
+
+        [TestMethod]
+        [DataRow(null)]
+        [DataRow("")]
+        public void Emplace_creating_Values_under_PropDefId_given_empty_key(string? key)
+        {
+            var trait = new TraitText(new Identifiable(), new Identifiable(), "value 42");
+            var map = new GrainTraitsMap();
+
+            map.Emplace(trait, key);
+            map.Should()
+                .HaveCount(1).And
+                .Satisfy(entry => entry.Key == trait.PropDefId.ToString() && null != entry.Value && 1 == entry.Value.Count && trait == entry.Value[0]);
+            map.GetValues(trait.PropDefId.ToString()).Should().Satisfy(element => element == trait.Value);
         }
 
         [TestMethod]
