@@ -21,29 +21,13 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon
             }
         }
 
-        protected Guid? GetNullableGuid(string fieldName)
-        {
-            var ord = _dataReader.GetOrdinal(fieldName);
-            return _dataReader.IsDBNull(ord) ? null : _dataReader.GetGuid(ord);
-        }
+        protected Guid? GetNullableGuid(string fieldName) => _dataReader.GetNullableGuid(fieldName);
 
-        protected Guid GetGuid(string fieldName)
-        {
-            return _dataReader.GetGuid(_dataReader.GetOrdinal(fieldName));
-        }
+        protected Guid GetGuid(string fieldName) => _dataReader.GetGuid(fieldName);
 
-        protected DateTime GetDateTime(string fieldName)
-        {
-            var ord = _dataReader.GetOrdinal(fieldName);
-            var result = _dataReader.IsDBNull(ord) ? DateTime.Now : _dataReader.GetDateTime(ord);
-            return DateTimeKind.Unspecified == result.Kind ? DateTime.SpecifyKind(result, DateTimeKind.Utc) : result.ToUniversalTime();
-        }
+        protected DateTime GetDateTime(string fieldName) => _dataReader.GetDateTime(fieldName);
 
-        protected T? GetNullableField<T>(string fieldName, T? defaultVal = default)
-        {
-            var ord = _dataReader.GetOrdinal(fieldName);
-            return _dataReader.IsDBNull(ord) ? defaultVal : _dataReader.GetFieldValue<T>(ord);
-        }
+        protected T? GetNullableField<T>(string fieldName, T? defaultVal = default) => _dataReader.GetNullableField<T>(fieldName, defaultVal);
 
         protected string GetMappedColumnName([CallerMemberName] string? name = null)
         {

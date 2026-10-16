@@ -1,5 +1,4 @@
-﻿using CraftedSolutions.MarBasBrokerSQLCommon;
-using CraftedSolutions.MarBasBrokerSQLCommon.Access;
+﻿using CraftedSolutions.MarBasBrokerSQLCommon.Access;
 using CraftedSolutions.MarBasBrokerSQLCommon.Grain;
 
 namespace CraftedSolutions.MarBasBrokerSQLCommon.GrainDef
@@ -18,6 +17,13 @@ $@"SELECT g.*, l.{GrainLocalizedDefaults.FieldLabel}, l.{GeneralEntityDefaults.F
         public static readonly string SQLSelectTypeDefByAclLocalized =
 $@"SELECT g.*, l.{GrainLocalizedDefaults.FieldLabel}, l.{GeneralEntityDefaults.FieldLangCode}, x.{AclDefaults.FieldAccessMask} AS permissions
     FROM {GrainTypeDefDefaults.DataSourceTypeDefExt} g
+    {GrainAccessConfig<TDialect>.SQLJoinAclCheck}
+    {GrainLocalizedConfig<TDialect>.SQLJoinLabel} WHERE ";
+
+        public static readonly string SQLSelectContaingTypeDefByAclLocalized =
+$@"SELECT g.*, l.{GrainLocalizedDefaults.FieldLabel}, l.{GeneralEntityDefaults.FieldLangCode}, x.{AclDefaults.FieldAccessMask} AS permissions
+    FROM {GrainBaseConfig.DataSourcePath} AS a
+    JOIN {GrainTypeDefDefaults.DataSourceTypeDefExt} AS g ON g.{GeneralEntityDefaults.FieldId} = a.{GeneralEntityDefaults.FieldId}
     {GrainAccessConfig<TDialect>.SQLJoinAclCheck}
     {GrainLocalizedConfig<TDialect>.SQLJoinLabel} WHERE ";
 

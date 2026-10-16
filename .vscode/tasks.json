@@ -44,7 +44,7 @@
                 },
                 "background": {
                     "activeOnStart": true,
-                    "beginsPattern": "info:",
+                    "beginsPattern": "launchSettings.json",
                     "endsPattern": "Content root path:"
                 }
             }

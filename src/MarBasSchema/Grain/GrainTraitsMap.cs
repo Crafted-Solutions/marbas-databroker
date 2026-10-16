@@ -13,7 +13,7 @@ namespace CraftedSolutions.MarBasSchema.Grain
             var propName = key ?? (trait.PropDef as INamed)?.Name;
             if (string.IsNullOrEmpty(propName))
             {
-                throw new ArgumentException($"Either {nameof(trait)}.{nameof(ITraitRef.PropDef)} is named or {nameof(key)} is required to be non-empty string");
+                propName = trait.PropDefId.ToString("D");
             }
             propName = propName.Trim().Replace(' ', '_');
             List<ITrait>? vals = null;

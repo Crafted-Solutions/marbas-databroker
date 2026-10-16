@@ -24,12 +24,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         {
         }
 
-        public GrainTraitsMap GetGrainTraits(IIdentifiable grain, CultureInfo? culture = null, bool scopedKeys = false)
+        public GrainTraitsMap GetGrainTraits(IIdentifiable grain, CultureInfo? culture = null, GrainTraitKeyFormat keyFormat = GrainTraitKeyFormat.UniqPropName)
         {
-            return GetGrainTraitsAsync(grain, culture, scopedKeys).Result;
+            return GetGrainTraitsAsync(grain, culture, keyFormat).Result;
         }
 
-        public async Task<GrainTraitsMap> GetGrainTraitsAsync(IIdentifiable grain, CultureInfo? culture = null, bool scopedKeys = false, CancellationToken cancellationToken = default)
+        public async Task<GrainTraitsMap> GetGrainTraitsAsync(IIdentifiable grain, CultureInfo? culture = null, GrainTraitKeyFormat keyFormat = GrainTraitKeyFormat.UniqPropName, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
             if (!await _accessService.VerfifyAccessAsync([grain], GrainAccessFlag.Read, cancellationToken))
@@ -48,10 +48,23 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                     {
                         while (await rs.ReadAsync(cancellationToken))
                         {
-                            var key = rs.GetString(rs.GetOrdinal(MapGrainBaseColumn(nameof(IGrainBase.Name))));
-                            if (scopedKeys && null != key)
+                            (string? name, string? id) = (null, null);
+                            if (GrainTraitKeyFormat.PropId != keyFormat)
                             {
-                                var path = rs.GetString(rs.GetOrdinal("propdef_path"));
+                                name = rs.GetNullableField<string>(MapGrainBaseColumn(nameof(IGrainBase.Name)));
+                            }
+                            if (GrainTraitKeyFormat.PropId <= keyFormat)
+                            {
+                                id = rs.GetGuid(MapTraitColumn(nameof(ITraitRef.PropDefId))).ToString("D");
+                            }
+                            var key = GrainTraitKeyFormat.PropId == keyFormat ? id : name;
+                            if (GrainTraitKeyFormat.PropId < keyFormat && null != id)
+                            {
+                                key = $"{key}:{id}";
+                            }
+                            if ((GrainTraitKeyFormat.ScopedPropName == keyFormat || GrainTraitKeyFormat.ScopedUniqPropName == keyFormat) && null != key)
+                            {
+                                var path = rs.GetNullableField("propdef_path", string.Empty)!;
                                 path = path[..path.LastIndexOf('/')];
                                 key = $"{path[(path.LastIndexOf('/') + 1)..]}/{key}";
                             }
