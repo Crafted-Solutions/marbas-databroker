@@ -32,28 +32,28 @@ namespace CraftedSolutions.MarBasSchema.IO
 
         protected static byte[]? ReadStream(Stream s)
         {
-            if (s.CanRead)
+            if (!s.CanRead)
             {
-                byte[]? result = null;
-                if (s is MemoryStream memStream)
-                {
-                    result = memStream.ToArray();
-                }
-                else
-                {
-                    using (var ms = new MemoryStream())
-                    {
-                        s.CopyTo(ms);
-                        result = ms.ToArray();
-                    }
-                    if (s.CanSeek)
-                    {
-                        s.Position = 0;
-                    }
-                }
-                return result;
+                throw new NotSupportedException("Stream must be readable");
             }
-            return null;
+            byte[]? result = null;
+            if (s is MemoryStream memStream)
+            {
+                result = memStream.ToArray();
+            }
+            else
+            {
+                using (var ms = new MemoryStream())
+                {
+                    s.CopyTo(ms);
+                    result = ms.ToArray();
+                }
+                if (s.CanSeek)
+                {
+                    s.Position = 0;
+                }
+            }
+            return result;
         }
 
         public void Dispose()

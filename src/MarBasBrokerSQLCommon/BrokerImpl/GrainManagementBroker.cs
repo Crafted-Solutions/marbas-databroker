@@ -458,7 +458,7 @@ WHERE g.{GeneralEntityDefaults.FieldId} {grainIdClause}";
                             }
 
                             var paramName = $"{GeneralEntityDefaults.ParamLangCode}{i}";
-                            cmd.Parameters.Add(_profile.ParameterFactory.Create(paramName, culture.IetfLanguageTag));
+                            cmd.Parameters.Add(_profile.ParameterFactory.Create(paramName, culture.Name));
                             result += $"l.{GeneralEntityDefaults.FieldLangCode} = @{paramName}";
 
                             i++;

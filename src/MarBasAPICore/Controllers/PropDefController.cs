@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-using CraftedSolutions.MarBasAPICore;
-using CraftedSolutions.MarBasAPICore.Http;
+﻿using CraftedSolutions.MarBasAPICore.Http;
 using CraftedSolutions.MarBasAPICore.Models;
 using CraftedSolutions.MarBasAPICore.Models.GrainDef;
 using CraftedSolutions.MarBasAPICore.Routing;
@@ -12,17 +10,18 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace CraftedSolutions.MarBasAPICore.Controllers
 {
     using CountResult = IMarBasResult<int>;
     using IGrainPropDefLocalizedResult = IMarBasResult<IGrainPropDefLocalized>;
+    using IGrainTypeDefLocalizedResult = IMarBasResult<IGrainTypeDefLocalized>;
     using IGrainPropDefResult = IMarBasResult<IGrainPropDef>;
 
     [Authorize]
     [Route($"{RoutingConstants.DefaultPrefix}/[controller]", Order = (int)ControllerPrority.PropDef)]
     [ApiController]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "We want the token without interference with default parameters")]
     public sealed class PropDefController : ControllerBase
     {
         private readonly ILogger _logger;
@@ -36,9 +35,9 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(IGrainPropDefLocalizedResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainPropDefLocalizedResult> Get(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, [FromQuery] string? lang)
+        public async Task<IGrainPropDefLocalizedResult> Get([FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, [FromQuery] string? lang, CancellationToken cancellationToken = default)
         {
-            HttpResponseException.Throw503IfOffline(schemaBroker);
+            await HttpResponseException.Throw503IfOfflineAsync(schemaBroker, cancellationToken);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
                 var result = await schemaBroker.GetPropDefAsync(id, string.IsNullOrEmpty(lang) ? null : CultureInfo.GetCultureInfo(lang), cancellationToken);
@@ -54,9 +53,9 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(IGrainPropDefResult), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<IGrainPropDefResult> Put(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, PropDefCreateModel model)
+        public async Task<IGrainPropDefResult> Put([FromServices] IAsyncSchemaBroker schemaBroker, PropDefCreateModel model, CancellationToken cancellationToken = default)
         {
-            HttpResponseException.Throw503IfOffline(schemaBroker);
+            await HttpResponseException.Throw503IfOfflineAsync(schemaBroker, cancellationToken);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
                 var result = await schemaBroker.CreatePropDefAsync(model.Name, (Identifiable)model.TypeContainerId,
@@ -75,13 +74,31 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
         [ProducesResponseType(typeof(CountResult), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        public async Task<CountResult> Store(CancellationToken cancellationToken, [FromServices] IAsyncSchemaBroker schemaBroker, PropDefUpdateModel model)
+        public async Task<CountResult> Store([FromServices] IAsyncSchemaBroker schemaBroker, PropDefUpdateModel model, CancellationToken cancellationToken = default)
         {
-            HttpResponseException.Throw503IfOffline(schemaBroker);
+            await HttpResponseException.Throw503IfOfflineAsync(schemaBroker, cancellationToken);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                var result = await schemaBroker.StorePropDefsAsync(new[] { model.Grain }, cancellationToken);
+                var result = await schemaBroker.StorePropDefsAsync([model.Grain], cancellationToken);
                 return MarbasResultFactory.Create(0 != result, result);
+            }, _logger);
+        }
+
+        [HttpGet("{id}/ContainingType", Name = "GetContainingTypeDef")]
+        [ProducesResponseType(typeof(IGrainTypeDefLocalizedResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<IGrainTypeDefLocalizedResult> GetContainingTypeDef([FromServices] IAsyncSchemaBroker schemaBroker, [FromRoute] Guid id, [FromQuery] string? lang, CancellationToken cancellationToken = default)
+        {
+            await HttpResponseException.Throw503IfOfflineAsync(schemaBroker, cancellationToken);
+            return await HttpResponseException.DigestExceptionsAsync(async () =>
+            {
+                var result = await schemaBroker.GetPropDefContainingTypeAsync((Identifiable)id, string.IsNullOrEmpty(lang) ? null : CultureInfo.GetCultureInfo(lang), cancellationToken);
+                if (null == result)
+                {
+                    throw new HttpResponseException(StatusCodes.Status404NotFound);
+                }
+                return MarbasResultFactory.Create(true, result);
             }, _logger);
         }
     }

@@ -403,7 +403,7 @@ namespace CraftedSolutions.MarBasSchema.Transport
                                 };
                                 if (!string.IsNullOrEmpty(placeholder.Path))
                                 {
-                                    placeholder.Localized = new Dictionary<string, IGrainLocalizedLayer>() { { SchemaDefaults.Culture.IetfLanguageTag, new GrainLocalizedLayer() { Label = placeholder.Path } } };
+                                    placeholder.Localized = new Dictionary<string, IGrainLocalizedLayer>() { { SchemaDefaults.Culture.Name, new GrainLocalizedLayer() { Label = placeholder.Path } } };
                                 }
                                 placeholders.Add(placeholder);
                                 _processedGrains[missingId] = GrainImportProcessStatus.Processed;

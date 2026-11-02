@@ -8,9 +8,9 @@ namespace CraftedSolutions.MarBasCommon.Tests.Reflection
     public class TimeSpanLiteralsTest
     {
         [TestMethod]
-        [DataRow(12, DisplayName = "IntegerValue")]
-        [DataRow(10.5d, DisplayName = "DoubleValue")]
-        public void H_returning_TimeSpan_over_hours_given_less_than_24_hours<T>(T hours) where T: INumber<T>
+        [DataRow(12, DisplayName = "H_returning_TimeSpan_over_hours_given_less_than_24_hours_as_int")]
+        [DataRow(10.5d, DisplayName = "H_returning_TimeSpan_over_hours_given_less_than_24_hours_as_double")]
+        public void H_returning_TimeSpan_over_hours_given_less_than_24_hours<T>(T hours) where T : INumber<T>
         {
             var span = hours.h();
             span.Days.Should().Be(0);
@@ -29,8 +29,8 @@ namespace CraftedSolutions.MarBasCommon.Tests.Reflection
             }
         }
         [TestMethod]
-        [DataRow(30, DisplayName = "IntegerValue")]
-        [DataRow(40.5d, DisplayName = "DoubleValue")]
+        [DataRow(30, DisplayName = "H_returning_TimeSpan_over_days_and_hours_given_more_than_24_hours_as_int")]
+        [DataRow(40.5d, DisplayName = "H_returning_TimeSpan_over_days_and_hours_given_more_than_24_hours_as_double")]
         public void H_returning_TimeSpan_over_days_and_hours_given_more_than_24_hours<T>(T hours) where T : INumber<T>
         {
             var span = hours.h();
@@ -51,8 +51,8 @@ namespace CraftedSolutions.MarBasCommon.Tests.Reflection
         }
 
         [TestMethod]
-        [DataRow(45, DisplayName = "IntegerValue")]
-        [DataRow(30.25d, DisplayName = "DoubleValue")]
+        [DataRow(45, DisplayName = "Min_returning_TimeSpan_over_minutes_given_less_than_60_minutes_as_int")]
+        [DataRow(30.25d, DisplayName = "Min_returning_TimeSpan_over_minutes_given_less_than_60_minutes_as_double")]
         public void Min_returning_TimeSpan_over_minutes_given_less_than_60_minutes<T>(T minutes) where T : INumber<T>
         {
             var span = minutes.min();
@@ -72,8 +72,8 @@ namespace CraftedSolutions.MarBasCommon.Tests.Reflection
             }
         }
         [TestMethod]
-        [DataRow(90, DisplayName = "IntegerValue")]
-        [DataRow(70.25d, DisplayName = "DoubleValue")]
+        [DataRow(90, DisplayName = "Min_returning_TimeSpan_over_hours_and_minutes_given_more_than_60_minutes_as_int")]
+        [DataRow(70.25d, DisplayName = "Min_returning_TimeSpan_over_hours_and_minutes_given_more_than_60_minutes_as_double")]
         public void Min_returning_TimeSpan_over_hours_and_minutes_given_more_than_60_minutes<T>(T minutes) where T : INumber<T>
         {
             var span = minutes.min();
@@ -94,8 +94,8 @@ namespace CraftedSolutions.MarBasCommon.Tests.Reflection
         }
 
         [TestMethod]
-        [DataRow(45, DisplayName = "IntegerValue")]
-        [DataRow(30.25d, DisplayName = "DoubleValue")]
+        [DataRow(45, DisplayName = "Sec_returning_TimeSpan_over_seconds_given_less_than_60_seconds_as_int")]
+        [DataRow(30.25d, DisplayName = "Sec_returning_TimeSpan_over_seconds_given_less_than_60_seconds_as_double")]
         public void Sec_returning_TimeSpan_over_seconds_given_less_than_60_seconds<T>(T seconds) where T : INumber<T>
         {
             var span = seconds.sec();
@@ -115,8 +115,8 @@ namespace CraftedSolutions.MarBasCommon.Tests.Reflection
             }
         }
         [TestMethod]
-        [DataRow(90, DisplayName = "IntegerValue")]
-        [DataRow(70.25d, DisplayName = "DoubleValue")]
+        [DataRow(90, DisplayName = "Sec_returning_TimeSpan_over_minutes_and_seconds_given_more_than_60_seconds_as_int")]
+        [DataRow(70.25d, DisplayName = "Sec_returning_TimeSpan_over_minutes_and_seconds_given_more_than_60_seconds_as_double")]
         public void Sec_returning_TimeSpan_over_minutes_and_seconds_given_more_than_60_seconds<T>(T seconds) where T : INumber<T>
         {
             var span = seconds.sec();
@@ -137,8 +137,8 @@ namespace CraftedSolutions.MarBasCommon.Tests.Reflection
         }
 
         [TestMethod]
-        [DataRow(456, DisplayName = "IntegerValue")]
-        [DataRow(234.25d, DisplayName = "DoubleValue")]
+        [DataRow(456, DisplayName = "Ms_returning_TimeSpan_over_milliseconds_given_less_than_1000_milliseconds_as_int")]
+        [DataRow(234.25d, DisplayName = "Ms_returning_TimeSpan_over_milliseconds_given_less_than_1000_milliseconds_as_double")]
         public void Ms_returning_TimeSpan_over_milliseconds_given_less_than_1000_milliseconds<T>(T milliseconds) where T : INumber<T>
         {
             var span = milliseconds.ms();
@@ -158,8 +158,8 @@ namespace CraftedSolutions.MarBasCommon.Tests.Reflection
             }
         }
         [TestMethod]
-        [DataRow(1456, DisplayName = "IntegerValue")]
-        [DataRow(1234.25d, DisplayName = "DoubleValue")]
+        [DataRow(1456, DisplayName = "Ms_returning_TimeSpan_over_seconds_and_milliseconds_given_more_than_1000_milliseconds_as_int")]
+        [DataRow(1234.25d, DisplayName = "Ms_returning_TimeSpan_over_seconds_and_milliseconds_given_more_than_1000_milliseconds_as_double")]
         public void Ms_returning_TimeSpan_over_seconds_and_milliseconds_given_more_than_1000_milliseconds<T>(T milliseconds) where T : INumber<T>
         {
             var span = milliseconds.ms();

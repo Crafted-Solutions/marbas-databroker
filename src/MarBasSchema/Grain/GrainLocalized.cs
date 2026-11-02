@@ -1,9 +1,8 @@
-﻿using System.Globalization;
+﻿using CraftedSolutions.MarBasCommon;
+using System.Globalization;
 using System.Runtime.Serialization;
 using System.Security.Principal;
 using System.Text.Json.Serialization;
-using CraftedSolutions.MarBasCommon;
-using CraftedSolutions.MarBasSchema.Access;
 
 namespace CraftedSolutions.MarBasSchema.Grain
 {
@@ -12,29 +11,25 @@ namespace CraftedSolutions.MarBasSchema.Grain
         protected CultureInfo _culture;
         protected string? _label;
 
-        protected GrainLocalized(Guid id, string? name = null, IIdentifiable? parent = null, IPrincipal? creator = null, CultureInfo? culture = null)
-            : this(name, parent, creator, culture)
-        {
-            _props.Id = id;
-        }
-
         public GrainLocalized(string? name = null, IIdentifiable? parent = null, IPrincipal? creator = null, CultureInfo? culture = null)
             : base(name, parent, creator)
         {
             _culture = culture ?? SchemaDefaults.Culture;
             _fieldTracker.AddScope<IGrainLocalized>();
-            _permissions = GrainAccessFlag.Read;
         }
 
-        public GrainLocalized(IGrainBase other)
+        public GrainLocalized(IGrain other)
             : base(other)
         {
-            if (other is IGrainLocalized localized)
+            if (other is ILocalized localized)
             {
-                _culture = localized.CultureInfo ?? SchemaDefaults.Culture;
-                _label = localized.Label;
+                _culture = localized.CultureInfo;
             }
-            else
+            if (other is ILabeled labeled)
+            {
+                _label = labeled.Label;
+            }
+            if (null == _culture)
             {
                 _culture = SchemaDefaults.Culture;
             }

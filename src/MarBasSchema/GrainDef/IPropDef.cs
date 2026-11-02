@@ -1,6 +1,4 @@
-﻿using CraftedSolutions.MarBasSchema;
-
-namespace CraftedSolutions.MarBasSchema.GrainDef
+﻿namespace CraftedSolutions.MarBasSchema.GrainDef
 {
     public interface IPropDef : IValueTypeConstraint
     {

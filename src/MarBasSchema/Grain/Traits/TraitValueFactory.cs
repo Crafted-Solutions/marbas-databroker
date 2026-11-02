@@ -6,7 +6,7 @@ namespace CraftedSolutions.MarBasSchema.Grain.Traits
 {
     public static class TraitValueFactory
     {
-        public static ITraitBase Create(ITraitBase template, object? value = null)
+        public static ITraitBase Create(ITrait template, object? value = null)
         {
             ITraitBase result;
             switch (template.ValueType)
@@ -110,7 +110,7 @@ namespace CraftedSolutions.MarBasSchema.Grain.Traits
                 TraitValueType.Boolean => typeof(bool),
                 TraitValueType.Number => typeof(decimal),
                 TraitValueType.DateTime => typeof(DateTime),
-                TraitValueType.Grain or TraitValueType.File => typeof(Guid),
+                TraitValueType.Grain or TraitValueType.File => typeof(Guid?),
                 _ => typeof(string)
             };
         }

@@ -15,6 +15,7 @@ namespace CraftedSolutions.MarBasSchema.Broker
         Task<IGrainPropDefLocalized?> GetPropDefAsync(Guid id, CultureInfo? culture = null, CancellationToken cancellationToken = default);
         Task<IGrainPropDef?> CreatePropDefAsync(string name, IIdentifiable typeContainer, TraitValueType valueType = TraitValueType.Text, int cardinalityMin = 1, int cardinalityMax = 1, CancellationToken cancellationToken = default);
         Task<int> StorePropDefsAsync(IEnumerable<IGrainPropDef> propdefs, CancellationToken cancellationToken = default);
+        Task<IGrainTypeDefLocalized?> GetPropDefContainingTypeAsync(IIdentifiable propDef, CultureInfo? culture = null, CancellationToken cancellationToken = default);
         Task<IEnumerable<IGrainPropDefLocalized>> GetTypeDefPropertiesAsync(IIdentifiable typedef, CultureInfo? culture = null, CancellationToken cancellationToken = default);
     }
 }

@@ -9,7 +9,11 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
 {
     public class GrainPropDef : GrainLocalized, IGrainPropDefLocalized
     {
-        protected static readonly IGrainBase DefaultType = new GrainBase(SchemaDefaults.PropDefTypeDefID, SchemaDefaults.PropDefTypeName);
+        protected static readonly IGrain DefaultType = new GrainPlain()
+        {
+            Id = SchemaDefaults.PropDefTypeDefID,
+            Name = SchemaDefaults.PropDefTypeName,
+        };
 
         protected TraitValueType _valueType;
         protected IIdentifiable? _valueConstraint;
@@ -18,6 +22,8 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
         protected bool _versionable;
         protected bool _localizable;
 
+        // TODO remove this constructor, GrainTransportBroker should use its own subclass
+        [Obsolete("Do not use, declare own subclass to initalize Id")]
         public GrainPropDef(Guid id, string? name = null, IIdentifiable? parent = null, IPrincipal? creator = null, CultureInfo? culture = null)
             : this(name, parent, creator, culture)
         {
@@ -28,18 +34,23 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
             : base(name, parent, creator, culture)
         {
             _fieldTracker.AddScope<IGrainPropDef>();
+            _typeConstraint = new SimpleTypeConstraint(DefaultType);
             _cardinality = [1, 1];
             _versionable = true;
             _localizable = true;
         }
 
-        public GrainPropDef(IGrainBase other)
+        public GrainPropDef(IGrain other)
             : base(other)
         {
             _fieldTracker.AddScope<IGrainPropDef>();
-            if (other is IGrainPropDef propDef)
+            if (null == _typeConstraint)
             {
-                _valueConstraint = propDef.ValueConstraint;
+                _typeConstraint = new SimpleTypeConstraint(DefaultType);
+            }
+            if (other is IPropDef propDef)
+            {
+                _valueConstraint = other is IGrainPropDef grainPropDef ? grainPropDef.ValueConstraint : (Identifiable?)propDef.ValueConstraintId;
                 _constraintParams = propDef.ConstraintParams;
                 _cardinality = [propDef.CardinalityMin, propDef.CardinalityMax];
                 _versionable = propDef.Versionable;
@@ -55,16 +66,6 @@ namespace CraftedSolutions.MarBasSchema.GrainDef
             {
                 _valueType = valueType.ValueType;
             }
-        }
-
-        public override string? TypeName => base.TypeName ?? SchemaDefaults.PropDefTypeName;
-
-        [JsonIgnore]
-        [IgnoreDataMember]
-        public override IIdentifiable? TypeDef
-        {
-            get => base.TypeDef as IGrainBase ?? DefaultType;
-            set => base.TypeDef = value ?? DefaultType;
         }
 
         public TraitValueType ValueType

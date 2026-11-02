@@ -1,5 +1,6 @@
 ﻿namespace CraftedSolutions.MarBasSchema.IO
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class StorageQuotaExceededException : Exception
     {
         public StorageQuotaExceededException()

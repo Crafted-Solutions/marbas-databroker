@@ -31,6 +31,19 @@ namespace CraftedSolutions.MarBasAPICore.Http
             }
         }
 
+        public static async Task Throw503IfOfflineAsync(IProfileProvider? profileProvider, CancellationToken cancellationToken = default)
+        {
+            await Throw503IfOfflineAsync(profileProvider?.Profile, cancellationToken);
+        }
+
+        public static async Task Throw503IfOfflineAsync(IBrokerProfile? profile, CancellationToken cancellationToken = default)
+        {
+            if (null == profile || !await profile.IsOnlineAsync(cancellationToken))
+            {
+                throw new HttpResponseException(StatusCodes.Status503ServiceUnavailable);
+            }
+        }
+
         public static T DigestExceptions<T>(Func<T> worker, ILogger? logger = null)
         {
             return DigestExceptionsAsync(() => Task.FromResult(worker()), logger).Result;

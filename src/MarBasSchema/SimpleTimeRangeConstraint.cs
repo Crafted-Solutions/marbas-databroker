@@ -1,5 +1,6 @@
 ﻿namespace CraftedSolutions.MarBasSchema
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class SimpleTimeRangeConstraint : ITimeRangeConstraint
     {
         public DateTime? Start { get; set; }

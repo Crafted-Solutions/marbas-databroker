@@ -12,6 +12,7 @@ namespace CraftedSolutions.MarBasSchema.Access
         Task<bool> TrimOldest(CancellationToken cancellationToken = default);
     }
 
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class SandboxException : Exception
     {
         public SandboxException()

@@ -1,7 +1,4 @@
-﻿
-using CraftedSolutions.MarBasSchema;
-
-namespace CraftedSolutions.MarBasSchema.Grain
+﻿namespace CraftedSolutions.MarBasSchema.Grain
 {
     public class GrainPlain : IGrain
     {

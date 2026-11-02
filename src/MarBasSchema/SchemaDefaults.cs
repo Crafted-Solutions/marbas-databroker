@@ -1,8 +1,7 @@
-﻿using System.Globalization;
-using System.Security.Principal;
-using CraftedSolutions.MarBasSchema.Access;
-using CraftedSolutions.MarBasSchema.GrainDef;
+﻿using CraftedSolutions.MarBasSchema.GrainDef;
 using CraftedSolutions.MarBasSchema.GrainTier;
+using System.Globalization;
+using System.Security.Principal;
 
 namespace CraftedSolutions.MarBasSchema
 {
@@ -49,11 +48,13 @@ namespace CraftedSolutions.MarBasSchema
         public static readonly Guid LinkTypeDefID = Guid.Parse("00000000-0000-1000-a000-00000000000f");
 
         public static readonly Guid SuperuserRoleID = Guid.Parse("00000000-0000-1000-b000-000000000000");
+        public const string SuperuserRoleName = "Superuser";
         public static readonly Guid DeveloperRoleID = Guid.Parse("00000000-0000-1000-b000-000000000001");
         public static readonly Guid SchemaManagerRoleID = Guid.Parse("00000000-0000-1000-b000-000000000002");
         public static readonly Guid ContentContributorRoleID = Guid.Parse("00000000-0000-1000-b000-000000000003");
         public static readonly Guid ContentConsumerRoleID = Guid.Parse("00000000-0000-1000-b000-000000000004");
         public static readonly Guid EveryoneRoleID = Guid.Parse("00000000-0000-1000-b000-000000000005");
+        public const string EveryoneRoleName = "Everyone";
 
         public const string InternalClaimIssuer = "marbas";
         public const string InternalPrincipalSuffix = $"@{InternalClaimIssuer}";
@@ -62,8 +63,8 @@ namespace CraftedSolutions.MarBasSchema
 
         public const string AnonymousUserName = "anonymous";
         public const string SystemUserName = $"system{InternalPrincipalSuffix}";
-        public static readonly IPrincipal AnonymousUser = new GenericPrincipal(new GenericIdentity(AnonymousUserName), [SchemaRole.Everyone.Name]);
-        public static readonly IPrincipal SystemUser = new GenericPrincipal(new GenericIdentity(SystemUserName), [SchemaRole.Superuser.Name]);
+        public static readonly IPrincipal AnonymousUser = new GenericPrincipal(new GenericIdentity(AnonymousUserName), [EveryoneRoleName]);
+        public static readonly IPrincipal SystemUser = new GenericPrincipal(new GenericIdentity(SystemUserName), [SuperuserRoleName]);
 
 
         public static readonly ISet<Guid> BuiltInIds = new HashSet<Guid>()

@@ -92,7 +92,7 @@ namespace CraftedSolutions.MarBasAPICore.Controllers
             HttpResponseException.Throw503IfOffline(schemaBroker);
             return await HttpResponseException.DigestExceptionsAsync(async () =>
             {
-                if (model.Language.IsoCode == CultureInfo.InvariantCulture.IetfLanguageTag)
+                if (model.Language.IsoCode == CultureInfo.InvariantCulture.Name)
                 {
                     throw new HttpResponseException(StatusCodes.Status400BadRequest);
                 }

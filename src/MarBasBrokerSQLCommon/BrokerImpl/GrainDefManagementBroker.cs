@@ -280,13 +280,12 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
         public async Task<IGrainPropDef?> CreatePropDefAsync(string name, IIdentifiable typeContainer, TraitValueType valueType = TraitValueType.Text, int cardinalityMin = 1, int cardinalityMax = 1, CancellationToken cancellationToken = default)
         {
             await CheckProfile(cancellationToken);
-            IGrainPropDef? result = null;
-            return await WrapInTransaction(result, async (ta) =>
+            return await WrapInTransaction(null, async (ta) =>
             {
                 var grain = await CreateGrainInTA(name, typeContainer, (Identifiable)SchemaDefaults.PropDefTypeDefID, ta, cancellationToken: cancellationToken);
                 if (null != grain)
                 {
-                    result = new GrainPropDef(grain)
+                    var result = new GrainPropDef(grain)
                     {
                         ValueType = valueType,
                         CardinalityMin = cardinalityMin,
@@ -325,9 +324,9 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                             throw new ApplicationException($"Failed to create PropDef {name}");
                         }
                     }
-
+                    return result;
                 }
-                return result;
+                return null;
             }, cancellationToken);
         }
 
@@ -357,6 +356,42 @@ namespace CraftedSolutions.MarBasBrokerSQLCommon.BrokerImpl
                 result = await StoreLocalizedGrainsInTA(grainsModL, result, ta, cancellationToken);
                 return await StoreGrainPropDefTiersInTA(ta, propsMod, result, cancellationToken);
             }, cancellationToken);
+        }
+
+        public IGrainTypeDefLocalized? GetPropDefContainingType(IIdentifiable propDef, CultureInfo? culture = null)
+        {
+            return GetPropDefContainingTypeAsync(propDef, culture).Result;
+        }
+
+        public async Task<IGrainTypeDefLocalized?> GetPropDefContainingTypeAsync(IIdentifiable propDef, CultureInfo? culture = null, CancellationToken cancellationToken = default)
+        {
+            await CheckProfile(cancellationToken);
+            var result = await ExecuteOnConnection<IGrainTypeDefLocalized?>(null, async (cmd) =>
+            {
+                using (cmd)
+                {
+                    cmd.CommandText = $"{GrainTypeDefConfig<TDialect>.SQLSelectContaingTypeDefByAclLocalized}a.{GrainBaseConfig.PathFieldStart} = @{GrainBaseConfig.PathParamStart}";
+
+                    _profile.ParameterFactory.AddParametersForGrainAclCheck(cmd.Parameters, (await _accessService.GetContextPrimaryRoleAsync(cancellationToken)).Id);
+                    _profile.ParameterFactory.AddParametersForCultureLayer(cmd.Parameters, culture);
+                    cmd.Parameters.Add(_profile.ParameterFactory.Create(GrainBaseConfig.PathParamStart, propDef.Id));
+
+                    using (var rs = await cmd.ExecuteReaderAsync(cancellationToken))
+                    {
+                        if (await rs.ReadAsync())
+                        {
+                            return new GrainTypeDef(new GrainTypeDefDataAdapter(rs));
+                        }
+                    }
+                }
+                return null;
+            }, cancellationToken);
+            if (null != result)
+            {
+                await GetTypeDefMixins(result, cancellationToken);
+                result.GetDirtyFields<IGrainTypeDef>().Clear();
+            }
+            return result;
         }
 
         public IEnumerable<IGrainPropDefLocalized> GetTypeDefProperties(IIdentifiable typedef, CultureInfo? culture = null)

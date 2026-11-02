@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using CraftedSolutions.MarBasSchema;
 
 namespace CraftedSolutions.MarBasSchema.Sys
 {

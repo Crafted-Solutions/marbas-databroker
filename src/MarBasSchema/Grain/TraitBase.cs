@@ -2,6 +2,7 @@
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using CraftedSolutions.MarBasCommon;
+using CraftedSolutions.MarBasCommon.Reflection;
 
 namespace CraftedSolutions.MarBasSchema.Grain
 {
@@ -17,17 +18,25 @@ namespace CraftedSolutions.MarBasSchema.Grain
         {
             _fieldTracker = new UpdateableTracker();
             _traitRef = new(grain, propdef, culture);
+            if (propdef is not IValueTypeConstraint)
+            {
+                _traitRef.PropDef = new SimpleValueTypeContraint(propdef);
+            }
             _ord = 0;
         }
 
-        public TraitBase(ITraitBase other)
+        public TraitBase(ITrait other)
             : base(other.Id)
         {
-            _fieldTracker = other.FieldTracker ?? new UpdateableTracker();
+            _fieldTracker = other is IUpdateable updateable ? updateable.FieldTracker.MakeClone()! : new UpdateableTracker();
             _traitRef = new(other.Grain, other.PropDef, other.CultureInfo)
             {
                 Revision = other.Revision
             };
+            if (other.PropDef is not IValueTypeConstraint)
+            {
+                _traitRef.PropDef = new SimpleValueTypeContraint(other.PropDef, other.ValueType);
+            }
             _ord = other.Ord;
         }
 
@@ -49,7 +58,7 @@ namespace CraftedSolutions.MarBasSchema.Grain
 
         [JsonIgnore]
         [IgnoreDataMember]
-        public IIdentifiable PropDef
+        public virtual IIdentifiable PropDef
         {
             get => _traitRef.PropDef;
             set

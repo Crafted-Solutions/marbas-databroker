@@ -15,6 +15,7 @@ namespace CraftedSolutions.MarBasSchema.Broker
         IGrainPropDefLocalized? GetPropDef(Guid id, CultureInfo? culture = null);
         IGrainPropDef? CreatePropDef(string name, IIdentifiable typeContainer, TraitValueType valueType = TraitValueType.Text, int cardinalityMin = 1, int cardinalityMax = 1);
         int StorePropDefs(IEnumerable<IGrainPropDef> propdefs);
+        IGrainTypeDefLocalized? GetPropDefContainingType(IIdentifiable propDef, CultureInfo? culture = null);
         IEnumerable<IGrainPropDefLocalized> GetTypeDefProperties(IIdentifiable typedef, CultureInfo? culture = null);
     }
 }

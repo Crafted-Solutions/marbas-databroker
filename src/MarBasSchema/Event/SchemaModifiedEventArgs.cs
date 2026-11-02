@@ -7,22 +7,20 @@ namespace CraftedSolutions.MarBasSchema.Event
         Update = 1, Create = 2, Delete = 3
     }
 
-    public class SchemaModifiedEventArgs<TSubject> : EventArgs
+    public class SchemaModifiedEventArgs<TSubject>(SchemaModificationType changeType, IEnumerable<TSubject>? subjects = null, Type? concreteSubjectType = null)
+        : EventArgs
         where TSubject : IIdentifiable
     {
-        protected readonly IList<TSubject> _subjects;
-        protected readonly SchemaModificationType _type;
-        protected readonly Type _subjectType;
-
-        public SchemaModifiedEventArgs(SchemaModificationType changeType, IEnumerable<TSubject>? subjects = null, Type? concreteSubjectType = null)
-        {
-            _type = changeType;
-            _subjects = subjects?.ToList() ?? new List<TSubject>();
-            _subjectType = concreteSubjectType ?? typeof(TSubject);
-        }
+        protected readonly IList<TSubject> _subjects = subjects?.ToList() ?? [];
+        protected readonly SchemaModificationType _type = changeType;
+        protected readonly Type _subjectType = concreteSubjectType ?? typeof(TSubject);
 
         public void AddSubject(TSubject subject)
         {
+            if (!subject.GetType().IsAssignableTo(_subjectType))
+            {
+                throw new ArgumentException($"{nameof(subject)} must be instance of {_subjectType.Name}");
+            }
             if (!_subjects.Any((x) => x.Id == subject.Id))
             {
                 _subjects.Add(subject);
